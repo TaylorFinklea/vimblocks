@@ -30,7 +30,10 @@ export default (logseq: ILSPluginUser) => {
       },
       async () => {
         // Check before action hook
-        if (!beforeActionExecute()) {
+        if (!beforeActionExecute({
+          allowContentEditable: true,
+          guardTextEntry: true,
+        })) {
           return;
         }
 

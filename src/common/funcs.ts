@@ -12,6 +12,12 @@ import hotkeys from "hotkeys-js";
 import { useCommandStore } from "@/stores/command";
 import { useColorStore } from "@/stores/color";
 import { useSearchStore } from "@/stores/search";
+import {
+  getActiveTextEntryTarget,
+  shouldBlockTextEntryAction,
+  type TextEntryGuardOptions,
+} from "@/runtime/context-guard";
+import { isMissingStorageItemError } from "@/runtime/storage-errors";
 
 export const clearBlocksHighlight = async (blocks: BlockEntity[]) => {
   for (const block of blocks) {
@@ -61,19 +67,28 @@ export async function createPageIfNotExists(pageName): Promise<PageEntity> {
   return page;
 }
 
-export async function setHotkeys(logseq: ILSPluginUser) {
-  hotkeys("esc", () => {
+export function setHotkeys(_logseq: ILSPluginUser): () => void {
+  const escapeHandler = () => {
     hideMainUI();
     return false;
-  });
+  };
 
-  hotkeys("command+shift+;, ctrl+shift+;, shift+;", () => {
+  const commandKeys = "command+shift+;, ctrl+shift+;, shift+;";
+  const commandHandler = () => {
     const $input = document.querySelector(
       ".command-input input"
     ) as HTMLInputElement;
     $input && $input.focus();
     return false;
-  });
+  };
+
+  hotkeys("esc", escapeHandler);
+  hotkeys(commandKeys, commandHandler);
+
+  return () => {
+    hotkeys.unbind("esc", escapeHandler);
+    hotkeys.unbind(commandKeys, commandHandler);
+  };
 }
 
 export async function getGraphKey(key: string): Promise<string> {
@@ -318,7 +333,14 @@ export const loadMarks = async () => {
     const storage = logseq.Assets.makeSandboxStorage();
 
     // Load block marks
-    const blockMarkCacheStr = await storage.getItem("block-marks.json");
+    let blockMarkCacheStr: string | null = null;
+    try {
+      blockMarkCacheStr = await storage.getItem("block-marks.json");
+    } catch (error) {
+      if (!isMissingStorageItemError(error)) {
+        throw error;
+      }
+    }
     if (blockMarkCacheStr) {
       const loaded = JSON.parse(blockMarkCacheStr as string) || {};
       // Ensure all entries have the note field for backward compatibility
@@ -334,7 +356,14 @@ export const loadMarks = async () => {
     }
 
     // Load page marks
-    const pageMarkCacheStr = await storage.getItem("page-marks.json");
+    let pageMarkCacheStr: string | null = null;
+    try {
+      pageMarkCacheStr = await storage.getItem("page-marks.json");
+    } catch (error) {
+      if (!isMissingStorageItemError(error)) {
+        throw error;
+      }
+    }
     if (pageMarkCacheStr) {
       const loaded = JSON.parse(pageMarkCacheStr as string) || {};
       // Ensure all entries have the note field for backward compatibility
@@ -674,13 +703,21 @@ export const beforeActionRegister = (key: string): boolean => {
  * Hook called before executing any action
  * Returns true if the action should continue, false if it should be blocked
  *
- * @param key - The keybinding key identifier (optional, for future use)
+ * @param options - Context allowances for deliberately global commands
  * @returns true if action should continue, false otherwise
  */
-export const beforeActionExecute = (_key?: string): boolean => {
+export type BeforeActionOptions = TextEntryGuardOptions;
+
+export const beforeActionExecute = (
+  options: BeforeActionOptions = {}
+): boolean => {
   // Check if we're currently waiting for input (e.g., replace character)
   // In this case, block all other actions
   if (isWaitingForInput) {
+    return false;
+  }
+
+  if (shouldBlockTextEntryAction(getActiveTextEntryTarget(), options)) {
     return false;
   }
 
@@ -733,77 +770,8 @@ export function filterDarkColor(hexColor) {
   return r * 0.299 + g * 0.587 + b * 0.114 < 150;
 }
 
-// Key binding validation and utilities
-export const validateKeyBinding = (
-  binding: string
-): { valid: boolean; error?: string } => {
-  if (!binding || binding.trim() === "") {
-    return { valid: false, error: "Key binding cannot be empty" };
-  }
-
-  const trimmed = binding.trim();
-
-  // Check for valid key format
-  // Valid formats: "j", "shift+j", "mod+shift+j", "g j", "d d"
-  const parts = trimmed.split(" ");
-
-  for (const part of parts) {
-    if (part === "") continue;
-
-    const keys = part.split("+");
-
-    // Check if all parts are valid
-    for (const key of keys) {
-      if (key === "") {
-        return {
-          valid: false,
-          error: "Invalid key binding format: empty key not allowed",
-        };
-      }
-    }
-  }
-
-  return { valid: true };
-};
-
-export const normalizeKeyBinding = (binding: string): string => {
-  // Normalize spaces and make it lowercase for comparison
-  return binding.trim().toLowerCase().replace(/\s+/g, " ");
-};
-
-export const findDuplicateKeyBindings = (
-  keyBindings: Record<string, string | string[]>
-): { key1: string; key2: string; binding: string }[] => {
-  const duplicates: { key1: string; key2: string; binding: string }[] = [];
-  const bindingMap = new Map<string, string[]>();
-
-  // Build a map of normalized bindings to keys
-  Object.entries(keyBindings).forEach(([key, value]) => {
-    const bindings = Array.isArray(value) ? value : [value];
-    bindings.forEach((binding) => {
-      const normalized = normalizeKeyBinding(binding);
-      if (!bindingMap.has(normalized)) {
-        bindingMap.set(normalized, []);
-      }
-      bindingMap.get(normalized)!.push(key);
-    });
-  });
-
-  // Find duplicates
-  bindingMap.forEach((keys, binding) => {
-    if (keys.length > 1) {
-      // Add all pairs of duplicates
-      for (let i = 0; i < keys.length; i++) {
-        for (let j = i + 1; j < keys.length; j++) {
-          duplicates.push({
-            key1: keys[i],
-            key2: keys[j],
-            binding,
-          });
-        }
-      }
-    }
-  });
-
-  return duplicates;
-};
+export {
+  findDuplicateKeyBindings,
+  normalizeKeyBinding,
+  validateKeyBinding,
+} from "@/runtime/keybindings";

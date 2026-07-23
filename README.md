@@ -4,6 +4,26 @@
 
 A comprehensive Vim-style keybinding plugin for Logseq that brings powerful modal editing, navigation, and command capabilities to your note-taking workflow.
 
+## Tesela keyboard pilot
+
+This branch pins upstream Vim Shortcuts 0.2.0 at
+`d79d2663f7751a4cdcd0ef67ccad35241540b6a3` and carries only the compatibility
+and lifecycle changes needed for the Logseq 2.0.1 DB keyboard pilot. The
+separate package in `companion/` adds one supported-API command for opening a
+selected PDF asset in Logseq's built-in viewer.
+
+```bash
+pnpm install
+pnpm check
+pnpm test
+pnpm build
+```
+
+Load `dist/` as **Vim Shortcuts (Tesela Keyboard)** and `companion/dist/` as
+**Tesela Keyboard Companion**. The complete action matrix, current developer
+load path, smoke evidence, known API ceilings, and five-day checklist are in
+[`docs/logseq-2.0.1-keyboard-audit.md`](docs/logseq-2.0.1-keyboard-audit.md).
+
 [中文文档](README_CN.md)
 
 ![screencast](screencast.gif)

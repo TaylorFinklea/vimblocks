@@ -27,7 +27,7 @@ export default (logseq: ILSPluginUser) => {
         key: "vim-shortcut-jump-internal-link-" + index,
         label: "Jump into internal link",
         keybinding: {
-          mode: "global",
+          mode: "non-editing",
           binding,
         },
       },

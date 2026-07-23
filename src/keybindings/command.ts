@@ -26,7 +26,7 @@ export default (logseq: ILSPluginUser) => {
         key: "vim-shortcut-command-" + index,
         label: "Call VIM commands",
         keybinding: {
-          mode: "global",
+          mode: "non-editing",
           binding,
         },
       },

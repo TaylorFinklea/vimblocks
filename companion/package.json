@@ -1,0 +1,24 @@
+{
+  "name": "tesela-logseq-keyboard-companion",
+  "version": "0.1.0",
+  "schemaVersion": "1.0.0",
+  "license": "MIT",
+  "main": "index.html",
+  "logseq": {
+    "id": "tesela-logseq-keyboard-companion",
+    "title": "Tesela Keyboard Companion"
+  },
+  "scripts": {
+    "build": "vite build && cp package.json ../LICENSE dist/",
+    "check": "tsc --noEmit --allowImportingTsExtensions",
+    "test": "node --test --experimental-strip-types tests/*.test.ts"
+  },
+  "dependencies": {
+    "@logseq/libs": "^0.0.17"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.0"
+  }
+}

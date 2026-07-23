@@ -26,7 +26,7 @@ export default (logseq: ILSPluginUser) => {
         key: "vim-shortcut-join-next-line-" + index,
         label: "Join next line",
         keybinding: {
-          mode: "global",
+          mode: "non-editing",
           binding,
         },
       },

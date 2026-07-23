@@ -22,7 +22,10 @@ export default (logseq: ILSPluginUser) => {
 
   const emojiHandler = async () => {
     // Check before action hook
-    if (!beforeActionExecute()) {
+    if (!beforeActionExecute({
+      allowContentEditable: true,
+      guardTextEntry: true,
+    })) {
       return;
     }
 

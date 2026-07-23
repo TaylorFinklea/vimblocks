@@ -28,7 +28,7 @@ export default (logseq: ILSPluginUser) => {
         key: "vim-shortcut-change-case-" + index,
         label: "Change case",
         keybinding: {
-          mode: "global",
+          mode: "non-editing",
           binding,
         },
       },

@@ -12,82 +12,24 @@ import {
   getCommandFromHistoryBack,
   getCommandFromHistoryForward,
   hideMainUI,
+  cancelInputListener,
 } from "./common/funcs";
-import bottom from "./keybindings/bottom";
-import changeCase from "./keybindings/changeCase";
-import changeCaseLowerCase from "./keybindings/changeCaseLowerCase";
-import changeCaseUpperCase from "./keybindings/changeCaseUpperCase";
-import changeCurrentBlock from "./keybindings/changeCurrentBlock";
-import collapse from "./keybindings/collapse";
-import command from "./keybindings/command";
-import copyCurrentBlockContent from "./keybindings/copyCurrentBlockContent";
-import copyCurrentBlockRef from "./keybindings/copyCurrentBlockRef";
-import deleteCurrentBlock from "./keybindings/deleteCurrentBlock";
-import down from "./keybindings/down";
-import exitEditing from "./keybindings/exitEditing";
-import extend from "./keybindings/extend";
-import highlightFocusIn from "./keybindings/highlightFocusIn";
-import highlightFocusOut from "./keybindings/highlightFocusOut";
-import indent from "./keybindings/indent";
-import insert from "./keybindings/insert";
-import insertBefore from "./keybindings/insertBefore";
-import joinNextLine from "./keybindings/joinNextLine";
-import left from "./keybindings/left";
-import right from "./keybindings/right";
-import wordForward from "./keybindings/wordForward";
-import wordBackward from "./keybindings/wordBackward";
-import wordEnd from "./keybindings/wordEnd";
-import lineEnd from "./keybindings/lineEnd";
-import findChar from "./keybindings/findChar";
-import findCharBackward from "./keybindings/findCharBackward";
-import repeatCharSearch from "./keybindings/repeatCharSearch";
-import repeatCharSearchReverse from "./keybindings/repeatCharSearchReverse";
-import jumpInto from "./keybindings/jumpInto";
-import mark from "./keybindings/mark";
-import nextNewBlock from "./keybindings/nextNewBlock";
-import nextSibling from "./keybindings/nextSibling";
-import number from "./keybindings/number";
-import outdent from "./keybindings/outdent";
-import pasteNext from "./keybindings/pasteNext";
-import pastePrev from "./keybindings/pastePrev";
-import prevNewBlock from "./keybindings/prevNewBlock";
-import prevSibling from "./keybindings/prevSibling";
-import redo from "./keybindings/redo";
-import replace from "./keybindings/replace";
-import search from "./keybindings/search";
-import searchBaidu from "./keybindings/searchBaidu";
-import searchGithub from "./keybindings/searchGithub";
-import searchGoogle from "./keybindings/searchGoogle";
-import searchStackoverflow from "./keybindings/searchStackoverflow";
-import searchWikipedia from "./keybindings/searchWikipedia";
-import searchYoutube from "./keybindings/searchYoutube";
-import toggleVisualMode from "./keybindings/toggleVisualMode";
-import visualLineMode from "./keybindings/visualLineMode";
-import top from "./keybindings/top";
-import undo from "./keybindings/undo";
-import up from "./keybindings/up";
 import { createPinia } from "pinia";
 
 import { commandList, useCommandStore } from "./stores/command";
 import { useEmojiStore } from "@/stores/emoji";
 import { useColorStore } from "./stores/color";
-import { useSearchStore } from "./stores/search";
+import {
+  disposeSearchEffects,
+  useSearchStore,
+} from "./stores/search";
 import { useMarkStore } from "./stores/mark";
 
-import emoji from "./keybindings/emoji";
-import sort from "./keybindings/sort";
-import collapseAll from "./keybindings/collapseAll";
-import extendAll from "./keybindings/extendAll";
-import backgroundColor from "./keybindings/backgroundColor";
-import increase from "./keybindings/increase";
-import decrease from "./keybindings/decrease";
-import cut from "./keybindings/cut";
-import cutWord from "./keybindings/cutWord";
 import { SettingSchemaDesc } from "@logseq/libs/dist/LSPlugin.user";
-import deleteCurrentAndNextSiblingBlocks from "./keybindings/deleteCurrentAndNextSiblingBlocks";
-import deleteCurrentAndPrevSiblingBlocks from "./keybindings/deleteCurrentAndPrevSiblingBlocks";
-import openSettings from "./keybindings/openSettings";
 import { marks } from "./commands/mark";
+import { registerOwnedCommands } from "./command-registry";
+import { isTextEntryTarget } from "./runtime/context-guard";
+import { DisposableRegistry } from "./runtime/disposable-registry";
 
 const defineSettings: SettingSchemaDesc[] = [
   {
@@ -102,6 +44,8 @@ const defineSettings: SettingSchemaDesc[] = [
 logseq.useSettingsSchema(defineSettings);
 
 async function main() {
+  const lifecycle = new DisposableRegistry();
+
   // settings
   initSettings();
 
@@ -143,94 +87,10 @@ async function main() {
   app.use(createPinia());
   app.mount("#app");
 
-  // bindings
-  number(logseq);
+  const emojiStore = useEmojiStore();
+  emojiStore.initPicker();
 
-  undo(logseq);
-  redo(logseq);
-
-  search(logseq);
-
-  insert(logseq);
-  insertBefore(logseq);
-
-  top(logseq);
-  bottom(logseq);
-
-  nextSibling(logseq);
-  prevSibling(logseq);
-
-  up(logseq);
-  down(logseq);
-
-  left(logseq);
-  right(logseq);
-
-  wordForward(logseq);
-  wordBackward(logseq);
-  wordEnd(logseq);
-  lineEnd(logseq);
-  findChar(logseq);
-  findCharBackward(logseq);
-  repeatCharSearch(logseq);
-  repeatCharSearchReverse(logseq);
-
-  indent(logseq);
-  outdent(logseq);
-
-  nextNewBlock(logseq);
-  prevNewBlock(logseq);
-
-  deleteCurrentBlock(logseq);
-  deleteCurrentAndNextSiblingBlocks(logseq);
-  deleteCurrentAndPrevSiblingBlocks(logseq);
-
-  changeCurrentBlock(logseq);
-
-  copyCurrentBlockContent(logseq);
-  copyCurrentBlockRef(logseq);
-
-  pasteNext(logseq);
-  pastePrev(logseq);
-
-  collapse(logseq);
-  extend(logseq);
-
-  collapseAll(logseq);
-  extendAll(logseq);
-
-  highlightFocusIn(logseq);
-  highlightFocusOut(logseq);
-
-  searchBaidu(logseq);
-  searchGithub(logseq);
-  searchGoogle(logseq);
-  searchStackoverflow(logseq);
-  searchWikipedia(logseq);
-  searchYoutube(logseq);
-
-  exitEditing(logseq);
-  jumpInto(logseq);
-  joinNextLine(logseq);
-
-  increase(logseq);
-  decrease(logseq);
-
-  cut(logseq);
-  cutWord(logseq);
-  replace(logseq);
-
-  toggleVisualMode(logseq);
-  visualLineMode(logseq);
-
-  changeCase(logseq);
-  changeCaseUpperCase(logseq);
-  changeCaseLowerCase(logseq);
-  sort(logseq);
-  backgroundColor(logseq);
-  command(logseq);
-
-  openSettings(logseq);
+  registerOwnedCommands(logseq);
 
   // load marks
   await loadMarks();
@@ -238,19 +98,13 @@ async function main() {
   markStore.reload();
 
   // reload marks when graph changes
-  logseq.App.onCurrentGraphChanged(async () => {
+  lifecycle.add(logseq.App.onCurrentGraphChanged(async () => {
     await loadMarks();
     markStore.reload();
-  });
-
-  mark(logseq);
+  }));
 
   // setup ui hotkeys
-  setHotkeys(logseq);
-
-  const emojiStore = useEmojiStore();
-  emojiStore.initPicker();
-  emoji(logseq);
+  lifecycle.add(setHotkeys(logseq));
 
   const colorStore = useColorStore();
 
@@ -383,6 +237,11 @@ async function main() {
     const searchStore = useSearchStore();
 
     if (searchStore.waitingForChar) {
+      if (isTextEntryTarget(e.target as HTMLElement)) {
+        searchStore.cancelCharSearch();
+        return;
+      }
+
       e.preventDefault();
       e.stopPropagation();
 
@@ -396,8 +255,12 @@ async function main() {
     }
   };
 
-  // Add global keydown listener
-  window.top!.document.addEventListener("keydown", handleGlobalKeydown, true);
+  lifecycle.listen(
+    window.top!.document,
+    "keydown",
+    handleGlobalKeydown as EventListener,
+    true
+  );
 
   // Global click handler to close UI when clicking outside
   const handleDocumentClick = (e: MouseEvent) => {
@@ -454,35 +317,39 @@ async function main() {
     }
   };
 
-  // Add global click listener
-  window.addEventListener("click", handleDocumentClick);
+  lifecycle.listen(window, "click", handleDocumentClick as EventListener);
 
-  logseq.on("ui:visible:changed", async ({ visible }) => {
-    if (!visible) {
-      return;
-    }
+  if ($commandInput) {
+    lifecycle.listen(
+      $commandInput,
+      "click",
+      handleCommandClick as EventListener
+    );
+    lifecycle.listen(
+      $commandInput,
+      "keyup",
+      handleCommandKeyup as EventListener
+    );
+    lifecycle.listen(
+      $commandInput,
+      "keydown",
+      handleCommandKeydown as EventListener
+    );
+  }
 
-    setTimeout(() => {
-      // add event listeners for input element
-      $commandInput &&
-        $commandInput.removeEventListener("click", handleCommandClick);
-      $commandInput &&
-        $commandInput.addEventListener("click", handleCommandClick);
+  if ($searchInput) {
+    lifecycle.listen(
+      $searchInput,
+      "keyup",
+      handleSearchKeyup as EventListener
+    );
+  }
 
-      $commandInput &&
-        $commandInput.removeEventListener("keyup", handleCommandKeyup);
-      $commandInput &&
-        $commandInput.addEventListener("keyup", handleCommandKeyup);
-
-      $commandInput &&
-        $commandInput.removeEventListener("keydown", handleCommandKeydown);
-      $commandInput &&
-        $commandInput.addEventListener("keydown", handleCommandKeydown);
-
-      $searchInput &&
-        $searchInput.removeEventListener("keyup", handleSearchKeyup);
-      $searchInput && $searchInput.addEventListener("keyup", handleSearchKeyup);
-    }, 300);
+  logseq.beforeunload(async () => {
+    cancelInputListener();
+    disposeSearchEffects();
+    lifecycle.dispose();
+    app.unmount();
   });
 }
 

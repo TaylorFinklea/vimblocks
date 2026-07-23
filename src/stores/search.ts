@@ -5,6 +5,13 @@ import { defineStore } from "pinia";
 // Track pending highlight timeout to prevent multiple highlights
 let pendingHighlightTimeout: number | null = null;
 
+export const disposeSearchEffects = (): void => {
+  if (pendingHighlightTimeout !== null) {
+    clearTimeout(pendingHighlightTimeout);
+    pendingHighlightTimeout = null;
+  }
+};
+
 const expandParents = async (uuid: BlockUUID) => {
   const block = await logseq.Editor.getBlock(uuid);
   if (block.parent && block.parent.id !== block.page.id) {

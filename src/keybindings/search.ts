@@ -29,7 +29,7 @@ export default (logseq: ILSPluginUser) => {
         key: "vim-shortcut-search-cleanup-" + index,
         label: "Search Cleanup",
         keybinding: {
-          mode: "global",
+          mode: "non-editing",
           binding,
         },
       },
@@ -58,7 +58,7 @@ export default (logseq: ILSPluginUser) => {
         key: "vim-shortcut-search-" + index,
         label: "Search",
         keybinding: {
-          mode: "global",
+          mode: "non-editing",
           binding,
         },
       },
@@ -99,7 +99,7 @@ export default (logseq: ILSPluginUser) => {
         key: "vim-shortcut-search-next-" + index,
         label: "Search Next",
         keybinding: {
-          mode: "global",
+          mode: "non-editing",
           binding,
         },
       },
@@ -128,7 +128,7 @@ export default (logseq: ILSPluginUser) => {
         key: "vim-shortcut-search-prev-" + index,
         label: "Search Prev",
         keybinding: {
-          mode: "global",
+          mode: "non-editing",
           binding,
         },
       },

@@ -29,7 +29,7 @@ export default (logseq: ILSPluginUser) => {
         label: "Open Vim Shortcuts settings",
         ...(hasBinding && {
           keybinding: {
-            mode: "global",
+            mode: "non-editing",
             binding,
           },
         }),
