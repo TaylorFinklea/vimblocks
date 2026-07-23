@@ -212,3 +212,13 @@ export const applyTextOperator = (
     entersInsertMode: operator === "change",
   };
 };
+
+export const deleteCharacterAt = (
+  content: string,
+  cursor: number
+): TextOperationResult =>
+  applyTextOperator(
+    content,
+    { start: cursor, end: cursor + 1 },
+    "delete"
+  );

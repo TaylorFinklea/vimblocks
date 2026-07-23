@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   applyTextOperator,
   aroundWordRange,
+  deleteCharacterAt,
   deferTrailingWhitespace,
   firstNonBlankPosition,
   innerWordRange,
@@ -92,5 +93,20 @@ test("end-of-block changes defer separator whitespace for the live editor", () =
   assert.deepEqual(deferTrailingWhitespace("alpha beta"), {
     persistedContent: "alpha beta",
     deferredWhitespace: "",
+  });
+});
+
+test("single-character delete preserves a valid modal cursor position", () => {
+  assert.deepEqual(deleteCharacterAt("alpha", 0), {
+    content: "lpha",
+    selected: "a",
+    cursor: 0,
+    entersInsertMode: false,
+  });
+  assert.deepEqual(deleteCharacterAt("alpha", 4), {
+    content: "alph",
+    selected: "a",
+    cursor: 3,
+    entersInsertMode: false,
   });
 });

@@ -18,6 +18,7 @@ import {
   type TextEntryGuardOptions,
 } from "@/runtime/context-guard";
 import { isMissingStorageItemError } from "@/runtime/storage-errors";
+import { resolveCurrentBlockUUID } from "@/runtime/cursor-block";
 
 export const clearBlocksHighlight = async (blocks: BlockEntity[]) => {
   for (const block of blocks) {
@@ -749,8 +750,13 @@ export const scrollToBlockInPage = (
 };
 
 export const getCurrentBlockUUID = async (): Promise<BlockUUID | undefined> => {
-  let block = await logseq.Editor.getCurrentBlock();
-  return block?.uuid;
+  const block = await logseq.Editor.getCurrentBlock();
+  const searchStore = useSearchStore();
+  return resolveCurrentBlockUUID(
+    block?.uuid,
+    searchStore.cursorMode,
+    searchStore.cursorBlockUUID
+  );
 };
 
 export const getCurrentPage = async () => {

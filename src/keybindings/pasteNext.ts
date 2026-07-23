@@ -8,6 +8,22 @@ import {
   beforeActionRegister,
 } from "@/common/funcs";
 
+export const pasteNextBlock = async (): Promise<void> => {
+  const blockUUID = await getCurrentBlockUUID();
+  if (!blockUUID) {
+    return;
+  }
+
+  const block = await logseq.Editor.getBlock(blockUUID);
+  const content = readClipboard();
+  if (block?.uuid && content) {
+    await logseq.Editor.insertBlock(block.uuid, content, {
+      before: false,
+      sibling: true,
+    });
+  }
+};
+
 export default (logseq: ILSPluginUser) => {
   // Check if this keybinding is disabled
   if (!beforeActionRegister("pasteNext")) {
@@ -38,16 +54,7 @@ export default (logseq: ILSPluginUser) => {
 
         debug("Paste to next block");
 
-        let blockUUID = await getCurrentBlockUUID();
-        if (blockUUID) {
-          let block = await logseq.Editor.getBlock(blockUUID);
-          if (block?.uuid) {
-            await logseq.Editor.insertBlock(block.uuid, readClipboard(), {
-              before: false,
-              sibling: true,
-            });
-          }
-        }
+        await pasteNextBlock();
       }
     );
   });

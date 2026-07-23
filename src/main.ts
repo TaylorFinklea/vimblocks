@@ -30,6 +30,7 @@ import { marks } from "./commands/mark";
 import { registerOwnedCommands } from "./command-registry";
 import { isTextEntryTarget } from "./runtime/context-guard";
 import { DisposableRegistry } from "./runtime/disposable-registry";
+import { disposeOperatorSequences } from "./keybindings/operators";
 
 const defineSettings: SettingSchemaDesc[] = [
   {
@@ -347,6 +348,7 @@ async function main() {
 
   logseq.beforeunload(async () => {
     cancelInputListener();
+    disposeOperatorSequences();
     disposeSearchEffects();
     lifecycle.dispose();
     app.unmount();

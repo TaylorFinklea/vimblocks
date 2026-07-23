@@ -12,6 +12,14 @@ and modal-editing changes needed for the Logseq 2.0.1 DB keyboard pilot. The
 separate package in `companion/` adds one supported-API command for opening a
 selected PDF asset in Logseq's built-in viewer.
 
+Vim text operators (`ciw`, `diw`, `yiw`, `caw`, `daw`, `yaw`, `cw`, `dw`,
+`yw`, `ce`, `de`, `ye`, `C`, `D`, `c$`, `d$`, `y$`, `cc`, and `S`) use a
+normal-mode-only sequence dispatcher. This avoids Logseq's dormant shortcut
+chords while leaving block editing, search, property fields, dialogs, and
+unrecognized existing Vim chords untouched.
+The same dispatcher handles `p` so text captured by `y` is pasted reliably
+without losing the focused normal-mode block.
+
 ```bash
 pnpm install
 pnpm check
@@ -207,6 +215,8 @@ All shortcuts can be customized via the [Settings UI](#settings-ui). Below are t
 The Tesela fork composes `c`, `d`, and `y` with supported motions and word
 objects. These commands act within the focused Logseq block and use the
 plugin's internal yank register, so `p`/`P` can paste the result as a block.
+`x` updates the block through Logseq's public editor API and restores the
+modal cursor without entering and exiting edit mode.
 
 | Shortcut | Action |
 | -------- | ------ |

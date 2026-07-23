@@ -7,6 +7,7 @@ import {
   beforeActionExecute,
   beforeActionRegister,
 } from "@/common/funcs";
+import { applyTextOperator } from "@/runtime/text-objects";
 import { useSearchStore } from "@/stores/search";
 
 const deleteTextAndCopy = async (
@@ -17,52 +18,22 @@ const deleteTextAndCopy = async (
   const block = await logseq.Editor.getBlock(blockUUID);
   if (block) {
     const deleteEnd = deleteStart + deleteLength;
+    const result = applyTextOperator(
+      block.content,
+      { start: deleteStart, end: deleteEnd },
+      "delete"
+    );
+    writeClipboard(result.selected);
+    await logseq.Editor.updateBlock(blockUUID, result.content);
 
-    // Copy the deleted text to clipboard
-    const deletedText = block.content.substring(deleteStart, deleteEnd);
-    writeClipboard(deletedText);
-
-    // Remove the text from content
-    const newContent =
-      block.content.substring(0, deleteStart) +
-      block.content.substring(deleteEnd);
-
-    // Update the block with new content
-    await logseq.Editor.updateBlock(blockUUID, newContent);
-
-    // Force UI refresh by briefly entering and exiting edit mode
-    await logseq.Editor.editBlock(blockUUID);
-    // Small delay to ensure the block is updated before exiting
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    await logseq.Editor.exitEditingMode();
-
-    // Restore cursor position after cut
     const searchStore = useSearchStore();
     if (searchStore.cursorMode && searchStore.cursorBlockUUID === blockUUID) {
-      // Update block content in store
-      searchStore.cursorBlockContent = newContent;
-
-      // Adjust cursor position after deletion
-      // If cursor was after the deleted section, move it back
-      if (searchStore.cursorPosition >= deleteEnd) {
-        searchStore.cursorPosition = searchStore.cursorPosition - deleteLength;
-      }
-      // If cursor was at the deletion point or within deleted range, keep it at deleteStart
-      else if (searchStore.cursorPosition >= deleteStart) {
-        searchStore.cursorPosition = deleteStart;
-      }
-
-      // Ensure cursor doesn't go beyond content length
-      if (
-        searchStore.cursorPosition >= newContent.length &&
-        newContent.length > 0
-      ) {
-        searchStore.cursorPosition = newContent.length - 1;
-      }
-
-      // Restore cursor highlight by moving right then left (triggers highlight refresh)
-      await searchStore.moveCursorRight();
-      await searchStore.moveCursorLeft();
+      await logseq.Editor.selectBlock(blockUUID);
+      await searchStore.restoreCursor(
+        blockUUID,
+        result.content,
+        result.cursor
+      );
     }
   }
 };

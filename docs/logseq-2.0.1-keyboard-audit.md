@@ -12,7 +12,7 @@ still required.
 - Modal baseline: Vim Shortcuts 0.2.0.
 - Upstream commit: `d79d2663f7751a4cdcd0ef67ccad35241540b6a3`.
 - Upstream license: MIT, preserved in `LICENSE` and both production bundles.
-- Fork package: `logseq-plugin-vim-shortcuts` 0.2.0-tesela.2.
+- Fork package: `logseq-plugin-vim-shortcuts` 0.2.0-tesela.3.
 - Companion package: `tesela-logseq-keyboard-companion` 0.1.0.
 - Public typings: `@logseq/libs` 0.0.17.
 - Current application source checked at Logseq 2.0.1 tag commit
@@ -47,7 +47,7 @@ Current Logseq 2.0.1 developer-plugin workflow:
 7. Repeat with
    `/Users/tfinklea/git/tesela-logseq-keyboard/companion/dist`.
 8. Confirm the dashboard shows:
-   - Vim Shortcuts (Tesela Keyboard) 0.2.0-tesela.2
+   - Vim Shortcuts (Tesela Keyboard) 0.2.0-tesela.3
    - Tesela Keyboard Companion 0.1.0
 
 ## Action matrix
@@ -136,19 +136,25 @@ shortcut registration and lifecycle implementation:
   and `y` with `iw`, `aw`, `w`, `e`, and `$`.
 - Added `ciw`/`diw`/`yiw`, `caw`/`daw`/`yaw`, `cw`/`dw`/`yw`,
   `ce`/`de`/`ye`, `c$`/`d$`/`y$`, `cc`/`S`, and `C`/`D`.
+- Routed operator sequences and `p` through one normal-mode-only,
+  capture-phase dispatcher because Logseq registered the multi-key bindings
+  but did not reliably deliver `d`, `y`, or the final text-object key to their
+  command callbacks.
+- Resolved the focused block from the Vim cursor store when Logseq has no
+  active edit block, which is the normal state for modal operators.
+- Changed `x` to update and reselect the block through public editor APIs,
+  then restore the Vim cursor directly. It no longer enters and exits edit
+  mode as a refresh workaround.
 - Added `^` for first-nonblank movement. Kept page-top on `T`; stock Logseq
   owns `gg` for Graph view, so `gg` remains an opt-in remap rather than a
   conflicting default.
 - Kept operator handling non-editing-only and used public block read/update/edit
   APIs. No application commands are invoked through DOM selectors or private
   internals.
-- Logseq registered the three-key `c i w` binding but did not reliably dispatch
-  it as one command in the installed runtime. The `iw`/`aw` forms therefore
-  register supported two-key prefixes (`ci`, `ca`, and their `d`/`y`
-  equivalents) and use one capture-phase listener for the final `w`. The
-  listener exists only while a text object is pending, consumes invalid final
-  keys, cancels on `Esc`, and is removed on completion, cancellation, or
-  plugin unload.
+- The dispatcher is installed exactly once on the top Logseq window, clears
+  pending sequences on `Esc` or any context change, and is removed on plugin
+  unload. First-key prefixes remain unconsumed so existing Vim commands such
+  as `dd` and `yy` continue to own chords not implemented by this dispatcher.
 
 The companion could not fix modal key interception because it does not own the
 Vim plugin's handlers. No unrelated dependency or visual rewrite was taken.
@@ -189,11 +195,11 @@ access were used.
 Final run after the operator extension:
 
 - `pnpm check`: exit 0.
-- `pnpm test`: exit 0; 26 passed, 0 failed.
-  - Vim fork: 20 passed.
+- `pnpm test`: exit 0; 34 passed, 0 failed.
+  - Vim fork: 28 passed.
   - Companion: 6 passed.
 - `pnpm build`: exit 0.
-  - Vim production bundle built from 1,919 modules.
+  - Vim production bundle built from 1,921 modules.
   - Companion production bundle built from 8 modules.
   - Only a stale Browserslist data warning; no build error.
 
@@ -222,7 +228,7 @@ The smoke used only `tesela-keyboard-audit-2026-07-23`.
 - Literal probe text remained intact in block editing, global search, command
   palette, and property controls after the final guard.
 - The dashboard loaded Vim Shortcuts (Tesela Keyboard)
-  `0.2.0-tesela.2`. Every added operator appeared in the command palette.
+  `0.2.0-tesela.3`. Every added operator appeared in the command palette.
 - `^`, then `w`, `w`, `w`, followed by `ciw` changed the final word in
   `spacing alpha beta gamma` to `delta`. The preceding separator survived the
   change, producing exactly `spacing alpha beta delta`.
@@ -234,11 +240,31 @@ The smoke used only `tesela-keyboard-audit-2026-07-23`.
   remained.
 - Both plugins were unloaded/reloaded at least twice. No duplicate command
   entry, double execution, or stale listener was observed.
+- After two final `.3` reloads, the palette returned exactly one
+  `Vim: Yank inner word (yiw)` result; `yiw`, `p` then created exactly one
+  sibling block containing `alpha`.
+- Starting `d`, `i`, pressing `Esc`, then pressing `w` left
+  `alpha beta gamma` unchanged and resumed ordinary word movement.
 - After two final fork reloads, searching the command palette for
   `Vim: Change inner word` returned exactly one command.
 - After restarting Logseq, the operator commands reappeared in the palette,
   `diw` removed the focused middle word, and the journal blocks, task status,
   Description property, uploaded PDF asset, and PDF reference remained intact.
+- Follow-up use showed the `.2` palette evidence was insufficient: `c`
+  sequences dispatched, but `d` and `y` sequences did not execute, and `x`
+  lost the modal cursor. The `.3` correction was tested by execution, not
+  palette presence:
+  - On `operator alpha beta gamma`, `^`, `d`, `i`, `w` produced
+    `alpha beta gamma` and retained normal-mode focus.
+  - On `one two three`, `^`, `d`, `w` produced `two three`; after a reset,
+    `^`, `w`, `D` produced `one`.
+  - After resetting the block, `^`, `y`, `i`, `w`, `p` left the source block
+    unchanged and created exactly one next sibling containing `operator`.
+  - On `one two three`, `^`, `y`, `w`, `p` created one sibling containing
+    `one`; `^`, `w`, `y`, `$`, `p` created one containing `two three`.
+  - After resetting the block, `^`, `x` removed the first character; `l`, `i`
+    then entered editing without a mouse, proving the modal cursor remained
+    live.
 - One malformed page created while reproducing the pre-fix command-palette
   interception bug remains only in the disposable graph. It is evidence from
   the failed baseline, not production data loss.

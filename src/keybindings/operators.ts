@@ -7,10 +7,15 @@ import {
   getNumber,
   getSettings,
   resetNumber,
-  setWaitingForInput,
   writeClipboard,
 } from "@/common/funcs";
 import type { DefaultSettingsType } from "@/common/funcs";
+import {
+  advanceOperatorSequence,
+  expandOperatorBinding,
+  keyboardEventToken,
+} from "@/runtime/operator-sequence";
+import type { OperatorSequence } from "@/runtime/operator-sequence";
 import {
   applyTextOperator,
   aroundWordRange,
@@ -27,6 +32,7 @@ import type {
   TextRange,
 } from "@/runtime/text-objects";
 import { useSearchStore } from "@/stores/search";
+import { pasteNextBlock } from "@/keybindings/pasteNext";
 
 type OperatorObject =
   | "inner-word"
@@ -201,7 +207,11 @@ export const resolveOperatorRange = (
 const executeOperator = async (
   command: OperatorCommandDefinition
 ): Promise<void> => {
-  const blockUUID = await getCurrentBlockUUID();
+  const searchStore = useSearchStore();
+  const blockUUID =
+    searchStore.cursorMode && searchStore.cursorBlockUUID
+      ? searchStore.cursorBlockUUID
+      : await getCurrentBlockUUID();
   if (!blockUUID) {
     resetNumber();
     return;
@@ -213,7 +223,6 @@ const executeOperator = async (
     return;
   }
 
-  const searchStore = useSearchStore();
   const cursor =
     searchStore.cursorMode && searchStore.cursorBlockUUID === blockUUID
       ? searchStore.cursorPosition
@@ -273,41 +282,19 @@ const executeOperator = async (
   );
 };
 
-const waitForWordObject = (
-  command: OperatorCommandDefinition
-): void => {
-  const handleKeyPress = async (event: KeyboardEvent) => {
-    if (event.key.length > 1 && event.key !== "Escape") {
-      return;
-    }
+let disposeOperatorSequenceListener: (() => void) | null = null;
 
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    top!.document.removeEventListener("keydown", handleKeyPress, true);
-    setWaitingForInput(false);
-
-    if (event.key === "Escape") {
-      resetNumber();
-      return;
-    }
-    if (event.key.toLowerCase() !== "w") {
-      resetNumber();
-      logseq.UI.showMsg(`Unsupported text object: ${event.key}`, "warning");
-      return;
-    }
-
-    await executeOperator(command);
-  };
-
-  const cleanup = () => {
-    top!.document.removeEventListener("keydown", handleKeyPress, true);
-  };
-  setWaitingForInput(true, cleanup);
-  top!.document.addEventListener("keydown", handleKeyPress, true);
+export const disposeOperatorSequences = (): void => {
+  disposeOperatorSequenceListener?.();
+  disposeOperatorSequenceListener = null;
 };
 
 export default (logseq: ILSPluginUser) => {
   const settings = getSettings();
+  const sequences: OperatorSequence[] = [];
+  const commandsById = new Map(
+    OPERATOR_COMMANDS.map((command) => [command.id, command])
+  );
 
   for (const command of OPERATOR_COMMANDS) {
     if (!beforeActionRegister(command.settingKey)) {
@@ -317,32 +304,106 @@ export default (logseq: ILSPluginUser) => {
     const configured = settings.keyBindings[command.settingKey];
     const bindings = Array.isArray(configured) ? configured : [configured];
 
-    bindings.forEach((binding, index) => {
-      logseq.App.registerCommandPalette(
-        {
-          key: `vim-shortcut-${command.id}-${index}`,
-          label: command.label,
-          keybinding: {
-            mode: "non-editing",
-            binding,
-          },
-        },
-        async () => {
-          if (!beforeActionExecute()) {
-            return;
-          }
-
-          if (
-            command.object === "inner-word" ||
+    bindings.forEach((binding) => {
+      sequences.push({
+        commandId: command.id,
+        tokens: expandOperatorBinding(
+          binding,
+          command.object === "inner-word" ||
             command.object === "around-word"
-          ) {
-            waitForWordObject(command);
-            return;
-          }
+        ),
+      });
+    });
 
+    logseq.App.registerCommandPalette(
+      {
+        key: `vim-shortcut-${command.id}`,
+        label: command.label,
+      },
+      async () => {
+        if (beforeActionExecute()) {
           await executeOperator(command);
         }
-      );
+      }
+    );
+  }
+
+  if (beforeActionRegister("pasteNext")) {
+    const configuredPaste = settings.keyBindings.pasteNext;
+    const pasteBindings = Array.isArray(configuredPaste)
+      ? configuredPaste
+      : [configuredPaste];
+    pasteBindings.forEach((binding) => {
+      sequences.push({
+        commandId: "paste-next",
+        tokens: expandOperatorBinding(binding, false),
+      });
     });
   }
+
+  disposeOperatorSequences();
+  const targetWindow = window.top;
+  if (!targetWindow) {
+    return;
+  }
+
+  let pendingTokens: string[] = [];
+  const clearPending = () => {
+    pendingTokens = [];
+  };
+  const handleKeydown = async (event: KeyboardEvent) => {
+    const searchStore = useSearchStore();
+    if (
+      event.isComposing ||
+      event.repeat ||
+      !searchStore.cursorMode ||
+      searchStore.visualMode
+    ) {
+      clearPending();
+      return;
+    }
+
+    if (event.key === "Escape") {
+      clearPending();
+      resetNumber();
+      return;
+    }
+    if (!beforeActionExecute()) {
+      clearPending();
+      return;
+    }
+
+    const result = advanceOperatorSequence(
+      sequences,
+      pendingTokens,
+      keyboardEventToken(event)
+    );
+    if (result.consume) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+
+    pendingTokens = result.pendingTokens;
+    if (result.status === "pending") {
+      return;
+    }
+    clearPending();
+
+    if (result.status === "matched" && result.commandId) {
+      if (result.commandId === "paste-next") {
+        await pasteNextBlock();
+        return;
+      }
+      const command = commandsById.get(result.commandId);
+      if (command) {
+        await executeOperator(command);
+      }
+    }
+  };
+
+  targetWindow.addEventListener("keydown", handleKeydown, true);
+  disposeOperatorSequenceListener = () => {
+    clearPending();
+    targetWindow.removeEventListener("keydown", handleKeydown, true);
+  };
 };
