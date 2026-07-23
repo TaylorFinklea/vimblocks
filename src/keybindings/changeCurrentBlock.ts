@@ -10,7 +10,7 @@ import {
 import { useSearchStore } from "@/stores/search";
 
 const clearBlockAndEdit = async (currentBlock: BlockEntity): Promise<void> => {
-  writeClipboard(currentBlock.content);
+  writeClipboard(currentBlock.content, "linewise");
   await logseq.Editor.updateBlock(currentBlock.uuid, "");
   await logseq.Editor.editBlock(currentBlock.uuid);
 };

@@ -12,7 +12,7 @@ still required.
 - Modal baseline: Vim Shortcuts 0.2.0.
 - Upstream commit: `d79d2663f7751a4cdcd0ef67ccad35241540b6a3`.
 - Upstream license: MIT, preserved in `LICENSE` and both production bundles.
-- Fork package: `logseq-plugin-vim-shortcuts` 0.2.0-tesela.3.
+- Fork package: `logseq-plugin-vim-shortcuts` 0.2.0-tesela.4.
 - Companion package: `tesela-logseq-keyboard-companion` 0.1.0.
 - Public typings: `@logseq/libs` 0.0.17.
 - Current application source checked at Logseq 2.0.1 tag commit
@@ -47,7 +47,7 @@ Current Logseq 2.0.1 developer-plugin workflow:
 7. Repeat with
    `/Users/tfinklea/git/tesela-logseq-keyboard/companion/dist`.
 8. Confirm the dashboard shows:
-   - Vim Shortcuts (Tesela Keyboard) 0.2.0-tesela.3
+   - Vim Shortcuts (Tesela Keyboard) 0.2.0-tesela.4
    - Tesela Keyboard Companion 0.1.0
 
 ## Action matrix
@@ -195,17 +195,18 @@ access were used.
 Final run after the operator extension:
 
 - `pnpm check`: exit 0.
-- `pnpm test`: exit 0; 34 passed, 0 failed.
-  - Vim fork: 28 passed.
+- `pnpm test`: exit 0; 40 passed, 0 failed.
+  - Vim fork: 34 passed.
   - Companion: 6 passed.
 - `pnpm build`: exit 0.
-  - Vim production bundle built from 1,921 modules.
+  - Vim production bundle built from 1,923 modules.
   - Companion production bundle built from 8 modules.
   - Only a stale Browserslist data warning; no build error.
 
 The behavioral suites cover command registration, context guards, configurable
-binding resolution, storage fallback, text-object ranges and mutations,
-end-of-block change spacing, and idempotent unload/reload disposal.
+  binding resolution, storage fallback, text-object ranges and mutations,
+  typed register put planning, event-target text-entry guards, end-of-block
+  change spacing, and idempotent unload/reload disposal.
 
 ## Disposable-graph smoke evidence
 
@@ -228,7 +229,7 @@ The smoke used only `tesela-keyboard-audit-2026-07-23`.
 - Literal probe text remained intact in block editing, global search, command
   palette, and property controls after the final guard.
 - The dashboard loaded Vim Shortcuts (Tesela Keyboard)
-  `0.2.0-tesela.3`. Every added operator appeared in the command palette.
+  `0.2.0-tesela.4`. Every added operator appeared in the command palette.
 - `^`, then `w`, `w`, `w`, followed by `ciw` changed the final word in
   `spacing alpha beta gamma` to `delta`. The preceding separator survived the
   change, producing exactly `spacing alpha beta delta`.
@@ -240,9 +241,8 @@ The smoke used only `tesela-keyboard-audit-2026-07-23`.
   remained.
 - Both plugins were unloaded/reloaded at least twice. No duplicate command
   entry, double execution, or stale listener was observed.
-- After two final `.3` reloads, the palette returned exactly one
-  `Vim: Yank inner word (yiw)` result; `yiw`, `p` then created exactly one
-  sibling block containing `alpha`.
+- After two final `.4` reloads, the palette returned exactly one
+  `Vim: Show unnamed register` result.
 - Starting `d`, `i`, pressing `Esc`, then pressing `w` left
   `alpha beta gamma` unchanged and resumed ordinary word movement.
 - After two final fork reloads, searching the command palette for
@@ -250,21 +250,24 @@ The smoke used only `tesela-keyboard-audit-2026-07-23`.
 - After restarting Logseq, the operator commands reappeared in the palette,
   `diw` removed the focused middle word, and the journal blocks, task status,
   Description property, uploaded PDF asset, and PDF reference remained intact.
-- Follow-up use showed the `.2` palette evidence was insufficient: `c`
-  sequences dispatched, but `d` and `y` sequences did not execute, and `x`
-  lost the modal cursor. The `.3` correction was tested by execution, not
-  palette presence:
-  - On `operator alpha beta gamma`, `^`, `d`, `i`, `w` produced
-    `alpha beta gamma` and retained normal-mode focus.
-  - On `one two three`, `^`, `d`, `w` produced `two three`; after a reset,
-    `^`, `w`, `D` produced `one`.
-  - After resetting the block, `^`, `y`, `i`, `w`, `p` left the source block
-    unchanged and created exactly one next sibling containing `operator`.
-  - On `one two three`, `^`, `y`, `w`, `p` created one sibling containing
-    `one`; `^`, `w`, `y`, `$`, `p` created one containing `two three`.
-  - After resetting the block, `^`, `x` removed the first character; `l`, `i`
-    then entered editing without a mouse, proving the modal cursor remained
-    live.
+- Follow-up use showed the `.3` tests had initialized the modal cursor with
+  `^`, masking a fresh-focus defect. The `.4` correction was tested from a
+  newly focused block without a preparatory motion:
+  - `Esc`, `d`, `i`, `w` removed the word under the cursor and retained
+    normal-mode focus.
+  - `x` removed exactly the character under the modal cursor and left the
+    cursor usable.
+  - `y`, `i`, `w` populated the unnamed register as `characterwise`; the
+    palette displayed `Unnamed register (characterwise): "one"`.
+  - Characterwise `p` inserted `one` after the current cursor in the same
+    block. `P` uses the corresponding before-cursor plan.
+  - `y`, `y`, `p` left the source block intact and created exactly one next
+    sibling with the same content.
+  - `d`, `d` deleted the focused block, moved focus to an adjacent block, and
+    populated `Unnamed register (linewise): "beta"`.
+  - Typing `Vim: Show unnamed register` in the command palette left the
+    underlying blocks unchanged, proving the raw dispatcher now guards the
+    actual key-event target as well as the top document active element.
 - One malformed page created while reproducing the pre-fix command-palette
   interception bug remains only in the disposable graph. It is evidence from
   the failed baseline, not production data loss.

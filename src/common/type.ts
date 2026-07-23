@@ -1,6 +1,5 @@
 
 export type TempCache = {
-  clipboard: string
   lastPage: string
 };
 

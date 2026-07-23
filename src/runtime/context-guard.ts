@@ -9,6 +9,11 @@ export interface TextEntryGuardOptions {
   guardTextEntry?: boolean;
 }
 
+export interface TextEntryEvent {
+  target?: unknown;
+  composedPath?: () => unknown[];
+}
+
 const TEXT_ENTRY_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT"]);
 const TEXT_ENTRY_ROLES = new Set([
   "combobox",
@@ -45,6 +50,14 @@ export const getActiveTextEntryTarget = (): TextEntryTarget | null => {
 
 export const isTextEntryActive = (): boolean => {
   return isTextEntryTarget(getActiveTextEntryTarget());
+};
+
+export const isTextEntryEvent = (event: TextEntryEvent): boolean => {
+  const path = event.composedPath?.() ?? [];
+  return (
+    path.some((target) => isTextEntryTarget(target as TextEntryTarget)) ||
+    isTextEntryTarget(event.target as TextEntryTarget)
+  );
 };
 
 export const shouldBlockTextEntryAction = (

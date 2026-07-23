@@ -29,6 +29,38 @@ function extractVisibleContent(content: string): string {
   return visibleLines.join("\n").trim();
 }
 
+export const yankCurrentBlockContent = async (): Promise<void> => {
+  const searchStore = useSearchStore();
+  let copyText = "";
+  let wasInVisualMode = false;
+
+  const visualSelection = searchStore.getVisualSelection();
+  if (visualSelection?.text) {
+    copyText = visualSelection.text;
+    wasInVisualMode = true;
+  } else {
+    const blockUUID = await getCurrentBlockUUID();
+    if (blockUUID) {
+      const block = await logseq.Editor.getBlock(blockUUID);
+      if (block?.content) {
+        copyText = extractVisibleContent(block.content);
+      }
+    }
+  }
+
+  if (!copyText) {
+    return;
+  }
+
+  writeClipboard(
+    copyText,
+    wasInVisualMode ? "characterwise" : "linewise"
+  );
+  if (wasInVisualMode) {
+    await searchStore.toggleVisualMode();
+  }
+};
+
 export default (logseq: ILSPluginUser) => {
   // Check if this keybinding is disabled
   if (!beforeActionRegister("copyCurrentBlockContent")) {
@@ -59,36 +91,7 @@ export default (logseq: ILSPluginUser) => {
 
         debug("Copy current block contents");
 
-        const searchStore = useSearchStore();
-        let copyText = "";
-        let wasInVisualMode = false;
-
-        // Priority 1: Visual mode selection
-        const visualSelection = searchStore.getVisualSelection();
-        if (visualSelection && visualSelection.text) {
-          copyText = visualSelection.text;
-          wasInVisualMode = true;
-        }
-        // Priority 2: Entire block content (visible only)
-        else {
-          let blockUUID = await getCurrentBlockUUID();
-          if (blockUUID) {
-            const block = await logseq.Editor.getBlock(blockUUID);
-            if (block?.content) {
-              copyText = extractVisibleContent(block.content);
-            }
-          }
-        }
-
-        if (copyText) {
-          writeClipboard(copyText);
-
-          // Exit visual mode after copying and restore cursor highlight
-          if (wasInVisualMode) {
-            // Use toggleVisualMode to properly exit and restore cursor highlight
-            await searchStore.toggleVisualMode();
-          }
-        }
+        await yankCurrentBlockContent();
       }
     );
   });

@@ -19,6 +19,11 @@ import {
 } from "@/runtime/context-guard";
 import { isMissingStorageItemError } from "@/runtime/storage-errors";
 import { resolveCurrentBlockUUID } from "@/runtime/cursor-block";
+import {
+  unnamedRegister,
+  type VimRegisterKind,
+  type VimRegisterValue,
+} from "@/runtime/vim-register";
 
 export const clearBlocksHighlight = async (blocks: BlockEntity[]) => {
   for (const block of blocks) {
@@ -109,17 +114,22 @@ export function sleep(ms: number) {
 }
 
 const tempCache: TempCache = {
-  clipboard: "",
   lastPage: "",
 };
 
-export const writeClipboard = (content: string) => {
-  tempCache.clipboard = content;
+export const writeClipboard = (
+  content: string,
+  kind: VimRegisterKind = "characterwise"
+) => {
+  unnamedRegister.write(content, kind);
 };
 
 export const readClipboard = (): string => {
-  return tempCache.clipboard;
+  return unnamedRegister.read().text;
 };
+
+export const readVimRegister = (): VimRegisterValue =>
+  unnamedRegister.read();
 
 const numberCache: N = {
   n: 1,

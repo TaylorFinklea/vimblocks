@@ -26,7 +26,7 @@ const deleteCurrentAndNextSiblingBlocks = async (number: number) => {
         currentBlock = block;
 
         for (let i = 0; i <= number; i++) {
-          writeClipboard(currentBlock.content);
+          writeClipboard(currentBlock.content, "linewise");
           nextBlock = await logseq.Editor.getNextSiblingBlock(
             currentBlock.uuid
           );
@@ -61,7 +61,7 @@ const deleteCurrentAndNextSiblingBlocks = async (number: number) => {
         currentBlock = block;
 
         for (let i = 0; i <= number; i++) {
-          writeClipboard(currentBlock.content);
+          writeClipboard(currentBlock.content, "linewise");
           nextBlock = await logseq.Editor.getNextSiblingBlock(
             currentBlock.uuid
           );

@@ -6,6 +6,7 @@ import {
   expandOperatorBinding,
   keyboardEventToken,
 } from "../src/runtime/operator-sequence.ts";
+import * as operatorSequence from "../src/runtime/operator-sequence.ts";
 
 const sequences = [
   { commandId: "delete-inner-word", tokens: ["d", "i", "w"] },
@@ -103,5 +104,35 @@ test("normalizes keyboard events to Logseq binding tokens", () => {
       shiftKey: true,
     }),
     "shift+4"
+  );
+});
+
+test("captures modal keys on a focused block before cursor mode is initialized", () => {
+  const shouldCaptureNormalModeKey = (
+    operatorSequence as Record<string, unknown>
+  ).shouldCaptureNormalModeKey;
+
+  assert.equal(typeof shouldCaptureNormalModeKey, "function");
+  if (typeof shouldCaptureNormalModeKey !== "function") {
+    return;
+  }
+
+  assert.equal(
+    shouldCaptureNormalModeKey({
+      composing: false,
+      repeat: false,
+      visualMode: false,
+      textEntryActive: false,
+    }),
+    true
+  );
+  assert.equal(
+    shouldCaptureNormalModeKey({
+      composing: false,
+      repeat: false,
+      visualMode: false,
+      textEntryActive: true,
+    }),
+    false
   );
 });

@@ -1,12 +1,11 @@
 import { ILSPluginUser } from "@logseq/libs/dist/LSPlugin";
 import {
   debug,
-  getCurrentBlockUUID,
   getSettings,
-  readClipboard,
   beforeActionExecute,
   beforeActionRegister,
 } from "@/common/funcs";
+import { putVimRegister } from "@/keybindings/pasteNext";
 
 export default (logseq: ILSPluginUser) => {
   // Check if this keybinding is disabled
@@ -37,16 +36,7 @@ export default (logseq: ILSPluginUser) => {
         }
 
         debug("Paste to prev block");
-        let blockUUID = await getCurrentBlockUUID();
-        if (blockUUID) {
-          let block = await logseq.Editor.getBlock(blockUUID);
-          if (block?.uuid) {
-            await logseq.Editor.insertBlock(block.uuid, readClipboard(), {
-              before: true,
-              sibling: true,
-            });
-          }
-        }
+        await putVimRegister(true);
       }
     );
   });

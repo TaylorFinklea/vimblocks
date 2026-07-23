@@ -14,6 +14,7 @@ import {
   advanceOperatorSequence,
   expandOperatorBinding,
   keyboardEventToken,
+  shouldCaptureNormalModeKey,
 } from "@/runtime/operator-sequence";
 import type { OperatorSequence } from "@/runtime/operator-sequence";
 import {
@@ -32,7 +33,14 @@ import type {
   TextRange,
 } from "@/runtime/text-objects";
 import { useSearchStore } from "@/stores/search";
-import { pasteNextBlock } from "@/keybindings/pasteNext";
+import { putVimRegister } from "@/keybindings/pasteNext";
+import { cutAtNormalCursor } from "@/keybindings/cut";
+import { yankCurrentBlockContent } from "@/keybindings/copyCurrentBlockContent";
+import { deleteCurrentBlock } from "@/keybindings/deleteCurrentBlock";
+import {
+  isTextEntryActive,
+  isTextEntryEvent,
+} from "@/runtime/context-guard";
 
 type OperatorObject =
   | "inner-word"
@@ -340,6 +348,56 @@ export default (logseq: ILSPluginUser) => {
       });
     });
   }
+  if (beforeActionRegister("pastePrev")) {
+    const configuredPaste = settings.keyBindings.pastePrev;
+    const pasteBindings = Array.isArray(configuredPaste)
+      ? configuredPaste
+      : [configuredPaste];
+    pasteBindings.forEach((binding) => {
+      sequences.push({
+        commandId: "paste-previous",
+        tokens: expandOperatorBinding(binding, false),
+      });
+    });
+  }
+  if (beforeActionRegister("cut")) {
+    const configuredCut = settings.keyBindings.cut;
+    const cutBindings = Array.isArray(configuredCut)
+      ? configuredCut
+      : [configuredCut];
+    cutBindings.forEach((binding) => {
+      sequences.push({
+        commandId: "cut-character",
+        tokens: expandOperatorBinding(binding, false),
+      });
+    });
+  }
+  if (beforeActionRegister("copyCurrentBlockContent")) {
+    const configuredYankLine =
+      settings.keyBindings.copyCurrentBlockContent;
+    const yankLineBindings = Array.isArray(configuredYankLine)
+      ? configuredYankLine
+      : [configuredYankLine];
+    yankLineBindings.forEach((binding) => {
+      sequences.push({
+        commandId: "yank-line",
+        tokens: expandOperatorBinding(binding, false),
+      });
+    });
+  }
+  if (beforeActionRegister("deleteCurrentBlock")) {
+    const configuredDeleteLine =
+      settings.keyBindings.deleteCurrentBlock;
+    const deleteLineBindings = Array.isArray(configuredDeleteLine)
+      ? configuredDeleteLine
+      : [configuredDeleteLine];
+    deleteLineBindings.forEach((binding) => {
+      sequences.push({
+        commandId: "delete-line",
+        tokens: expandOperatorBinding(binding, false),
+      });
+    });
+  }
 
   disposeOperatorSequences();
   const targetWindow = window.top;
@@ -353,12 +411,13 @@ export default (logseq: ILSPluginUser) => {
   };
   const handleKeydown = async (event: KeyboardEvent) => {
     const searchStore = useSearchStore();
-    if (
-      event.isComposing ||
-      event.repeat ||
-      !searchStore.cursorMode ||
-      searchStore.visualMode
-    ) {
+    if (!shouldCaptureNormalModeKey({
+      composing: event.isComposing,
+      repeat: event.repeat,
+      visualMode: searchStore.visualMode,
+      textEntryActive:
+        isTextEntryEvent(event) || isTextEntryActive(),
+    })) {
       clearPending();
       return;
     }
@@ -391,7 +450,25 @@ export default (logseq: ILSPluginUser) => {
 
     if (result.status === "matched" && result.commandId) {
       if (result.commandId === "paste-next") {
-        await pasteNextBlock();
+        await putVimRegister(false);
+        return;
+      }
+      if (result.commandId === "paste-previous") {
+        await putVimRegister(true);
+        return;
+      }
+      if (result.commandId === "cut-character") {
+        await cutAtNormalCursor();
+        return;
+      }
+      if (result.commandId === "yank-line") {
+        await yankCurrentBlockContent();
+        return;
+      }
+      if (result.commandId === "delete-line") {
+        const count = getNumber();
+        resetNumber();
+        await deleteCurrentBlock(count);
         return;
       }
       const command = commandsById.get(result.commandId);

@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   isContentEditableTarget,
+  isTextEntryEvent,
   isTextEntryTarget,
   shouldBlockTextEntryAction,
 } from "../src/runtime/context-guard.ts";
@@ -47,5 +48,25 @@ test("exit-editing may run in contenteditable but not in other inputs", () => {
   assert.equal(
     shouldBlockTextEntryAction({ tagName: "INPUT" }, options),
     true
+  );
+});
+
+test("event targets guard text entry even when the top document is not focused", () => {
+  const input = { tagName: "INPUT" };
+  const wrapper = { tagName: "DIV" };
+
+  assert.equal(
+    isTextEntryEvent({
+      target: input,
+      composedPath: () => [input, wrapper],
+    }),
+    true
+  );
+  assert.equal(
+    isTextEntryEvent({
+      target: wrapper,
+      composedPath: () => [wrapper],
+    }),
+    false
   );
 });

@@ -58,6 +58,7 @@ import searchGoogle from "@/keybindings/searchGoogle";
 import searchStackoverflow from "@/keybindings/searchStackoverflow";
 import searchWikipedia from "@/keybindings/searchWikipedia";
 import searchYoutube from "@/keybindings/searchYoutube";
+import showRegister from "@/keybindings/showRegister";
 import sort from "@/keybindings/sort";
 import toggleVisualMode from "@/keybindings/toggleVisualMode";
 import top from "@/keybindings/top";
@@ -126,6 +127,7 @@ export const COMMAND_REGISTRY: readonly OwnedCommandRegistrar[] = [
   { id: "search-stack-overflow", register: searchStackoverflow },
   { id: "search-wikipedia", register: searchWikipedia },
   { id: "search-youtube", register: searchYoutube },
+  { id: "show-unnamed-register", register: showRegister },
   { id: "exit-editing", register: exitEditing },
   { id: "jump-into", register: jumpInto },
   { id: "join-next-line", register: joinNextLine },

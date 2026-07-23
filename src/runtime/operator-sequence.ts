@@ -18,6 +18,21 @@ export interface KeyboardEventLike {
   shiftKey: boolean;
 }
 
+export interface NormalModeKeyContext {
+  composing: boolean;
+  repeat: boolean;
+  visualMode: boolean;
+  textEntryActive: boolean;
+}
+
+export const shouldCaptureNormalModeKey = (
+  context: NormalModeKeyContext
+): boolean =>
+  !context.composing &&
+  !context.repeat &&
+  !context.visualMode &&
+  !context.textEntryActive;
+
 export const advanceOperatorSequence = (
   sequences: readonly OperatorSequence[],
   pendingTokens: readonly string[],

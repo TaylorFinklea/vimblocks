@@ -18,7 +18,10 @@ normal-mode-only sequence dispatcher. This avoids Logseq's dormant shortcut
 chords while leaving block editing, search, property fields, dialogs, and
 unrecognized existing Vim chords untouched.
 The same dispatcher handles `p` so text captured by `y` is pasted reliably
-without losing the focused normal-mode block.
+without losing the focused normal-mode block. Characterwise `y`, `d`, and `x`
+operations put back into the current block at the cursor. Linewise `yy` and
+`dd` populate the same register, and `p`/`P` put linewise values into sibling
+blocks.
 
 ```bash
 pnpm install
@@ -217,6 +220,9 @@ objects. These commands act within the focused Logseq block and use the
 plugin's internal yank register, so `p`/`P` can paste the result as a block.
 `x` updates the block through Logseq's public editor API and restores the
 modal cursor without entering and exiting edit mode.
+
+Run **Vim: Show unnamed register** from Logseq's command palette to inspect
+the current register type and escaped content.
 
 | Shortcut | Action |
 | -------- | ------ |

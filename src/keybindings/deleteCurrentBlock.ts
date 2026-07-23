@@ -12,7 +12,7 @@ import {
   beforeActionRegister,
 } from "@/common/funcs";
 
-const deleteCurrentBlock = async (number: number) => {
+export const deleteCurrentBlock = async (number: number) => {
   const page = await getCurrentPage();
   if (page?.name) {
     let blockUUID = await getCurrentBlockUUID();
@@ -26,7 +26,7 @@ const deleteCurrentBlock = async (number: number) => {
         currentBlock = block;
 
         for (let i = 0; i < number; i++) {
-          writeClipboard(currentBlock.content);
+          writeClipboard(currentBlock.content, "linewise");
           nextBlock = await logseq.Editor.getNextSiblingBlock(
             currentBlock.uuid
           );
@@ -61,7 +61,7 @@ const deleteCurrentBlock = async (number: number) => {
         currentBlock = block;
 
         for (let i = 0; i < number; i++) {
-          writeClipboard(currentBlock.content);
+          writeClipboard(currentBlock.content, "linewise");
           nextBlock = await logseq.Editor.getNextSiblingBlock(
             currentBlock.uuid
           );

@@ -7,13 +7,17 @@ import {
   beforeActionExecute,
   beforeActionRegister,
 } from "@/common/funcs";
-import { applyTextOperator } from "@/runtime/text-objects";
+import {
+  applyTextOperator,
+  firstNonBlankPosition,
+} from "@/runtime/text-objects";
 import { useSearchStore } from "@/stores/search";
 
 const deleteTextAndCopy = async (
   blockUUID: string,
   deleteStart: number,
-  deleteLength: number
+  deleteLength: number,
+  forceCursorRestore = false
 ): Promise<void> => {
   const block = await logseq.Editor.getBlock(blockUUID);
   if (block) {
@@ -27,7 +31,11 @@ const deleteTextAndCopy = async (
     await logseq.Editor.updateBlock(blockUUID, result.content);
 
     const searchStore = useSearchStore();
-    if (searchStore.cursorMode && searchStore.cursorBlockUUID === blockUUID) {
+    if (
+      forceCursorRestore ||
+      (searchStore.cursorMode &&
+        searchStore.cursorBlockUUID === blockUUID)
+    ) {
       await logseq.Editor.selectBlock(blockUUID);
       await searchStore.restoreCursor(
         blockUUID,
@@ -35,6 +43,28 @@ const deleteTextAndCopy = async (
         result.cursor
       );
     }
+  }
+};
+
+export const cutAtNormalCursor = async (): Promise<void> => {
+  const blockUUID = await getCurrentBlockUUID();
+  if (!blockUUID) {
+    return;
+  }
+
+  const block = await logseq.Editor.getBlock(blockUUID);
+  if (!block?.content) {
+    return;
+  }
+
+  const searchStore = useSearchStore();
+  const cursor =
+    searchStore.cursorMode &&
+    searchStore.cursorBlockUUID === blockUUID
+      ? searchStore.cursorPosition
+      : firstNonBlankPosition(block.content);
+  if (cursor < block.content.length) {
+    await deleteTextAndCopy(blockUUID, cursor, 1, true);
   }
 };
 

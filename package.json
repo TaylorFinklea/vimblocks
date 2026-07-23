@@ -1,6 +1,6 @@
 {
   "name": "logseq-plugin-vim-shortcuts",
-  "version": "0.2.0-tesela.3",
+  "version": "0.2.0-tesela.4",
   "schemaVersion": "1.0.0",
   "license": "MIT",
   "main": "index.html",
