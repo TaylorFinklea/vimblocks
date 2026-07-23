@@ -811,6 +811,34 @@ export const useSearchStore = defineStore("search", {
       this.visualEndPosition = 0;
     },
 
+    async restoreCursor(
+      blockUUID: string,
+      content: string,
+      position: number
+    ) {
+      this.cursorMode = true;
+      this.cursorBlockUUID = blockUUID;
+      this.cursorBlockContent = content;
+      this.cursorPosition =
+        content.length === 0
+          ? 0
+          : normalizeToVisiblePosition(
+              content,
+              Math.min(Math.max(position, 0), content.length - 1)
+            );
+      this.visualMode = false;
+      this.visualStartPosition = 0;
+      this.visualEndPosition = 0;
+
+      if (content.length > 0) {
+        highlightInput(
+          { uuid: blockUUID },
+          this.getCursorChar(),
+          this.cursorPosition
+        );
+      }
+    },
+
     // Move cursor right (l key)
     async moveCursorRight() {
       const blockUUID = await logseq.Editor.getCurrentBlock().then(b => b?.uuid);

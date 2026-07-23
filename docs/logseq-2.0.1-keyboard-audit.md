@@ -12,7 +12,7 @@ still required.
 - Modal baseline: Vim Shortcuts 0.2.0.
 - Upstream commit: `d79d2663f7751a4cdcd0ef67ccad35241540b6a3`.
 - Upstream license: MIT, preserved in `LICENSE` and both production bundles.
-- Fork package: `logseq-plugin-vim-shortcuts` 0.2.0-tesela.1.
+- Fork package: `logseq-plugin-vim-shortcuts` 0.2.0-tesela.2.
 - Companion package: `tesela-logseq-keyboard-companion` 0.1.0.
 - Public typings: `@logseq/libs` 0.0.17.
 - Current application source checked at Logseq 2.0.1 tag commit
@@ -47,7 +47,7 @@ Current Logseq 2.0.1 developer-plugin workflow:
 7. Repeat with
    `/Users/tfinklea/git/tesela-logseq-keyboard/companion/dist`.
 8. Confirm the dashboard shows:
-   - Vim Shortcuts (Tesela Keyboard) 0.2.0-tesela.1
+   - Vim Shortcuts (Tesela Keyboard) 0.2.0-tesela.2
    - Tesela Keyboard Companion 0.1.0
 
 ## Action matrix
@@ -132,6 +132,23 @@ shortcut registration and lifecycle implementation:
 - Made unload idempotent and prevented duplicate handlers after reload.
 - Treated missing mark-storage files in a fresh DB graph as empty storage
   instead of a plugin load error.
+- Added a reusable range engine and generated command registry for `c`, `d`,
+  and `y` with `iw`, `aw`, `w`, `e`, and `$`.
+- Added `ciw`/`diw`/`yiw`, `caw`/`daw`/`yaw`, `cw`/`dw`/`yw`,
+  `ce`/`de`/`ye`, `c$`/`d$`/`y$`, `cc`/`S`, and `C`/`D`.
+- Added `^` for first-nonblank movement. Kept page-top on `T`; stock Logseq
+  owns `gg` for Graph view, so `gg` remains an opt-in remap rather than a
+  conflicting default.
+- Kept operator handling non-editing-only and used public block read/update/edit
+  APIs. No application commands are invoked through DOM selectors or private
+  internals.
+- Logseq registered the three-key `c i w` binding but did not reliably dispatch
+  it as one command in the installed runtime. The `iw`/`aw` forms therefore
+  register supported two-key prefixes (`ci`, `ca`, and their `d`/`y`
+  equivalents) and use one capture-phase listener for the final `w`. The
+  listener exists only while a text object is pending, consumes invalid final
+  keys, cancels on `Esc`, and is removed on completion, cancellation, or
+  plugin unload.
 
 The companion could not fix modal key interception because it does not own the
 Vim plugin's handlers. No unrelated dependency or visual rewrite was taken.
@@ -169,19 +186,20 @@ access were used.
 
 ## Automated verification
 
-Final run after the text-entry guard:
+Final run after the operator extension:
 
 - `pnpm check`: exit 0.
-- `pnpm test`: exit 0; 19 passed, 0 failed.
-  - Vim fork: 13 passed.
+- `pnpm test`: exit 0; 26 passed, 0 failed.
+  - Vim fork: 20 passed.
   - Companion: 6 passed.
 - `pnpm build`: exit 0.
-  - Vim production bundle built from 1,916 modules.
+  - Vim production bundle built from 1,919 modules.
   - Companion production bundle built from 8 modules.
   - Only a stale Browserslist data warning; no build error.
 
 The behavioral suites cover command registration, context guards, configurable
-binding resolution, storage fallback, and idempotent unload/reload disposal.
+binding resolution, storage fallback, text-object ranges and mutations,
+end-of-block change spacing, and idempotent unload/reload disposal.
 
 ## Disposable-graph smoke evidence
 
@@ -203,10 +221,24 @@ The smoke used only `tesela-keyboard-audit-2026-07-23`.
 - The Task DB page opened through `Cmd+K` and displayed the test task.
 - Literal probe text remained intact in block editing, global search, command
   palette, and property controls after the final guard.
+- The dashboard loaded Vim Shortcuts (Tesela Keyboard)
+  `0.2.0-tesela.2`. Every added operator appeared in the command palette.
+- `^`, then `w`, `w`, `w`, followed by `ciw` changed the final word in
+  `spacing alpha beta gamma` to `delta`. The preceding separator survived the
+  change, producing exactly `spacing alpha beta delta`.
+- `ciw` also changed a middle word after literal `ciw daw C D ^` had first
+  been entered normally in the block editor. This confirmed both the operator
+  and the text-entry guard.
+- Starting `ci`, pressing `Esc`, then pressing `w` left the block unchanged
+  and performed ordinary word movement. No pending text-object listener
+  remained.
 - Both plugins were unloaded/reloaded at least twice. No duplicate command
   entry, double execution, or stale listener was observed.
-- After restarting Logseq, the journal blocks, task status, Description
-  property, uploaded PDF asset, and PDF reference remained intact.
+- After two final fork reloads, searching the command palette for
+  `Vim: Change inner word` returned exactly one command.
+- After restarting Logseq, the operator commands reappeared in the palette,
+  `diw` removed the focused middle word, and the journal blocks, task status,
+  Description property, uploaded PDF asset, and PDF reference remained intact.
 - One malformed page created while reproducing the pre-fix command-palette
   interception bug remains only in the disposable graph. It is evidence from
   the failed baseline, not production data loss.
@@ -258,7 +290,17 @@ forced-mouse incident.
    Expected: block selection/reordering is visible and cancel returns safely.
 6. Press `Tab`, `Shift+Tab`, `zc`, `zo`.
    Expected: indent/outdent and collapse/expand operate on the focused block.
-7. Type `[[Pilot Reference]]`; place focus on it and press `Cmd+O`.
+7. On `alpha beta gamma`, press `^`, `w`, `ciw`, type `changed`, then `Esc`.
+   Expected: `alpha changed gamma`; insert mode begins after `ciw`; `Esc`
+   reliably returns to normal mode.
+8. Undo, then exercise `diw`, `caw`, `dw`, `ce`, `D`, and `cc` on disposable
+   text. Use `Esc` after every change command.
+   Expected: the named word/range changes, delete commands remain in normal
+   mode, change commands enter insert mode, and adjacent spaces stay sensible.
+9. Press `yiw`, then `p`; repeat with `yaw` and `y$`.
+   Expected: the selected text reaches the Vim register and paste executes
+   once. `Esc` cancels any pending `yi`/`ya` prefix before the final `w`.
+10. Type `[[Pilot Reference]]`; place focus on it and press `Cmd+O`.
    Expected: reference is created and followed.
 
 ### Tasks, properties, views, and PDF
@@ -280,7 +322,7 @@ forced-mouse incident.
 
 ### Text-entry regression checks
 
-Type the literal string `jkiv :/~ C-a C-r` in each surface:
+Type the literal string `jkiv ciw daw C D ^ :/~ C-a C-r` in each surface:
 
 1. Block editor.
 2. Global search.

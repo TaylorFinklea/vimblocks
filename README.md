@@ -8,7 +8,7 @@ A comprehensive Vim-style keybinding plugin for Logseq that brings powerful moda
 
 This branch pins upstream Vim Shortcuts 0.2.0 at
 `d79d2663f7751a4cdcd0ef67ccad35241540b6a3` and carries only the compatibility
-and lifecycle changes needed for the Logseq 2.0.1 DB keyboard pilot. The
+and modal-editing changes needed for the Logseq 2.0.1 DB keyboard pilot. The
 separate package in `companion/` adds one supported-API command for opening a
 selected PDF asset in Logseq's built-in viewer.
 
@@ -171,6 +171,7 @@ All shortcuts can be customized via the [Settings UI](#settings-ui). Below are t
 | `b`               | Previous Word    | Jump to start of previous word                                             |
 | `e`               | Word End         | Jump to end of current word                                                |
 | `$`               | Line End         | Jump to end of line                                                        |
+| `^`               | First Nonblank   | Jump to the first nonblank character                                      |
 | `J`               | Next Sibling     | Jump to next sibling block (or move selected blocks down in Visual mode)   |
 | `K`               | Previous Sibling | Jump to previous sibling block (or move selected blocks up in Visual mode) |
 | `T`               | Jump to Top      | Scroll to top of page                                                      |
@@ -200,6 +201,28 @@ All shortcuts can be customized via the [Settings UI](#settings-ui). Below are t
 | `Ctrl+a`                 | Increase Number | Increment first number in block                        |
 | `Ctrl+x`                 | Decrease Number | Decrement first number in block                        |
 | `Mod+Alt+j`              | Join Next Line  | Merge next sibling block into current                  |
+
+#### Operators and text objects
+
+The Tesela fork composes `c`, `d`, and `y` with supported motions and word
+objects. These commands act within the focused Logseq block and use the
+plugin's internal yank register, so `p`/`P` can paste the result as a block.
+
+| Shortcut | Action |
+| -------- | ------ |
+| `ciw` / `diw` / `yiw` | Change, delete, or yank the word at the cursor |
+| `caw` / `daw` / `yaw` | Change, delete, or yank the word plus adjacent whitespace |
+| `cw` / `dw` / `yw` | Operate through the word end or next word start |
+| `ce` / `de` / `ye` | Operate through the current word end |
+| `c$` / `d$` / `y$` | Operate from the cursor through the end of the block |
+| `cc` / `S` | Change the entire block content |
+| `C` / `D` | Change or delete through the end of the block |
+
+A numeric prefix repeats word-oriented objects and motions. All entries are
+individually discoverable in Logseq's command palette and configurable in the
+plugin settings. `gg` is not a default because stock Logseq owns that chord for
+Graph view; users who disable the stock binding can remap **Jump to Top** from
+`T` to `g g`.
 
 ### Block Operations
 

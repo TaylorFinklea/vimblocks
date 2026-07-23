@@ -24,6 +24,7 @@ import extend from "@/keybindings/extend";
 import extendAll from "@/keybindings/extendAll";
 import findChar from "@/keybindings/findChar";
 import findCharBackward from "@/keybindings/findCharBackward";
+import firstNonBlank from "@/keybindings/firstNonBlank";
 import highlightFocusIn from "@/keybindings/highlightFocusIn";
 import highlightFocusOut from "@/keybindings/highlightFocusOut";
 import increase from "@/keybindings/increase";
@@ -39,6 +40,7 @@ import nextNewBlock from "@/keybindings/nextNewBlock";
 import nextSibling from "@/keybindings/nextSibling";
 import number from "@/keybindings/number";
 import openSettings from "@/keybindings/openSettings";
+import operators from "@/keybindings/operators";
 import outdent from "@/keybindings/outdent";
 import pasteNext from "@/keybindings/pasteNext";
 import pastePrev from "@/keybindings/pastePrev";
@@ -89,6 +91,7 @@ export const COMMAND_REGISTRY: readonly OwnedCommandRegistrar[] = [
   { id: "word-backward", register: wordBackward },
   { id: "word-end", register: wordEnd },
   { id: "line-end", register: lineEnd },
+  { id: "first-nonblank", register: firstNonBlank },
   { id: "find-character", register: findChar },
   { id: "find-character-backward", register: findCharBackward },
   { id: "repeat-character-search", register: repeatCharSearch },
@@ -130,6 +133,7 @@ export const COMMAND_REGISTRY: readonly OwnedCommandRegistrar[] = [
   { id: "decrease", register: decrease },
   { id: "cut", register: cut },
   { id: "cut-word", register: cutWord },
+  { id: "text-operators", register: operators },
   { id: "replace", register: replace },
   { id: "visual-mode", register: toggleVisualMode },
   { id: "visual-line-mode", register: visualLineMode },
