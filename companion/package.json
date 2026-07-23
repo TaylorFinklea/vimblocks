@@ -1,12 +1,12 @@
 {
-  "name": "tesela-logseq-keyboard-companion",
+  "name": "vimblocks-companion",
   "version": "0.1.0",
   "schemaVersion": "1.0.0",
   "license": "MIT",
   "main": "index.html",
   "logseq": {
     "id": "tesela-logseq-keyboard-companion",
-    "title": "Tesela Keyboard Companion"
+    "title": "Vimblocks Companion"
   },
   "scripts": {
     "build": "vite build && cp package.json ../LICENSE dist/",

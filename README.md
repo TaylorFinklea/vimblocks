@@ -1,12 +1,10 @@
-# Logseq Plugin: Vim Shortcuts
-
-[![Github All Releases](https://img.shields.io/github/downloads/vipzhicheng/logseq-plugin-vim-shortcuts/total.svg)](https://github.com/vipzhicheng/logseq-plugin-vim-shortcuts/releases)
+# Vimblocks
 
 A comprehensive Vim-style keybinding plugin for Logseq that brings powerful modal editing, navigation, and command capabilities to your note-taking workflow.
 
-## Tesela keyboard pilot
+## Logseq DB keyboard pilot
 
-This branch pins upstream Vim Shortcuts 0.2.0 at
+Vimblocks pins upstream Vim Shortcuts 0.2.0 at
 `d79d2663f7751a4cdcd0ef67ccad35241540b6a3` and carries only the compatibility
 and modal-editing changes needed for the Logseq 2.0.1 DB keyboard pilot. The
 separate package in `companion/` adds one supported-API command for opening a
@@ -28,10 +26,12 @@ pnpm install
 pnpm check
 pnpm test
 pnpm build
+pnpm package
 ```
 
-Load `dist/` as **Vim Shortcuts (Tesela Keyboard)** and `companion/dist/` as
-**Tesela Keyboard Companion**. The complete action matrix, current developer
+Load `dist/` as **Vimblocks** and `companion/dist/` as
+**Vimblocks Companion**. `pnpm package` creates one portable ZIP containing
+both loadable directories. The complete action matrix, current developer
 load path, smoke evidence, known API ceilings, and five-day checklist are in
 [`docs/logseq-2.0.1-keyboard-audit.md`](docs/logseq-2.0.1-keyboard-audit.md).
 
@@ -65,22 +65,35 @@ load path, smoke evidence, known API ceilings, and five-day checklist are in
 
 ## Installation
 
-### From Logseq Marketplace
+Vimblocks is not in the Logseq Marketplace during the five-day pilot.
 
-1. Open Logseq and go to Settings → Plugins
-2. Click "Marketplace"
-3. Search for "Vim Shortcuts"
-4. Click "Install"
+### From a Vimblocks release
 
-### Manual Installation
+1. Download `vimblocks-<version>.zip` from the repository's GitHub Releases.
+2. Extract it to a permanent local directory.
+3. Open Logseq's command palette and run **Go to plugins dashboard**.
+4. Choose **Load unpacked plugin** and select the extracted `vimblocks/`
+   directory.
+5. Repeat **Load unpacked plugin** and select `vimblocks-companion/`.
+6. Confirm **Vimblocks** and **Vimblocks Companion** are enabled.
 
-1. Download the latest release from [GitHub Releases](https://github.com/vipzhicheng/logseq-plugin-vim-shortcuts/releases)
-2. Extract to your Logseq plugins folder
-3. Enable the plugin in Logseq Settings → Plugins
+Keep the extracted directory in place. Logseq loads unpacked plugins from that
+location.
+
+### Build from source
+
+```bash
+pnpm install --frozen-lockfile
+pnpm check
+pnpm test
+pnpm package
+```
+
+Extract `release/vimblocks-<version>.zip`, then follow the release steps above.
 
 ## Quick Start
 
-1. **Install the plugin** from the Logseq Marketplace
+1. **Install both plugins** from a Vimblocks release
 2. **Restart Logseq** to activate the plugin
 3. **Focus on any block** - you're now in Normal mode
 4. **Try basic navigation**: `j` (down), `k` (up), `h` (left), `l` (right)
@@ -215,7 +228,7 @@ All shortcuts can be customized via the [Settings UI](#settings-ui). Below are t
 
 #### Operators and text objects
 
-The Tesela fork composes `c`, `d`, and `y` with supported motions and word
+Vimblocks composes `c`, `d`, and `y` with supported motions and word
 objects. These commands act within the focused Logseq block and use the
 plugin's internal yank register, so `p`/`P` can paste the result as a block.
 `x` updates the block through Logseq's public editor API and restores the
@@ -606,7 +619,10 @@ When cursor is on a page reference `[[Page Name]]` or tag `#tag`:
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues, feature requests, or pull requests on [GitHub](https://github.com/vipzhicheng/logseq-plugin-vim-shortcuts).
+Vimblocks is a narrow fork of
+[vipzhicheng/logseq-plugin-vim-shortcuts](https://github.com/vipzhicheng/logseq-plugin-vim-shortcuts)
+at commit `d79d2663f7751a4cdcd0ef67ccad35241540b6a3`. Its MIT license and upstream
+copyright notice are preserved in [LICENSE](LICENSE).
 
 ## Support the Project
 

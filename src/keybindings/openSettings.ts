@@ -26,7 +26,7 @@ export default (logseq: ILSPluginUser) => {
     logseq.App.registerCommandPalette(
       {
         key: "vim-shortcut-open-settings-" + index,
-        label: "Open Vim Shortcuts settings",
+        label: "Open Vimblocks settings",
         ...(hasBinding && {
           keybinding: {
             mode: "non-editing",

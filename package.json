@@ -1,16 +1,18 @@
 {
-  "name": "logseq-plugin-vim-shortcuts",
-  "version": "0.2.0-tesela.4",
+  "name": "vimblocks",
+  "version": "0.3.0",
   "schemaVersion": "1.0.0",
   "license": "MIT",
+  "packageManager": "pnpm@11.13.1",
   "main": "index.html",
   "logseq": {
     "icon": "./icon.png",
     "id": "logseq-plugin-vim-shortcuts",
-    "title": "Vim Shortcuts (Tesela Keyboard)"
+    "title": "Vimblocks"
   },
   "scripts": {
     "build": "vite build && cp icon.png package.json LICENSE dist/ && pnpm --dir companion build",
+    "package": "pnpm build && node scripts/package-release.mjs",
     "check": "tsc --noEmit --allowImportingTsExtensions && pnpm --dir companion check",
     "test": "node --test --experimental-strip-types tests/*.test.ts && pnpm --dir companion test"
   },

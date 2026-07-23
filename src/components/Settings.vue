@@ -323,7 +323,7 @@ const getDefaultBindingString = (key: string): string => {
   <div v-show="settingsStore.visible">
     <el-dialog
       v-model="settingsStore.visible"
-      title="Vim Shortcuts Settings"
+      title="Vimblocks Settings"
       width="80%"
       top="5vh"
       :close-on-click-modal="false"

@@ -12,8 +12,10 @@ still required.
 - Modal baseline: Vim Shortcuts 0.2.0.
 - Upstream commit: `d79d2663f7751a4cdcd0ef67ccad35241540b6a3`.
 - Upstream license: MIT, preserved in `LICENSE` and both production bundles.
-- Fork package: `logseq-plugin-vim-shortcuts` 0.2.0-tesela.4.
-- Companion package: `tesela-logseq-keyboard-companion` 0.1.0.
+- Fork package: Vimblocks 0.3.0 (compatibility ID
+  `logseq-plugin-vim-shortcuts`).
+- Companion package: Vimblocks Companion 0.1.0 (compatibility ID
+  `tesela-logseq-keyboard-companion`).
 - Public typings: `@logseq/libs` 0.0.17.
 - Current application source checked at Logseq 2.0.1 tag commit
   `26f6f7880`.
@@ -42,13 +44,13 @@ Current Logseq 2.0.1 developer-plugin workflow:
 2. Run `Go to plugins dashboard`.
 3. Choose `Load unpacked plugin`.
 4. In the native folder picker press `Cmd+Shift+G`.
-5. Enter `/Users/tfinklea/git/tesela-logseq-keyboard/dist`.
+5. Enter `$HOME/git/vimblocks/dist`.
 6. Press `Return`, then choose `Open`.
 7. Repeat with
-   `/Users/tfinklea/git/tesela-logseq-keyboard/companion/dist`.
+   `$HOME/git/vimblocks/companion/dist`.
 8. Confirm the dashboard shows:
-   - Vim Shortcuts (Tesela Keyboard) 0.2.0-tesela.4
-   - Tesela Keyboard Companion 0.1.0
+   - Vimblocks 0.3.0
+   - Vimblocks Companion 0.1.0
 
 ## Action matrix
 
@@ -195,13 +197,16 @@ access were used.
 Final run after the operator extension:
 
 - `pnpm check`: exit 0.
-- `pnpm test`: exit 0; 40 passed, 0 failed.
-  - Vim fork: 34 passed.
+- `pnpm test`: exit 0; 41 passed, 0 failed.
+  - Vim fork: 35 passed.
   - Companion: 6 passed.
 - `pnpm build`: exit 0.
   - Vim production bundle built from 1,923 modules.
   - Companion production bundle built from 8 modules.
   - Only a stale Browserslist data warning; no build error.
+- `pnpm package`: exit 0; created
+  `release/vimblocks-0.3.0.zip` with both loadable plugins and installation
+  instructions.
 
 The behavioral suites cover command registration, context guards, configurable
   binding resolution, storage fallback, text-object ranges and mutations,
@@ -213,11 +218,17 @@ The behavioral suites cover command registration, context guards, configurable
 The smoke used only `tesela-keyboard-audit-2026-07-23`.
 
 - Both unpacked production builds loaded and were enabled.
+- The final rename smoke upgraded the primary plugin in place to Vimblocks
+  0.3.0. A temporary companion-ID change produced a disabled duplicate after
+  restart, so the compatibility ID was restored before release. The final
+  dashboard showed exactly Vimblocks and Vimblocks Companion, both enabled.
+- After another full Logseq restart, the command palette retained exactly one
+  `Open selected PDF inline` result and displayed `Open Vimblocks settings`.
 - Final process restart registered both packages without plugin console errors:
   console filters `Ready Error`, `TypeError`, and `Uncaught` each showed zero
   messages.
 - Command palette showed exactly one `Open selected PDF inline` and exactly one
-  `Open Vim Shortcuts settings` entry after repeated reloads and restart.
+  `Open Vimblocks settings` entry after repeated reloads and restart.
 - `Cmd+Option+P` opened the selected `Understanding EXPLAIN.pdf` asset.
 - In the viewer, `Option+N` moved page 1 to 2, `Option+P` returned to page 1,
   `Option+F` opened search, `Esc` closed search, and `Option+X` closed the
@@ -228,7 +239,7 @@ The smoke used only `tesela-keyboard-audit-2026-07-23`.
 - The Task DB page opened through `Cmd+K` and displayed the test task.
 - Literal probe text remained intact in block editing, global search, command
   palette, and property controls after the final guard.
-- The dashboard loaded Vim Shortcuts (Tesela Keyboard)
+- The dashboard loaded the pre-rename fork
   `0.2.0-tesela.4`. Every added operator appeared in the command palette.
 - `^`, then `w`, `w`, `w`, followed by `ciw` changed the final word in
   `spacing alpha beta gamma` to `delta`. The preceding separator survived the

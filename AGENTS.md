@@ -1,4 +1,4 @@
-# Agent Guidelines for logseq-plugin-vim-shortcuts
+# Agent Guidelines for Vimblocks
 
 ## Build/Lint/Test Commands
 
