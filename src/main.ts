@@ -31,6 +31,10 @@ import { registerOwnedCommands } from "./command-registry";
 import { isTextEntryTarget } from "./runtime/context-guard";
 import { DisposableRegistry } from "./runtime/disposable-registry";
 import { disposeOperatorSequences } from "./keybindings/operators";
+import {
+  registerOpenPdfCommand,
+  type OpenPdfApi,
+} from "./open-pdf-command";
 
 const defineSettings: SettingSchemaDesc[] = [
   {
@@ -39,6 +43,14 @@ const defineSettings: SettingSchemaDesc[] = [
     description: "Show recent emojis by default. Needs window reload.",
     default: false,
     type: "boolean",
+  },
+  {
+    key: "openPdfShortcut",
+    type: "string",
+    default: "mod+alt+p",
+    title: "Open selected PDF inline",
+    description:
+      "Logseq keybinding notation. Leave blank to keep the command palette-only.",
   },
 ];
 
@@ -92,6 +104,9 @@ async function main() {
   emojiStore.initPicker();
 
   registerOwnedCommands(logseq);
+  lifecycle.add(
+    registerOpenPdfCommand(logseq as unknown as OpenPdfApi)
+  );
 
   // load marks
   await loadMarks();

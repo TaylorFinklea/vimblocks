@@ -1,6 +1,6 @@
 {
   "name": "vimblocks",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "schemaVersion": "1.0.0",
   "license": "AGPL-3.0-only",
   "packageManager": "pnpm@11.13.1",
@@ -11,10 +11,10 @@
     "title": "Vimblocks"
   },
   "scripts": {
-    "build": "vite build && cp icon.png package.json LICENSE UPSTREAM-LICENSE-MIT dist/ && pnpm --dir companion build",
+    "build": "vite build && cp icon.png package.json LICENSE UPSTREAM-LICENSE-MIT dist/",
     "package": "pnpm build && node scripts/package-release.mjs",
-    "check": "tsc --noEmit --allowImportingTsExtensions && pnpm --dir companion check",
-    "test": "node --test --experimental-strip-types tests/*.test.ts && pnpm --dir companion test"
+    "check": "tsc --noEmit --allowImportingTsExtensions",
+    "test": "node --test --experimental-strip-types tests/*.test.ts"
   },
   "devDependencies": {
     "@types/lodash-es": "*",

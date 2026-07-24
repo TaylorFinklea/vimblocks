@@ -11,11 +11,11 @@ still required.
 - Graph: disposable DB graph `tesela-keyboard-audit-2026-07-23`.
 - Modal baseline: Vim Shortcuts 0.2.0.
 - Upstream commit: `d79d2663f7751a4cdcd0ef67ccad35241540b6a3`.
-- Upstream license: MIT, preserved in `LICENSE` and both production bundles.
+- Upstream license: MIT, preserved in `LICENSE` and the production bundle.
 - Fork package: Vimblocks 0.3.0 (compatibility ID
   `logseq-plugin-vim-shortcuts`).
-- Companion package: Vimblocks Companion 0.1.0 (compatibility ID
-  `tesela-logseq-keyboard-companion`).
+- The PDF command originally shipped as Vimblocks Companion 0.1.0 and is now
+  included directly in Vimblocks 0.4.0.
 - Public typings: `@logseq/libs` 0.0.17.
 - Current application source checked at Logseq 2.0.1 tag commit
   `26f6f7880`.
@@ -46,11 +46,7 @@ Current Logseq 2.0.1 developer-plugin workflow:
 4. In the native folder picker press `Cmd+Shift+G`.
 5. Enter `$HOME/git/vimblocks/dist`.
 6. Press `Return`, then choose `Open`.
-7. Repeat with
-   `$HOME/git/vimblocks/companion/dist`.
-8. Confirm the dashboard shows:
-   - Vimblocks 0.3.0
-   - Vimblocks Companion 0.1.0
+7. Confirm the dashboard shows Vimblocks.
 
 ## Action matrix
 
@@ -64,13 +60,13 @@ supported route evaluated for a remaining gap.
 | 2 | Command palette | `Cmd+Shift+P`; filters and runs commands | Guard leaves palette input untouched | `App.registerCommandPalette` supplies plugin entries | built-in and configurable |
 | 3 | Today’s journal | `g j` | Does not replace the stock sequence | `App.pushState("page", …)` unnecessary | built-in and configurable |
 | 4 | Arbitrary page | `Cmd+K`, type page, `Return` | Search field remains normal | Navigation APIs exist but add no value | built-in and configurable |
-| 5 | Back / forward | `Cmd+[` / `Cmd+]` | Does not replace stock history | No companion command needed | built-in and configurable |
+| 5 | Back / forward | `Cmd+[` / `Cmd+]` | Does not replace stock history | No additional command needed | built-in and configurable |
 | 6 | Toggle and focus sidebars | `t l` / `t r` toggle; keyboard traversal can enter visible content | Vim page/block navigation remains available | Public APIs toggle sidebars, but expose no dedicated “focus left/right pane” command | acceptable keyboard approximation |
 | 7 | Favorites and recent | `Cmd+K` reaches the same pages; visible sidebar links are keyboard-traversable | Vim does not own these lists | No public API exposes direct Favorites/Recent focus or indexed movement | acceptable keyboard approximation |
 | 8 | Focus a block | Stock arrow/block selection remains available | `j` / `k` focuses adjacent blocks | Editor APIs exist but are unnecessary | supplied by the pinned Vim plugin |
 | 9 | Enter / leave edit mode | Click/selection and `Esc` are stock | `i`/`a` enter; `Esc` reliably returns to normal mode after fork guard | Editor editing APIs exist but modal layer already owns this | supplied by the pinned Vim plugin |
-| 10 | Normal-mode text and block movement | Stock editor keys apply while editing | `h`, `j`, `k`, `l`, `w`, `b`, `e`, `$` tested | No companion command needed | supplied by the pinned Vim plugin |
-| 11 | Select blocks | `Option+Up/Down`, `Shift+Up/Down` | Visual-line mode also available | No companion command needed | built-in and configurable |
+| 10 | Normal-mode text and block movement | Stock editor keys apply while editing | `h`, `j`, `k`, `l`, `w`, `b`, `e`, `$` tested | No additional command needed | supplied by the pinned Vim plugin |
+| 11 | Select blocks | `Option+Up/Down`, `Shift+Up/Down` | Visual-line mode also available | No additional command needed | built-in and configurable |
 | 12 | Move / reorder blocks | `Cmd+Shift+Up/Down` | `V`, then `J`/`K`, also works | Editor move APIs unnecessary | built-in and configurable |
 | 13 | Indent / outdent | `Tab` / `Shift+Tab` | `>` / `<` also works | Editor indent APIs unnecessary | built-in and configurable |
 | 14 | Collapse / expand | `Cmd+Up/Down` or `Cmd+;` | `zc` / `zo`, with `zC` / `zO` recursive | Editor collapse APIs unnecessary | built-in and configurable |
@@ -100,9 +96,9 @@ normal macOS editing, search, dialogs, and Logseq input controls.
 | `C-k`, `C-y` | Keep native editing semantics in text inputs. Use Vim delete/yank/paste operations in normal mode. No global override. |
 | `C-s`, `C-r` | Use `Cmd+K` for global search or `/`, `n`, `N` for in-page search. Keep Vim `C-r` as redo in normal mode. No global override. |
 
-## Companion command
+## PDF command
 
-The companion owns one registry entry:
+Vimblocks owns one PDF registry entry:
 
 - `Open selected PDF inline`
   - Palette name: `Open selected PDF inline`
@@ -158,8 +154,8 @@ shortcut registration and lifecycle implementation:
   unload. First-key prefixes remain unconsumed so existing Vim commands such
   as `dd` and `yy` continue to own chords not implemented by this dispatcher.
 
-The companion could not fix modal key interception because it does not own the
-Vim plugin's handlers. No unrelated dependency or visual rewrite was taken.
+The PDF command could not fix modal key interception because it does not own
+the Vim handlers. No unrelated dependency or visual rewrite was taken.
 
 ## Public API findings and ceilings
 
@@ -176,7 +172,7 @@ Compatibility finding:
   `Commands` API.
 - In the installed Logseq 2.0.1 plugin runtime, `logseq.Commands` was
   `undefined`; using it produced a plugin Ready Error.
-- The production companion therefore uses the supported legacy `App`
+- The production PDF command therefore uses the supported legacy `App`
   registration APIs that are present in the installed runtime and current
   typings. The final restart had no Ready Error.
 
@@ -204,9 +200,9 @@ Final run after the operator extension:
   - Vim production bundle built from 1,923 modules.
   - Companion production bundle built from 8 modules.
   - Only a stale Browserslist data warning; no build error.
-- `pnpm package`: exit 0; created
+- At the time of the initial audit, `pnpm package` created
   `release/vimblocks-0.3.0.zip` with both loadable plugins and installation
-  instructions.
+  instructions. The current package contains one consolidated plugin.
 
 The behavioral suites cover command registration, context guards, configurable
   binding resolution, storage fallback, text-object ranges and mutations,
@@ -293,10 +289,10 @@ forced-mouse incident.
 
 1. Build with `pnpm check`, `pnpm test`, and `pnpm build`.
    Expected: all three exit 0.
-2. Load both production directories using the developer-plugin path above.
-   Expected: both packages enabled with the exact versions in Baseline.
+2. Load the production directory using the developer-plugin path above.
+   Expected: Vimblocks is enabled with the expected version.
 3. Restart Logseq.
-   Expected: graph opens with both plugins active and no Ready Error.
+   Expected: graph opens with Vimblocks active and no Ready Error.
 4. Press `Cmd+Shift+P`, type `Open selected PDF inline`, then `Esc`.
    Expected: exactly one command result; `Esc` closes the palette without
    executing it.

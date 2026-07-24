@@ -6,9 +6,9 @@ A comprehensive Vim-style keybinding plugin for Logseq that brings powerful moda
 
 Vimblocks pins upstream Vim Shortcuts 0.2.0 at
 `d79d2663f7751a4cdcd0ef67ccad35241540b6a3` and carries only the compatibility
-and modal-editing changes needed for the Logseq 2.0.1 DB keyboard pilot. The
-separate package in `companion/` adds one supported-API command for opening a
-selected PDF asset in Logseq's built-in viewer.
+and modal-editing changes needed for the Logseq 2.0.1 DB keyboard pilot. It
+also provides a supported-API command for opening a selected PDF asset in
+Logseq's built-in viewer.
 
 Vim text operators (`ciw`, `diw`, `yiw`, `caw`, `daw`, `yaw`, `cw`, `dw`,
 `yw`, `ce`, `de`, `ye`, `C`, `D`, `c$`, `d$`, `y$`, `cc`, and `S`) use a
@@ -29,10 +29,9 @@ pnpm build
 pnpm package
 ```
 
-Load `dist/` as **Vimblocks** and `companion/dist/` as
-**Vimblocks Companion**. `pnpm package` creates one portable ZIP containing
-both loadable directories. The complete action matrix, current developer
-load path, smoke evidence, known API ceilings, and five-day checklist are in
+Load `dist/` as **Vimblocks**. `pnpm package` creates one portable ZIP
+containing the complete plugin. The action matrix, developer load path, smoke
+evidence, known API ceilings, and five-day checklist are in
 [`docs/logseq-2.0.1-keyboard-audit.md`](docs/logseq-2.0.1-keyboard-audit.md).
 
 [中文文档](README_CN.md)
@@ -73,10 +72,9 @@ Vimblocks is not in the Logseq Marketplace during the five-day pilot.
    [GitHub Releases](https://github.com/TaylorFinklea/vimblocks/releases).
 2. Extract it to a permanent local directory.
 3. Open Logseq's command palette and run **Go to plugins dashboard**.
-4. Choose **Load unpacked plugin** and select the extracted `vimblocks/`
-   directory.
-5. Repeat **Load unpacked plugin** and select `vimblocks-companion/`.
-6. Confirm **Vimblocks** and **Vimblocks Companion** are enabled.
+4. Choose **Load unpacked plugin** and select the extracted
+   `vimblocks-<version>/` directory.
+5. Confirm **Vimblocks** is enabled.
 
 Keep the extracted directory in place. Logseq loads unpacked plugins from that
 location.
@@ -92,9 +90,16 @@ pnpm package
 
 Extract `release/vimblocks-<version>.zip`, then follow the release steps above.
 
+### Upgrade from the two-plugin pilot
+
+Vimblocks 0.4.0 includes the PDF command that previously shipped as Vimblocks
+Companion. After loading Vimblocks 0.4.0, remove the separate
+**Vimblocks Companion** plugin from Logseq. Keeping it installed would register
+the same PDF command twice.
+
 ## Quick Start
 
-1. **Install both plugins** from a Vimblocks release
+1. **Install Vimblocks** from a release
 2. **Restart Logseq** to activate the plugin
 3. **Focus on any block** - you're now in Normal mode
 4. **Try basic navigation**: `j` (down), `k` (up), `h` (left), `l` (right)

@@ -591,6 +591,7 @@ export const defaultSettings = {
   settingsVersion,
   disabled: false,
   showRecentEmojis: false,
+  openPdfShortcut: "mod+alt+p",
 };
 
 export type DefaultSettingsType = typeof defaultSettings;

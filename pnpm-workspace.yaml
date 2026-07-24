@@ -1,5 +1,4 @@
-packages:
-  - companion
+packages: []
 
 allowBuilds:
   '@fortawesome/fontawesome-common-types': true

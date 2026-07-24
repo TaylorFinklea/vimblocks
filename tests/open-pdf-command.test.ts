@@ -4,12 +4,11 @@ import test from "node:test";
 import {
   DEFAULT_OPEN_PDF_SHORTCUT,
   OPEN_PDF_COMMAND_ID,
-  commandRegistry,
   openSelectedPdf,
-  registerOwnedCommands,
+  registerOpenPdfCommand,
   resolveOpenPdfShortcut,
-  type CompanionApi,
-} from "../src/command-registry.ts";
+  type OpenPdfApi,
+} from "../src/open-pdf-command.ts";
 
 type Registration = {
   keybinding: {
@@ -33,8 +32,8 @@ type PaletteRegistration = {
 };
 
 function createApi(
-  overrides: Partial<CompanionApi> = {},
-): CompanionApi & {
+  overrides: Partial<OpenPdfApi> = {}
+): OpenPdfApi & {
   registrations: Registration[];
   paletteRegistrations: PaletteRegistration[];
   unregisterCount: () => number;
@@ -84,24 +83,23 @@ function createApi(
   };
 }
 
-test("the companion owns one discoverable command with a configurable shortcut", () => {
+test("registers one discoverable PDF command with a configurable shortcut", () => {
   const api = createApi();
-  registerOwnedCommands(api);
+  registerOpenPdfCommand(api);
 
-  assert.equal(commandRegistry.length, 1);
   assert.equal(api.paletteRegistrations.length, 1);
   assert.equal(
     api.paletteRegistrations[0].options.key,
-    `${OPEN_PDF_COMMAND_ID}-palette`,
+    `${OPEN_PDF_COMMAND_ID}-palette`
   );
   assert.equal(
     api.paletteRegistrations[0].options.label,
-    "Open selected PDF inline",
+    "Open selected PDF inline"
   );
   assert.equal(api.registrations.length, 1);
   assert.equal(
     api.registrations[0].options.key,
-    `${OPEN_PDF_COMMAND_ID}-shortcut`,
+    `${OPEN_PDF_COMMAND_ID}-shortcut`
   );
   assert.deepEqual(api.registrations[0].keybinding, {
     mode: "non-editing",
@@ -111,7 +109,7 @@ test("the companion owns one discoverable command with a configurable shortcut",
 
 test("blank shortcut settings keep the command palette-only", () => {
   const api = createApi({ settings: { openPdfShortcut: "  " } });
-  registerOwnedCommands(api);
+  registerOpenPdfCommand(api);
 
   assert.equal(api.paletteRegistrations.length, 1);
   assert.equal(api.registrations.length, 0);
@@ -120,15 +118,12 @@ test("blank shortcut settings keep the command palette-only", () => {
 
 test("custom shortcut settings are trimmed and registered", () => {
   const api = createApi({ settings: { openPdfShortcut: " mod+shift+9 " } });
-  registerOwnedCommands(api);
+  registerOpenPdfCommand(api);
 
-  assert.equal(
-    api.registrations[0].keybinding.binding,
-    "mod+shift+9",
-  );
+  assert.equal(api.registrations[0].keybinding.binding, "mod+shift+9");
 });
 
-test("the command opens the current block through the public PDF API", async () => {
+test("opens the current block through the public PDF API", async () => {
   const api = createApi();
 
   await openSelectedPdf(api);
@@ -137,7 +132,7 @@ test("the command opens the current block through the public PDF API", async () 
   assert.deepEqual(api.messages, []);
 });
 
-test("the command reports a missing current block without invoking the viewer", async () => {
+test("reports a missing current block without invoking the viewer", async () => {
   const api = createApi({
     Editor: {
       async getCurrentBlock() {
@@ -159,12 +154,12 @@ test("the command reports a missing current block without invoking the viewer", 
 
 test("dispose and reload unregister each registration exactly once", () => {
   const firstApi = createApi();
-  const firstDispose = registerOwnedCommands(firstApi);
+  const firstDispose = registerOpenPdfCommand(firstApi);
   firstDispose();
   firstDispose();
 
   const secondApi = createApi();
-  const secondDispose = registerOwnedCommands(secondApi);
+  const secondDispose = registerOpenPdfCommand(secondApi);
   secondDispose();
 
   assert.equal(firstApi.paletteRegistrations.length, 1);

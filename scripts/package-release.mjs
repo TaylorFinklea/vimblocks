@@ -28,14 +28,9 @@ export async function stageRelease({
   await rm(stagePath, { recursive: true, force: true });
   await rm(archivePath, { force: true });
   await mkdir(stagePath, { recursive: true });
-  await cp(path.join(root, "dist"), path.join(stagePath, "vimblocks"), {
+  await cp(path.join(root, "dist"), stagePath, {
     recursive: true,
   });
-  await cp(
-    path.join(root, "companion", "dist"),
-    path.join(stagePath, "vimblocks-companion"),
-    { recursive: true }
-  );
   await writeFile(
     path.join(stagePath, "INSTALL.txt"),
     [
@@ -44,11 +39,11 @@ export async function stageRelease({
       "1. Extract this archive to a permanent local folder.",
       "2. In Logseq, open the command palette and run: Go to plugins dashboard.",
       "3. Choose Load unpacked plugin.",
-      "4. Select the extracted vimblocks folder.",
-      "5. Repeat Load unpacked plugin and select vimblocks-companion.",
-      "6. Confirm Vimblocks and Vimblocks Companion are enabled.",
+      `4. Select the extracted ${stageName} folder.`,
+      "5. Confirm Vimblocks is enabled.",
+      "6. If upgrading from 0.3.1 or earlier, remove the separate Vimblocks Companion plugin.",
       "",
-      "Keep the extracted folder in place. Logseq loads the plugins from it.",
+      "Keep the extracted folder in place. Logseq loads the plugin from it.",
       "",
     ].join("\n")
   );
