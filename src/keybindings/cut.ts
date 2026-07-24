@@ -12,6 +12,7 @@ import {
   firstNonBlankPosition,
 } from "@/runtime/text-objects";
 import { useSearchStore } from "@/stores/search";
+import { persistNormalModeContent } from "@/runtime/normal-mode-mutation";
 
 const deleteTextAndCopy = async (
   blockUUID: string,
@@ -28,20 +29,23 @@ const deleteTextAndCopy = async (
       "delete"
     );
     writeClipboard(result.selected);
-    await logseq.Editor.updateBlock(blockUUID, result.content);
 
     const searchStore = useSearchStore();
-    if (
+    const restoreNormalCursor =
       forceCursorRestore ||
       (searchStore.cursorMode &&
-        searchStore.cursorBlockUUID === blockUUID)
-    ) {
-      await logseq.Editor.selectBlock(blockUUID);
-      await searchStore.restoreCursor(
+        searchStore.cursorBlockUUID === blockUUID);
+    if (restoreNormalCursor) {
+      await persistNormalModeContent({
+        editor: logseq.Editor,
         blockUUID,
-        result.content,
-        result.cursor
-      );
+        content: result.content,
+        cursor: result.cursor,
+        restoreCursor: (uuid, content, position) =>
+          searchStore.restoreCursor(uuid, content, position),
+      });
+    } else {
+      await logseq.Editor.updateBlock(blockUUID, result.content);
     }
   }
 };

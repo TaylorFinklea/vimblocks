@@ -41,6 +41,7 @@ import {
   isTextEntryActive,
   isTextEntryEvent,
 } from "@/runtime/context-guard";
+import { persistNormalModeContent } from "@/runtime/normal-mode-mutation";
 
 type OperatorObject =
   | "inner-word"
@@ -281,13 +282,14 @@ const executeOperator = async (
     return;
   }
 
-  await logseq.Editor.updateBlock(blockUUID, result.content);
-  await logseq.Editor.selectBlock(blockUUID);
-  await searchStore.restoreCursor(
+  await persistNormalModeContent({
+    editor: logseq.Editor,
     blockUUID,
-    result.content,
-    result.cursor
-  );
+    content: result.content,
+    cursor: result.cursor,
+    restoreCursor: (uuid, content, position) =>
+      searchStore.restoreCursor(uuid, content, position),
+  });
 };
 
 let disposeOperatorSequenceListener: (() => void) | null = null;

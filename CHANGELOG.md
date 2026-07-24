@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.3.1
+
+- fix: reconcile normal-mode `x` and `d` mutations with Logseq's rendered block immediately.
+
 ## v0.2.0
 
 - fix: add `shift+.` and `shift+,` to indent and outdent block, thanks to @primeapple for the suggestion. #34
