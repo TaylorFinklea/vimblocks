@@ -69,7 +69,8 @@ Vimblocks is not in the Logseq Marketplace during the five-day pilot.
 
 ### From a Vimblocks release
 
-1. Download `vimblocks-<version>.zip` from the repository's GitHub Releases.
+1. Download `vimblocks-<version>.zip` from
+   [GitHub Releases](https://github.com/TaylorFinklea/vimblocks/releases).
 2. Extract it to a permanent local directory.
 3. Open Logseq's command palette and run **Go to plugins dashboard**.
 4. Choose **Load unpacked plugin** and select the extracted `vimblocks/`
@@ -622,7 +623,10 @@ When cursor is on a page reference `[[Page Name]]` or tag `#tag`:
 Vimblocks is a narrow fork of
 [vipzhicheng/logseq-plugin-vim-shortcuts](https://github.com/vipzhicheng/logseq-plugin-vim-shortcuts)
 at commit `d79d2663f7751a4cdcd0ef67ccad35241540b6a3`. Its MIT license and upstream
-copyright notice are preserved in [LICENSE](LICENSE).
+copyright notice are preserved in
+[UPSTREAM-LICENSE-MIT](UPSTREAM-LICENSE-MIT). Vimblocks modifications and the
+combined distribution are released under the same GNU Affero General Public
+License v3 used by Logseq.
 
 ## Support the Project
 
@@ -639,7 +643,9 @@ See [CHANGELOG.md](CHANGELOG.md) for version history and updates.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+GNU Affero General Public License v3.0 only (`AGPL-3.0-only`) - see
+[LICENSE](LICENSE). The upstream Vim Shortcuts MIT notice is preserved in
+[UPSTREAM-LICENSE-MIT](UPSTREAM-LICENSE-MIT).
 
 ## Acknowledgments
 

@@ -15,9 +15,22 @@ test("stages both loadable plugins and installation instructions", async () => {
     JSON.stringify({ name: "vimblocks", version: "9.8.7" })
   );
   await writeFile(path.join(root, "dist", "index.html"), "modal");
+  await writeFile(path.join(root, "dist", "LICENSE"), "AGPL-3.0-only");
+  await writeFile(
+    path.join(root, "dist", "UPSTREAM-LICENSE-MIT"),
+    "MIT upstream"
+  );
   await writeFile(
     path.join(root, "companion", "dist", "index.html"),
     "companion"
+  );
+  await writeFile(
+    path.join(root, "companion", "dist", "LICENSE"),
+    "AGPL-3.0-only"
+  );
+  await writeFile(
+    path.join(root, "companion", "dist", "UPSTREAM-LICENSE-MIT"),
+    "MIT upstream"
   );
 
   const result = await stageRelease({
@@ -37,6 +50,19 @@ test("stages both loadable plugins and installation instructions", async () => {
     ),
     "companion"
   );
+  for (const plugin of ["vimblocks", "vimblocks-companion"]) {
+    assert.equal(
+      await readFile(path.join(result.stagePath, plugin, "LICENSE"), "utf8"),
+      "AGPL-3.0-only"
+    );
+    assert.equal(
+      await readFile(
+        path.join(result.stagePath, plugin, "UPSTREAM-LICENSE-MIT"),
+        "utf8"
+      ),
+      "MIT upstream"
+    );
+  }
   assert.match(
     await readFile(path.join(result.stagePath, "INSTALL.txt"), "utf8"),
     /Load unpacked plugin/
