@@ -38,10 +38,14 @@ import { cutAtNormalCursor } from "@/keybindings/cut";
 import { yankCurrentBlockContent } from "@/keybindings/copyCurrentBlockContent";
 import { deleteCurrentBlock } from "@/keybindings/deleteCurrentBlock";
 import {
-  isTextEntryActive,
   isTextEntryEvent,
 } from "@/runtime/context-guard";
 import { persistNormalModeContent } from "@/runtime/normal-mode-mutation";
+import {
+  addHostKeydownListener,
+  configureHostCapture,
+  type HostKeydownEvent,
+} from "@/runtime/host-bridge";
 
 type OperatorObject =
   | "inner-word"
@@ -402,33 +406,37 @@ export default (logseq: ILSPluginUser) => {
   }
 
   disposeOperatorSequences();
-  const targetWindow = window.top;
-  if (!targetWindow) {
-    return;
-  }
+  configureHostCapture(sequences.flatMap((sequence) => sequence.tokens));
 
   let pendingTokens: string[] = [];
   const clearPending = () => {
     pendingTokens = [];
   };
-  const handleKeydown = async (event: KeyboardEvent) => {
+  const handleKeydown = async (event: HostKeydownEvent) => {
     const searchStore = useSearchStore();
+    if (event.key === "Escape") {
+      clearPending();
+      resetNumber();
+      if (event.contentEditable) {
+        setTimeout(() => {
+          void searchStore.moveCursorRight();
+        }, 50);
+      } else if (!event.textEntryActive) {
+        await searchStore.moveCursorRight();
+      }
+      return;
+    }
+
     if (!shouldCaptureNormalModeKey({
       composing: event.isComposing,
       repeat: event.repeat,
       visualMode: searchStore.visualMode,
-      textEntryActive:
-        isTextEntryEvent(event) || isTextEntryActive(),
+      textEntryActive: isTextEntryEvent(event) || event.textEntryActive,
     })) {
       clearPending();
       return;
     }
 
-    if (event.key === "Escape") {
-      clearPending();
-      resetNumber();
-      return;
-    }
     if (!beforeActionExecute()) {
       clearPending();
       return;
@@ -480,9 +488,9 @@ export default (logseq: ILSPluginUser) => {
     }
   };
 
-  targetWindow.addEventListener("keydown", handleKeydown, true);
+  const removeListener = addHostKeydownListener(handleKeydown);
   disposeOperatorSequenceListener = () => {
     clearPending();
-    targetWindow.removeEventListener("keydown", handleKeydown, true);
+    removeListener();
   };
 };

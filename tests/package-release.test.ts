@@ -25,6 +25,7 @@ test("stages one loadable plugin and installation instructions", async () => {
     JSON.stringify({
       name: "vimblocks",
       version: "9.8.7",
+      effect: true,
       logseq: { id: "logseq-plugin-vim-shortcuts" },
     })
   );
@@ -50,6 +51,12 @@ test("stages one loadable plugin and installation instructions", async () => {
   assert.equal(
     await readFile(path.join(result.stagePath, "UPSTREAM-LICENSE-MIT"), "utf8"),
     "MIT upstream"
+  );
+  assert.equal(
+    JSON.parse(
+      await readFile(path.join(result.stagePath, "package.json"), "utf8")
+    ).effect,
+    true
   );
   assert.deepEqual((await readdir(result.stagePath)).sort(), [
     "INSTALL.txt",

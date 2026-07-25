@@ -24,20 +24,20 @@ import {
   type VimRegisterKind,
   type VimRegisterValue,
 } from "@/runtime/vim-register";
+import { clearHostHighlights } from "@/runtime/host-bridge";
 
 export const clearBlocksHighlight = async (blocks: BlockEntity[]) => {
-  for (const block of blocks) {
-    const el = top!.document.getElementById(`block-content-${block.uuid}`);
-    if (el?.innerHTML) {
-      // Use global regex to replace ALL highlight marks in this block
-      const regex = /<mark class="vim-shortcuts-highlight">(.*?)<\/mark>/g;
-      el.innerHTML = el.innerHTML.replace(regex, "$1");
+  const uuids: string[] = [];
+  const collect = (items: BlockEntity[]) => {
+    for (const block of items) {
+      uuids.push(block.uuid);
+      if (block.children && block.children.length > 0) {
+        collect(block.children as BlockEntity[]);
+      }
     }
-
-    if (block.children && block.children.length > 0) {
-      await clearBlocksHighlight(block.children as BlockEntity[]);
-    }
-  }
+  };
+  collect(blocks);
+  clearHostHighlights(uuids);
 };
 
 export const clearCurrentPageBlocksHighlight = async () => {

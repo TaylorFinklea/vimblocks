@@ -92,8 +92,8 @@ Extract `release/vimblocks-<version>.zip`, then follow the release steps above.
 
 ### Upgrade from the two-plugin pilot
 
-Vimblocks 0.4.0 includes the PDF command that previously shipped as Vimblocks
-Companion. After loading Vimblocks 0.4.0, remove the separate
+Vimblocks 0.4.1 includes the PDF command that previously shipped as Vimblocks
+Companion. After loading Vimblocks 0.4.1, remove the separate
 **Vimblocks Companion** plugin from Logseq. Keeping it installed would register
 the same PDF command twice.
 

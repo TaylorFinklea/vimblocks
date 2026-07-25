@@ -7,6 +7,11 @@ import {
   setWaitingForInput,
 } from "@/common/funcs";
 import { useSearchStore } from "@/stores/search";
+import {
+  addHostKeydownListener,
+  setHostCaptureAll,
+  type HostKeydownEvent,
+} from "@/runtime/host-bridge";
 
 export default (logseq: ILSPluginUser) => {
   // Check if this keybinding is disabled
@@ -58,7 +63,8 @@ export default (logseq: ILSPluginUser) => {
         logseq.UI.showMsg("Type a character to replace with...", "info");
 
         // Set up one-time keyboard listener for the replacement character
-        const handleKeyPress = async (e: KeyboardEvent) => {
+        let removeKeyListener = () => undefined;
+        const handleKeyPress = async (e: HostKeydownEvent) => {
           // Ignore modifier keys
           if (
             e.key.length > 1 &&
@@ -68,10 +74,11 @@ export default (logseq: ILSPluginUser) => {
           }
 
           e.preventDefault();
-          e.stopPropagation();
+          e.stopImmediatePropagation();
 
           // Remove the listener and clear waiting state
-          top!.document.removeEventListener("keydown", handleKeyPress, true);
+          removeKeyListener();
+          setHostCaptureAll(false);
           setWaitingForInput(false);
 
           let replacementChar = e.key;
@@ -154,12 +161,14 @@ export default (logseq: ILSPluginUser) => {
 
         // Set waiting for input state with cleanup function
         const cleanup = () => {
-          top!.document.removeEventListener("keydown", handleKeyPress, true);
+          removeKeyListener();
+          setHostCaptureAll(false);
         };
         setWaitingForInput(true, cleanup);
 
         // Add keyboard listener with capture phase to intercept the key
-        top!.document.addEventListener("keydown", handleKeyPress, true);
+        setHostCaptureAll(true);
+        removeKeyListener = addHostKeydownListener(handleKeyPress);
       }
     );
   });

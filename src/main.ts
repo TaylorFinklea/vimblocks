@@ -35,6 +35,11 @@ import {
   registerOpenPdfCommand,
   type OpenPdfApi,
 } from "./open-pdf-command";
+import {
+  addHostKeydownListener,
+  installHostBridge,
+  type HostKeydownEvent,
+} from "./runtime/host-bridge";
 
 const defineSettings: SettingSchemaDesc[] = [
   {
@@ -58,6 +63,7 @@ logseq.useSettingsSchema(defineSettings);
 
 async function main() {
   const lifecycle = new DisposableRegistry();
+  lifecycle.add(await installHostBridge());
 
   // settings
   initSettings();
@@ -249,7 +255,7 @@ async function main() {
   };
 
   // Global keydown handler for character search (f/t commands)
-  const handleGlobalKeydown = async (e: KeyboardEvent) => {
+  const handleGlobalKeydown = async (e: HostKeydownEvent) => {
     const searchStore = useSearchStore();
 
     if (searchStore.waitingForChar) {
@@ -271,12 +277,7 @@ async function main() {
     }
   };
 
-  lifecycle.listen(
-    window.top!.document,
-    "keydown",
-    handleGlobalKeydown as EventListener,
-    true
-  );
+  lifecycle.add(addHostKeydownListener(handleGlobalKeydown));
 
   // Global click handler to close UI when clicking outside
   const handleDocumentClick = (e: MouseEvent) => {

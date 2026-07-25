@@ -1,6 +1,7 @@
 import { clearCurrentPageBlocksHighlight, hideMainUI } from "@/common/funcs";
 import { BlockEntity, BlockUUID } from "@logseq/libs/dist/LSPlugin";
 import { defineStore } from "pinia";
+import { highlightHostText, setHostCaptureAll } from "@/runtime/host-bridge";
 
 // Track pending highlight timeout to prevent multiple highlights
 let pendingHighlightTimeout: number | null = null;
@@ -199,36 +200,22 @@ async function highlightInput(block, input, matchOffset?: number) {
 
   // Schedule new highlight with a small delay
   pendingHighlightTimeout = setTimeout(async () => {
-    const el = top!.document.getElementById(`block-content-${block.uuid}`);
-
-    if (el) {
-      // If matchOffset is specified, we need to find the exact position in the text
-      if (matchOffset !== undefined) {
-        // Get the block to access original content
-        const blockData = await logseq.Editor.getBlock(block.uuid);
-        if (blockData) {
-          // Map original position to rendered position
-          const renderedOffset = mapToRenderedPosition(blockData.content, matchOffset);
-
-          // If we got a valid rendered position, use it
-          if (renderedOffset !== undefined && renderedOffset !== -1) {
-            highlightAtTextOffset(el, renderedOffset, input.length);
-          } else {
-            // Fallback: try to highlight at original position
-            highlightAtTextOffset(el, matchOffset, input.length);
-          }
-        } else {
-          // Fallback if we can't get block data
-          highlightAtTextOffset(el, matchOffset, input.length);
-        }
-      } else {
-        // Original behavior for backward compatibility
-        let spanTab: Element[] = [];
-        spanTab = splitTextFromHtml(el.innerHTML);
-        spanTab = processBlockSegments(spanTab, input, matchOffset);
-        el.innerHTML = spanTab.join("");
-      }
+    let renderedOffset: number | undefined;
+    if (matchOffset !== undefined) {
+      const blockData = await logseq.Editor.getBlock(block.uuid);
+      renderedOffset = blockData
+        ? mapToRenderedPosition(blockData.content, matchOffset)
+        : matchOffset;
     }
+    highlightHostText({
+      uuid: block.uuid,
+      offset:
+        renderedOffset !== undefined && renderedOffset !== -1
+          ? renderedOffset
+          : matchOffset,
+      length: input.length,
+      text: input,
+    });
     pendingHighlightTimeout = null;
   }, 50) as unknown as number;
 }
@@ -525,56 +512,6 @@ function normalizeToVisiblePosition(originalContent: string, pos: number): numbe
 function isVisiblePosition(originalContent: string, pos: number): boolean {
   const positionMap = buildPositionMap(originalContent);
   return positionMap[pos] !== -1 && positionMap[pos] !== undefined;
-}
-
-function highlightAtTextOffset(element: HTMLElement, offset: number, length: number) {
-  // Get all text nodes first (before any DOM modification)
-  const textNodes: Text[] = [];
-  const walker = document.createTreeWalker(
-    element,
-    NodeFilter.SHOW_TEXT,
-    null
-  );
-
-  let node: Node | null;
-  while ((node = walker.nextNode())) {
-    textNodes.push(node as Text);
-  }
-
-  // Find the target text node
-  let currentOffset = 0;
-  for (const textNode of textNodes) {
-    const nodeLength = textNode.textContent?.length || 0;
-
-    // Check if our match starts in this text node
-    if (offset >= currentOffset && offset < currentOffset + nodeLength) {
-      const startInNode = offset - currentOffset;
-      const endInNode = Math.min(startInNode + length, nodeLength);
-
-      // Split the text node to insert the mark
-      const beforeText = textNode.textContent?.substring(0, startInNode) || "";
-      const matchText = textNode.textContent?.substring(startInNode, endInNode) || "";
-      const afterText = textNode.textContent?.substring(endInNode) || "";
-
-      const mark = document.createElement('mark');
-      mark.className = 'vim-shortcuts-highlight';
-      mark.textContent = matchText;
-
-      const fragment = document.createDocumentFragment();
-      if (beforeText) {
-        fragment.appendChild(document.createTextNode(beforeText));
-      }
-      fragment.appendChild(mark);
-      if (afterText) {
-        fragment.appendChild(document.createTextNode(afterText));
-      }
-
-      textNode.parentNode?.replaceChild(fragment, textNode);
-      return;
-    }
-
-    currentOffset += nodeLength;
-  }
 }
 
 export const useSearchStore = defineStore("search", {
@@ -1304,6 +1241,7 @@ export const useSearchStore = defineStore("search", {
     // Start waiting for character (for f/F commands)
     startCharSearch(mode: string) {
       this.waitingForChar = true;
+      setHostCaptureAll(true);
       this.charSearchMode = mode;
       const direction = mode === 'F' ? 'backward' : 'forward';
       logseq.UI.showMsg(`Press a character to find ${direction}`, "info");
@@ -1314,6 +1252,7 @@ export const useSearchStore = defineStore("search", {
       if (!this.waitingForChar) return;
 
       this.waitingForChar = false;
+      setHostCaptureAll(false);
       const mode = this.charSearchMode;
       this.charSearchMode = "";
 
@@ -1327,6 +1266,7 @@ export const useSearchStore = defineStore("search", {
     // Cancel character search
     cancelCharSearch() {
       this.waitingForChar = false;
+      setHostCaptureAll(false);
       this.charSearchMode = "";
     },
 

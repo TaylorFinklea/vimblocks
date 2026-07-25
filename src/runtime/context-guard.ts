@@ -1,3 +1,5 @@
+import { isHostTextEntryActive } from "./host-bridge.ts";
+
 export interface TextEntryTarget {
   tagName?: string;
   isContentEditable?: boolean;
@@ -45,7 +47,7 @@ export const isContentEditableTarget = (
 ): boolean => Boolean(target?.isContentEditable);
 
 export const getActiveTextEntryTarget = (): TextEntryTarget | null => {
-  return window.top?.document.activeElement as TextEntryTarget | null;
+  return isHostTextEntryActive() ? { tagName: "INPUT" } : null;
 };
 
 export const isTextEntryActive = (): boolean => {
