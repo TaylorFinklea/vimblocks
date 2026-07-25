@@ -75,6 +75,7 @@ test("registers a palette command and configurable non-editing shortcut", async 
     `${command.DB_TASK_CAPTURE_COMMAND_ID}-palette`
   );
   assert.equal(api.shortcuts.length, 1);
+  assert.equal(command.DEFAULT_DB_TASK_CAPTURE_SHORTCUT, "alt+shift+space");
   assert.deepEqual(api.shortcuts[0].keybinding, {
     mode: "non-editing",
     binding: command.DEFAULT_DB_TASK_CAPTURE_SHORTCUT,

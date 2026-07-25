@@ -1,7 +1,7 @@
 import { resolveCaptureAnchorUUID } from "./runtime/db-task-capture.ts";
 
 export const DB_TASK_CAPTURE_COMMAND_ID = "vimblocks-db-task-capture";
-export const DEFAULT_DB_TASK_CAPTURE_SHORTCUT = "mod+shift+space";
+export const DEFAULT_DB_TASK_CAPTURE_SHORTCUT = "alt+shift+space";
 
 type CommandDisposer = void | (() => void);
 

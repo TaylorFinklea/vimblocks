@@ -72,7 +72,7 @@ const defineSettings: SettingSchemaDesc[] = [
   {
     key: "dbTaskCaptureShortcut",
     type: "string",
-    default: "mod+shift+space",
+    default: "alt+shift+space",
     title: "Capture DB task",
     description:
       "Logseq keybinding notation. Leave blank to keep the capture command palette-only.",
