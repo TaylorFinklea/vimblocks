@@ -7,7 +7,10 @@ import {
   setHostNormalModeActive,
 } from "@/runtime/host-bridge";
 import { resolveNormalModeBlockUUID } from "@/runtime/cursor-block";
-import { resolveAdjacentVisibleBlockUUID } from "@/runtime/visible-block-navigation";
+import {
+  resolveAdjacentVisibleBlockUUID,
+  type VerticalDirection,
+} from "@/runtime/visible-block-navigation";
 
 // Track pending highlight timeout to prevent multiple highlights
 let pendingHighlightTimeout: number | null = null;
@@ -1018,6 +1021,59 @@ export const useSearchStore = defineStore("search", {
       }
     },
 
+    async moveCursorHalfPage(
+      visibleBlockUUIDs: readonly string[],
+      viewportBlockUUIDs: readonly string[],
+      direction: VerticalDirection
+    ) {
+      if (!this.cursorMode || !this.cursorBlockUUID) return;
+
+      const distance = Math.max(
+        1,
+        Math.floor([...new Set(viewportBlockUUIDs)].length / 2)
+      );
+      let targetBlockUUID: string | undefined;
+      for (let step = distance; step >= 1 && !targetBlockUUID; step--) {
+        targetBlockUUID = resolveAdjacentVisibleBlockUUID(
+          visibleBlockUUIDs,
+          this.cursorBlockUUID,
+          direction,
+          step
+        );
+      }
+      if (!targetBlockUUID) return;
+
+      const targetBlock = await logseq.Editor.getBlock(targetBlockUUID);
+      if (!targetBlock) return;
+      await logseq.Editor.selectBlock(targetBlock.uuid);
+
+      if (this.visualMode) {
+        this.exitVisualMode();
+      }
+
+      this.cursorBlockUUID = targetBlock.uuid;
+      this.cursorBlockContent = targetBlock.content;
+      if (this.cursorPosition >= targetBlock.content.length) {
+        this.cursorPosition = normalizeToVisiblePosition(
+          targetBlock.content,
+          Math.max(0, targetBlock.content.length - 1)
+        );
+      } else {
+        this.cursorPosition = normalizeToVisiblePosition(
+          targetBlock.content,
+          this.cursorPosition
+        );
+      }
+
+      if (targetBlock.content.length > 0) {
+        highlightInput(
+          { uuid: targetBlock.uuid },
+          this.getCursorChar(),
+          this.cursorPosition
+        );
+      }
+    },
+
     // Get character at cursor position
     getCursorChar() {
       if (!this.cursorBlockContent || this.cursorPosition >= this.cursorBlockContent.length) {
@@ -1033,12 +1089,13 @@ export const useSearchStore = defineStore("search", {
 
     // Move to start of next word (w)
     async moveWordForward() {
-      if (!this.cursorMode) return;
+      if (!this.cursorMode || !this.cursorBlockUUID) return;
 
-      const blockUUID = await logseq.Editor.getCurrentBlock().then(b => b?.uuid);
-      if (!blockUUID || this.cursorBlockUUID !== blockUUID) return;
-
-      const content = this.cursorBlockContent;
+      const blockUUID = this.cursorBlockUUID;
+      const block = await logseq.Editor.getBlock(blockUUID);
+      if (!block) return;
+      const content = block.content;
+      this.cursorBlockContent = content;
       let pos = this.cursorPosition;
 
       // Skip current word (only count visible characters)

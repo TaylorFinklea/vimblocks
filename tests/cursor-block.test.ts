@@ -6,10 +6,10 @@ import {
   resolveNormalModeBlockUUID,
 } from "../src/runtime/cursor-block.ts";
 
-test("uses Logseq's current editing block when available", () => {
+test("prefers the Vim-owned block while normal mode is active", () => {
   assert.equal(
     resolveCurrentBlockUUID("editing-block", true, "cursor-block"),
-    "editing-block"
+    "cursor-block"
   );
 });
 

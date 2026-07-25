@@ -25,6 +25,19 @@ test("deduplicates repeated rendered instances before resolving adjacency", () =
   );
 });
 
+test("moves by a requested number of rendered blocks", () => {
+  const visible = ["first", "second", "third", "fourth", "fifth"];
+
+  assert.equal(
+    resolveAdjacentVisibleBlockUUID(visible, "second", "down", 2),
+    "fourth"
+  );
+  assert.equal(
+    resolveAdjacentVisibleBlockUUID(visible, "fourth", "up", 2),
+    "second"
+  );
+});
+
 test("stops at rendered stream edges", () => {
   assert.equal(
     resolveAdjacentVisibleBlockUUID(["first", "second"], "first", "up"),

@@ -32,3 +32,19 @@ through date arithmetic.
 **Rationale**: Verified state transitions remove timing dependence, owned
 identity survives Logseq selection churn, and rendered order matches what the
 user can actually see without assuming journal dates or page boundaries.
+
+## 2026-07-25 Base page motion and cursor styling on validated host state
+
+**Context**: Logseq does not expose its multi-page journal viewport through the
+plugin API, repeated one-block jumps can leave intermediate cursor marks during
+host re-renders, and a free-form CSS color setting would permit malformed style
+injection.
+**Decision**: Have the host bridge report rendered blocks intersecting the
+viewport, define Ctrl-U/Ctrl-D as half that unique-block count, and select only
+the final rendered-order target. Accept hexadecimal cursor colors only and fall
+back to the existing `#ffff00`.
+**Alternatives considered**: Use a fixed block count; scroll pixels without
+moving the Vim cursor; issue repeated j/k actions; accept arbitrary CSS colors.
+**Rationale**: Viewport-derived distance follows the visible journal stream,
+one final selection preserves a single cursor mark, and hex validation keeps
+the setting predictable and safe to inject.

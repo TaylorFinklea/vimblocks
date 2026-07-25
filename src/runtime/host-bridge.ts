@@ -20,6 +20,7 @@ export interface HostKeydownEvent {
   blockEditorActive: boolean;
   blockUUID?: string;
   visibleBlockUUIDs: string[];
+  viewportBlockUUIDs: string[];
   target?: unknown;
   composedPath(): unknown[];
   preventDefault(): void;
@@ -74,6 +75,11 @@ const onMessage = (event: MessageEvent): void => {
       typeof data.blockUUID === "string" ? data.blockUUID : undefined,
     visibleBlockUUIDs: Array.isArray(data.visibleBlockUUIDs)
       ? data.visibleBlockUUIDs.filter(
+          (uuid: unknown): uuid is string => typeof uuid === "string"
+        )
+      : [],
+    viewportBlockUUIDs: Array.isArray(data.viewportBlockUUIDs)
+      ? data.viewportBlockUUIDs.filter(
           (uuid: unknown): uuid is string => typeof uuid === "string"
         )
       : [],

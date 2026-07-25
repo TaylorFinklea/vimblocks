@@ -412,6 +412,9 @@ export default (logseq: ILSPluginUser) => {
     ["move-down", "down"],
     ["move-up", "up"],
     ["move-right", "right"],
+    ["move-word-forward", "wordForward"],
+    ["move-half-page-down", "halfPageDown"],
+    ["move-half-page-up", "halfPageUp"],
   ] as const;
   for (const [commandId, settingKey] of motionBindings) {
     if (!beforeActionRegister(settingKey)) continue;
@@ -453,6 +456,7 @@ export default (logseq: ILSPluginUser) => {
     }
 
     if (
+      pendingTokens.length === 0 &&
       !event.isComposing &&
       !event.repeat &&
       !isTextEntryEvent(event) &&
@@ -477,6 +481,20 @@ export default (logseq: ILSPluginUser) => {
           await searchStore.moveCursorUp(event.visibleBlockUUIDs);
         } else if (motionResult.commandId === "move-right") {
           await searchStore.moveCursorRight();
+        } else if (motionResult.commandId === "move-word-forward") {
+          await searchStore.moveWordForward();
+        } else if (motionResult.commandId === "move-half-page-down") {
+          await searchStore.moveCursorHalfPage(
+            event.visibleBlockUUIDs,
+            event.viewportBlockUUIDs,
+            "down"
+          );
+        } else if (motionResult.commandId === "move-half-page-up") {
+          await searchStore.moveCursorHalfPage(
+            event.visibleBlockUUIDs,
+            event.viewportBlockUUIDs,
+            "up"
+          );
         }
         return;
       }

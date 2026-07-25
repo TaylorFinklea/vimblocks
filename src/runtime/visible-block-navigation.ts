@@ -3,7 +3,8 @@ export type VerticalDirection = "up" | "down";
 export const resolveAdjacentVisibleBlockUUID = (
   visibleBlockUUIDs: readonly string[],
   currentBlockUUID: string,
-  direction: VerticalDirection
+  direction: VerticalDirection,
+  distance = 1
 ): string | undefined => {
   const uniqueUUIDs = [...new Set(visibleBlockUUIDs)];
   const currentIndex = uniqueUUIDs.indexOf(currentBlockUUID);
@@ -11,7 +12,10 @@ export const resolveAdjacentVisibleBlockUUID = (
     return undefined;
   }
 
+  const normalizedDistance = Math.max(1, Math.floor(distance));
   const adjacentIndex =
-    direction === "down" ? currentIndex + 1 : currentIndex - 1;
+    direction === "down"
+      ? currentIndex + normalizedDistance
+      : currentIndex - normalizedDistance;
   return uniqueUUIDs[adjacentIndex];
 };

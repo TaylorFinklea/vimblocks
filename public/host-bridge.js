@@ -72,6 +72,26 @@
     return uuids;
   };
 
+  const viewportBlockUUIDs = () => {
+    const uuids = [];
+    const seen = new Set();
+    for (const element of document.querySelectorAll('[id^="block-content-"]')) {
+      const rect = element.getBoundingClientRect();
+      if (
+        rect.bottom <= 0 ||
+        rect.top >= window.innerHeight ||
+        element.closest(".ls-page-title")
+      ) {
+        continue;
+      }
+      const uuid = element.id.substring("block-content-".length);
+      if (!uuid || seen.has(uuid)) continue;
+      seen.add(uuid);
+      uuids.push(uuid);
+    }
+    return uuids;
+  };
+
   const blockIsReady = (uuid) => {
     const element = document.getElementById(`block-content-${uuid}`);
     const block =
@@ -233,6 +253,7 @@
       blockEditorActive,
       blockUUID,
       visibleBlockUUIDs: visibleBlockUUIDs(),
+      viewportBlockUUIDs: viewportBlockUUIDs(),
     };
     if (
       shouldForwardEscape &&

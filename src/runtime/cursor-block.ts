@@ -3,8 +3,8 @@ export const resolveCurrentBlockUUID = (
   cursorMode: boolean,
   cursorBlockUUID: string | undefined
 ): string | undefined =>
-  editingBlockUUID ??
-  (cursorMode ? cursorBlockUUID : undefined);
+  (cursorMode ? cursorBlockUUID : undefined) ??
+  editingBlockUUID;
 
 export const resolveNormalModeBlockUUID = (
   requestedBlockUUID: string | undefined,

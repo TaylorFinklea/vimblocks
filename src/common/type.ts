@@ -34,6 +34,8 @@ export const keyBindingsMeta: KeyBindingMeta[] = [
   { key: 'left', label: 'Move Left', description: 'Move cursor left', category: 'navigation', defaultBinding: 'h' },
   { key: 'right', label: 'Move Right', description: 'Move cursor right', category: 'navigation', defaultBinding: 'l' },
   { key: 'wordForward', label: 'Next Word', description: 'Move to start of next word', category: 'navigation', defaultBinding: 'w' },
+  { key: 'halfPageDown', label: 'Half Page Down', description: 'Move the cursor down by half the visible page', category: 'navigation', defaultBinding: 'ctrl+d' },
+  { key: 'halfPageUp', label: 'Half Page Up', description: 'Move the cursor up by half the visible page', category: 'navigation', defaultBinding: 'ctrl+u' },
   { key: 'wordBackward', label: 'Previous Word', description: 'Move to start of previous word', category: 'navigation', defaultBinding: 'b' },
   { key: 'wordEnd', label: 'Word End', description: 'Move to end of word', category: 'navigation', defaultBinding: 'e' },
   { key: 'lineEnd', label: 'Line End', description: 'Move to end of line', category: 'navigation', defaultBinding: 'shift+4' },

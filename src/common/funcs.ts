@@ -538,6 +538,8 @@ export const defaultSettings = {
     left: "h",
     right: "l",
     wordForward: "w",
+    halfPageDown: "ctrl+d",
+    halfPageUp: "ctrl+u",
     wordBackward: "b",
     wordEnd: "e",
     lineEnd: "shift+4",
@@ -592,6 +594,7 @@ export const defaultSettings = {
   disabled: false,
   showRecentEmojis: false,
   openPdfShortcut: "mod+alt+p",
+  cursorColor: "#ffff00",
 };
 
 export type DefaultSettingsType = typeof defaultSettings;

@@ -40,10 +40,12 @@ test("loads the host script and relays validated key events", async () => {
     let received = "";
     let receivedBlockUUID: string | undefined;
     let visibleBlockUUIDs: string[] = [];
+    let viewportBlockUUIDs: string[] = [];
     const removeKeydown = addHostKeydownListener((event) => {
       received = event.key;
       receivedBlockUUID = event.blockUUID;
       visibleBlockUUIDs = event.visibleBlockUUIDs;
+      viewportBlockUUIDs = event.viewportBlockUUIDs;
     });
 
     configureHostCapture(["x", "d"]);
@@ -66,6 +68,7 @@ test("loads the host script and relays validated key events", async () => {
         blockEditorActive: false,
         blockUUID: "block-1",
         visibleBlockUUIDs: ["block-2", "block-1"],
+        viewportBlockUUIDs: ["block-1"],
       },
     });
 
@@ -73,6 +76,7 @@ test("loads the host script and relays validated key events", async () => {
     assert.equal(received, "x");
     assert.equal(receivedBlockUUID, "block-1");
     assert.deepEqual(visibleBlockUUIDs, ["block-2", "block-1"]);
+    assert.deepEqual(viewportBlockUUIDs, ["block-1"]);
     assert.deepEqual(messages, [
       {
         channel: "vimblocks-host-bridge-v1",

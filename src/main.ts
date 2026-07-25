@@ -13,6 +13,7 @@ import {
   getCommandFromHistoryForward,
   hideMainUI,
   cancelInputListener,
+  getSettings,
 } from "./common/funcs";
 import { createPinia } from "pinia";
 
@@ -40,6 +41,7 @@ import {
   installHostBridge,
   type HostKeydownEvent,
 } from "./runtime/host-bridge";
+import { cursorHighlightStyle } from "./runtime/cursor-style";
 
 const defineSettings: SettingSchemaDesc[] = [
   {
@@ -57,6 +59,14 @@ const defineSettings: SettingSchemaDesc[] = [
     description:
       "Logseq keybinding notation. Leave blank to keep the command palette-only.",
   },
+  {
+    key: "cursorColor",
+    type: "string",
+    default: "#ffff00",
+    title: "Vim cursor color",
+    description:
+      "Hex color for the normal-mode character cursor. Reload Logseq after changing it.",
+  },
 ];
 
 logseq.useSettingsSchema(defineSettings);
@@ -69,12 +79,7 @@ async function main() {
   initSettings();
 
   // Inject CSS for vim-shortcuts-highlight to Logseq main page
-  logseq.provideStyle(`
-    mark.vim-shortcuts-highlight {
-      padding-left: 0 !important;
-      padding-right: 0 !important;
-    }
-  `);
+  logseq.provideStyle(cursorHighlightStyle(getSettings().cursorColor));
 
   logseq.provideModel({
     async openMarks() {

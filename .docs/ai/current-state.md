@@ -11,7 +11,7 @@
 ## Blockers
 
 - Physical PDF rerun remains under `tesela-8c9v.4.9`; Computer Use native pipe
-  became unavailable after the modal-repair reproduction.
+  is intermittent, with Electron DevTools fallback proven for Logseq only.
 
 ## Open questions
 
