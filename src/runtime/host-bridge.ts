@@ -17,6 +17,9 @@ export interface HostKeydownEvent {
   isComposing: boolean;
   textEntryActive: boolean;
   contentEditable: boolean;
+  blockEditorActive: boolean;
+  blockUUID?: string;
+  visibleBlockUUIDs: string[];
   target?: unknown;
   composedPath(): unknown[];
   preventDefault(): void;
@@ -30,7 +33,9 @@ const listeners = new Set<HostKeydownListener>();
 let installed = false;
 let textEntryActive = false;
 let configuredTokens: string[] = [];
+let normalModeTokens: string[] = [];
 let captureAll = false;
+let normalModeActive = false;
 
 const postHostMessage = (message: Record<string, unknown>): void => {
   window.parent.postMessage({ channel: CHANNEL, ...message }, "*");
@@ -44,7 +49,9 @@ const onMessage = (event: MessageEvent): void => {
     postHostMessage({
       type: "configure",
       tokens: configuredTokens,
+      normalModeTokens,
       captureAll,
+      normalModeActive,
     });
     return;
   }
@@ -62,6 +69,14 @@ const onMessage = (event: MessageEvent): void => {
     isComposing: Boolean(data.isComposing),
     textEntryActive,
     contentEditable: Boolean(data.contentEditable),
+    blockEditorActive: Boolean(data.blockEditorActive),
+    blockUUID:
+      typeof data.blockUUID === "string" ? data.blockUUID : undefined,
+    visibleBlockUUIDs: Array.isArray(data.visibleBlockUUIDs)
+      ? data.visibleBlockUUIDs.filter(
+          (uuid: unknown): uuid is string => typeof uuid === "string"
+        )
+      : [],
     composedPath: () => [],
     preventDefault: () => undefined,
     stopPropagation: () => undefined,
@@ -99,12 +114,36 @@ export const addHostKeydownListener = (
 
 export const configureHostCapture = (tokens: readonly string[]): void => {
   configuredTokens = [...new Set(tokens)];
-  postHostMessage({ type: "configure", tokens: configuredTokens, captureAll });
+  postHostMessage({
+    type: "configure",
+    tokens: configuredTokens,
+    normalModeTokens,
+    captureAll,
+    normalModeActive,
+  });
+};
+
+export const configureHostNormalModeCapture = (
+  tokens: readonly string[]
+): void => {
+  normalModeTokens = [...new Set(tokens)];
+  postHostMessage({
+    type: "configure",
+    tokens: configuredTokens,
+    normalModeTokens,
+    captureAll,
+    normalModeActive,
+  });
 };
 
 export const setHostCaptureAll = (value: boolean): void => {
   captureAll = value;
   postHostMessage({ type: "capture-all", value: captureAll });
+};
+
+export const setHostNormalModeActive = (value: boolean): void => {
+  normalModeActive = value;
+  postHostMessage({ type: "normal-mode", value: normalModeActive });
 };
 
 export const isHostTextEntryActive = (): boolean => textEntryActive;

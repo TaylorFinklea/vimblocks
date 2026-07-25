@@ -4,7 +4,9 @@ import test from "node:test";
 import {
   addHostKeydownListener,
   configureHostCapture,
+  configureHostNormalModeCapture,
   installHostBridge,
+  setHostNormalModeActive,
 } from "../src/runtime/host-bridge.ts";
 
 test("loads the host script and relays validated key events", async () => {
@@ -36,11 +38,17 @@ test("loads the host script and relays validated key events", async () => {
       },
     });
     let received = "";
+    let receivedBlockUUID: string | undefined;
+    let visibleBlockUUIDs: string[] = [];
     const removeKeydown = addHostKeydownListener((event) => {
       received = event.key;
+      receivedBlockUUID = event.blockUUID;
+      visibleBlockUUIDs = event.visibleBlockUUIDs;
     });
 
     configureHostCapture(["x", "d"]);
+    configureHostNormalModeCapture(["h", "j", "k", "l"]);
+    setHostNormalModeActive(true);
     eventListeners.get("message")?.({
       source: parent,
       data: {
@@ -55,26 +63,49 @@ test("loads the host script and relays validated key events", async () => {
         type: "keydown",
         key: "x",
         code: "KeyX",
+        blockEditorActive: false,
+        blockUUID: "block-1",
+        visibleBlockUUIDs: ["block-2", "block-1"],
       },
     });
 
     assert.deepEqual(scripts, ["./host-bridge.js"]);
     assert.equal(received, "x");
+    assert.equal(receivedBlockUUID, "block-1");
+    assert.deepEqual(visibleBlockUUIDs, ["block-2", "block-1"]);
     assert.deepEqual(messages, [
       {
         channel: "vimblocks-host-bridge-v1",
         type: "configure",
         tokens: ["x", "d"],
+        normalModeTokens: [],
         captureAll: false,
+        normalModeActive: false,
       },
       {
         channel: "vimblocks-host-bridge-v1",
         type: "configure",
         tokens: ["x", "d"],
+        normalModeTokens: ["h", "j", "k", "l"],
         captureAll: false,
+        normalModeActive: false,
+      },
+      {
+        channel: "vimblocks-host-bridge-v1",
+        type: "normal-mode",
+        value: true,
+      },
+      {
+        channel: "vimblocks-host-bridge-v1",
+        type: "configure",
+        tokens: ["x", "d"],
+        normalModeTokens: ["h", "j", "k", "l"],
+        captureAll: false,
+        normalModeActive: true,
       },
     ]);
 
+    setHostNormalModeActive(false);
     removeKeydown();
     dispose();
   } finally {

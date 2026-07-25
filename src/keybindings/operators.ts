@@ -44,6 +44,7 @@ import { persistNormalModeContent } from "@/runtime/normal-mode-mutation";
 import {
   addHostKeydownListener,
   configureHostCapture,
+  configureHostNormalModeCapture,
   type HostKeydownEvent,
 } from "@/runtime/host-bridge";
 
@@ -306,6 +307,7 @@ export const disposeOperatorSequences = (): void => {
 export default (logseq: ILSPluginUser) => {
   const settings = getSettings();
   const sequences: OperatorSequence[] = [];
+  const normalModeSequences: OperatorSequence[] = [];
   const commandsById = new Map(
     OPERATOR_COMMANDS.map((command) => [command.id, command])
   );
@@ -405,26 +407,80 @@ export default (logseq: ILSPluginUser) => {
     });
   }
 
+  const motionBindings = [
+    ["move-left", "left"],
+    ["move-down", "down"],
+    ["move-up", "up"],
+    ["move-right", "right"],
+  ] as const;
+  for (const [commandId, settingKey] of motionBindings) {
+    if (!beforeActionRegister(settingKey)) continue;
+    const configured = settings.keyBindings[settingKey];
+    const bindings = Array.isArray(configured) ? configured : [configured];
+    bindings.forEach((binding) => {
+      normalModeSequences.push({
+        commandId,
+        tokens: expandOperatorBinding(binding, false),
+      });
+    });
+  }
+
   disposeOperatorSequences();
   configureHostCapture(sequences.flatMap((sequence) => sequence.tokens));
+  configureHostNormalModeCapture(
+    normalModeSequences.flatMap((sequence) => sequence.tokens)
+  );
 
   let pendingTokens: string[] = [];
+  let pendingMotionTokens: string[] = [];
   const clearPending = () => {
     pendingTokens = [];
+    pendingMotionTokens = [];
   };
   const handleKeydown = async (event: HostKeydownEvent) => {
     const searchStore = useSearchStore();
     if (event.key === "Escape") {
       clearPending();
       resetNumber();
-      if (event.contentEditable) {
-        setTimeout(() => {
-          void searchStore.moveCursorRight();
-        }, 50);
-      } else if (!event.textEntryActive) {
-        await searchStore.moveCursorRight();
+      if (
+        event.blockEditorActive ||
+        event.contentEditable ||
+        !event.textEntryActive
+      ) {
+        await searchStore.enterNormalMode(event.blockUUID);
       }
       return;
+    }
+
+    if (
+      !event.isComposing &&
+      !event.repeat &&
+      !isTextEntryEvent(event) &&
+      !event.textEntryActive
+    ) {
+      const motionResult = advanceOperatorSequence(
+        normalModeSequences,
+        pendingMotionTokens,
+        keyboardEventToken(event)
+      );
+      pendingMotionTokens = motionResult.pendingTokens;
+      if (motionResult.status === "pending") {
+        return;
+      }
+      if (motionResult.status === "matched") {
+        pendingMotionTokens = [];
+        if (motionResult.commandId === "move-left") {
+          await searchStore.moveCursorLeft();
+        } else if (motionResult.commandId === "move-down") {
+          await searchStore.moveCursorDown(event.visibleBlockUUIDs);
+        } else if (motionResult.commandId === "move-up") {
+          await searchStore.moveCursorUp(event.visibleBlockUUIDs);
+        } else if (motionResult.commandId === "move-right") {
+          await searchStore.moveCursorRight();
+        }
+        return;
+      }
+      pendingMotionTokens = [];
     }
 
     if (!shouldCaptureNormalModeKey({

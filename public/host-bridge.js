@@ -7,7 +7,10 @@
   }
 
   const captureTokens = new Set();
+  const normalModeTokens = new Set();
+  const pendingObservers = new Set();
   let captureAll = false;
+  let normalModeActive = false;
 
   const isTextEntry = (target) => {
     if (!(target instanceof Element)) return false;
@@ -36,6 +39,72 @@
     }
   };
 
+  const blockUUIDForTarget = (target) => {
+    if (!(target instanceof Element)) return undefined;
+    const blockContent = target.closest('[id^="block-content-"]');
+    if (blockContent?.id) {
+      return blockContent.id.substring("block-content-".length);
+    }
+
+    const block = target.closest("[blockid], [data-uuid]");
+    return (
+      block?.getAttribute("blockid") ||
+      block?.getAttribute("data-uuid") ||
+      undefined
+    );
+  };
+
+  const visibleBlockUUIDs = () => {
+    const uuids = [];
+    const seen = new Set();
+    for (const element of document.querySelectorAll('[id^="block-content-"]')) {
+      if (
+        element.getClientRects().length === 0 ||
+        element.closest(".ls-page-title")
+      ) {
+        continue;
+      }
+      const uuid = element.id.substring("block-content-".length);
+      if (!uuid || seen.has(uuid)) continue;
+      seen.add(uuid);
+      uuids.push(uuid);
+    }
+    return uuids;
+  };
+
+  const blockIsReady = (uuid) => {
+    const element = document.getElementById(`block-content-${uuid}`);
+    const block =
+      element?.closest("[blockid], [data-uuid], .ls-block") || element;
+    return (
+      element &&
+      block &&
+      !block.isContentEditable &&
+      !block.querySelector('[contenteditable="true"]')
+    );
+  };
+
+  const postWhenBlockIsReady = (uuid, message) => {
+    if (!uuid || blockIsReady(uuid)) {
+      postToPluginFrames(message);
+      return;
+    }
+
+    const observer = new MutationObserver(() => {
+      if (!blockIsReady(uuid)) return;
+      observer.disconnect();
+      pendingObservers.delete(observer);
+      postToPluginFrames(message);
+    });
+    pendingObservers.add(observer);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["contenteditable"],
+    });
+  };
+
   const clearHighlights = (uuids) => {
     for (const uuid of uuids) {
       const element = document.getElementById(`block-content-${uuid}`);
@@ -47,7 +116,16 @@
     }
   };
 
+  const clearAllHighlights = () => {
+    for (const mark of document.querySelectorAll(
+      "mark.vim-shortcuts-highlight"
+    )) {
+      mark.replaceWith(document.createTextNode(mark.textContent || ""));
+    }
+  };
+
   const highlight = ({ uuid, offset, length, text }) => {
+    clearAllHighlights();
     const element = document.getElementById(`block-content-${uuid}`);
     if (!element) return;
 
@@ -98,9 +176,16 @@
     if (data.type === "configure") {
       captureTokens.clear();
       for (const token of data.tokens || []) captureTokens.add(token);
+      normalModeTokens.clear();
+      for (const token of data.normalModeTokens || []) {
+        normalModeTokens.add(token);
+      }
       captureAll = Boolean(data.captureAll);
+      normalModeActive = Boolean(data.normalModeActive);
     } else if (data.type === "capture-all") {
       captureAll = Boolean(data.value);
+    } else if (data.type === "normal-mode") {
+      normalModeActive = Boolean(data.value);
     } else if (data.type === "clear-highlights") {
       clearHighlights(data.uuids || []);
     } else if (data.type === "highlight") {
@@ -113,17 +198,27 @@
     const textEntryActive = isTextEntry(event.target);
     const contentEditable =
       event.target instanceof Element && event.target.isContentEditable;
+    const blockEditorActive =
+      event.target instanceof Element &&
+      (event.target.matches('[data-testid="block editor"]') ||
+        event.target.id.startsWith("edit-block-"));
+    const blockUUID = blockUUIDForTarget(event.target);
     const shouldCapture =
-      !textEntryActive && (captureAll || captureTokens.has(token));
+      !textEntryActive &&
+      (captureAll ||
+        captureTokens.has(token) ||
+        (normalModeActive && normalModeTokens.has(token)));
     const shouldForwardEscape = event.key === "Escape";
+    const shouldCaptureNormalModeEscape =
+      shouldForwardEscape && normalModeActive && !textEntryActive;
 
     if (!shouldCapture && !shouldForwardEscape) return;
-    if (shouldCapture) {
+    if (shouldCapture || shouldCaptureNormalModeEscape) {
       event.preventDefault();
       event.stopImmediatePropagation();
     }
 
-    postToPluginFrames({
+    const message = {
       type: "keydown",
       key: event.key,
       code: event.code,
@@ -135,7 +230,18 @@
       isComposing: event.isComposing,
       textEntryActive,
       contentEditable,
-    });
+      blockEditorActive,
+      blockUUID,
+      visibleBlockUUIDs: visibleBlockUUIDs(),
+    };
+    if (
+      shouldForwardEscape &&
+      (contentEditable || blockEditorActive)
+    ) {
+      postWhenBlockIsReady(blockUUID, message);
+    } else {
+      postToPluginFrames(message);
+    }
   };
 
   window.addEventListener("message", onMessage);
@@ -149,6 +255,8 @@
       return [...captureTokens];
     },
     dispose() {
+      for (const observer of pendingObservers) observer.disconnect();
+      pendingObservers.clear();
       window.removeEventListener("message", onMessage);
       window.removeEventListener("keydown", onKeydown, true);
     },
