@@ -11,7 +11,7 @@
 ## Implementation
 
 - Palette: `Vimblocks: Capture DB task`
-- Shortcut: `alt+shift+space`; blank setting disables shortcut only
+- Shortcut: `ctrl+shift+t`; blank setting disables shortcut only
 - Parser: local shorthand for today/tomorrow, time, and p1-p4
 - Writer: plain sibling block plus built-in Status/Priority/Scheduled DB properties
 - Anchor: selected block or Vim-owned cursor block
@@ -26,7 +26,7 @@
 - Package: `release/vimblocks-0.5.0-capture.1.zip`
 - Stable install equals `dist`
 - App target: `Logseq`; graph `tesela-keyboard-audit-2026-07-23` only
-- Direct Computer Use: palette entry, Option-Shift-Space shortcut, preview,
+- Direct Computer Use: palette entry, Control-Shift-T shortcut, preview,
   create, cancel, ordinary palette Esc, and one enabled plugin card
 - Created block: `do this thing`; Task; Todo; Urgent; scheduled 2026-07-26 08:00
 - Final renderer reload: exact final asset loaded; immediate input focus/type pass
