@@ -1,6 +1,6 @@
 {
   "name": "vimblocks",
-  "version": "0.4.1",
+  "version": "0.5.0-capture.1",
   "schemaVersion": "1.0.0",
   "license": "AGPL-3.0-only",
   "effect": true,

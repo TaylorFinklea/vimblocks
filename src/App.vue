@@ -1,4 +1,6 @@
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+import DbTaskCapture from "@/components/DbTaskCapture.vue";
+</script>
 
 <template>
   <Command />
@@ -8,6 +10,7 @@
   <Color />
   <CopyText />
   <Settings />
+  <DbTaskCapture />
 </template>
 
 <style></style>

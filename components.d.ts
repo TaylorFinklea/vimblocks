@@ -14,6 +14,7 @@ declare module 'vue' {
     Color: typeof import('./src/components/Color.vue')['default']
     Command: typeof import('./src/components/Command.vue')['default']
     CopyText: typeof import('./src/components/CopyText.vue')['default']
+    DbTaskCapture: typeof import('./src/components/DbTaskCapture.vue')['default']
     ElAutocomplete: typeof import('element-plus/es')['ElAutocomplete']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCheckbox: typeof import('element-plus/es')['ElCheckbox']

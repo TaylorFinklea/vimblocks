@@ -12,6 +12,7 @@ import hotkeys from "hotkeys-js";
 import { useCommandStore } from "@/stores/command";
 import { useColorStore } from "@/stores/color";
 import { useSearchStore } from "@/stores/search";
+import { useDbTaskCaptureStore } from "@/stores/db-task-capture";
 import {
   getActiveTextEntryTarget,
   shouldBlockTextEntryAction,
@@ -223,6 +224,9 @@ export const hideMainUI = () => {
 
   const colorStore = useColorStore();
   colorStore.hide();
+
+  const captureStore = useDbTaskCaptureStore();
+  captureStore.hide();
 
   logseq.hideMainUI({
     restoreEditingCursor: true,

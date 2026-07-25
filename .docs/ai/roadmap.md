@@ -18,6 +18,11 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
   x, diw, custom cyan and restored yellow cursor, normal palette Esc, one
   enabled 0.4.1 card, zero renderer/plugin errors. Verify:
   `pnpm check && pnpm test && pnpm package`.
+- [x] Prototype DB-native natural-language task capture on isolated branch
+  `codex/db-natural-capture`. `tesela-8c9v.4.12`; parse
+  `do this thing tom at 8 p1`, preview the result, and create a Logseq DB
+  Todo/Urgent task scheduled tomorrow at 08:00 without Markdown task syntax.
+  Verify: `pnpm check && pnpm test && pnpm package` plus disposable-graph UI.
 - [?] Verify the file-backed PDF correction in physical Logseq 2.0.1 on
   `tesela-keyboard-audit-2026-07-23`; Computer Use `get_app_state` timed out
   twice on 2026-07-24. Verify: select the encoded `file://` PDF block, run

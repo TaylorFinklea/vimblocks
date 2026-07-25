@@ -42,6 +42,8 @@ import {
   type HostKeydownEvent,
 } from "./runtime/host-bridge";
 import { cursorHighlightStyle } from "./runtime/cursor-style";
+import { registerDbTaskCaptureCommand } from "./db-task-capture-command";
+import { useDbTaskCaptureStore } from "./stores/db-task-capture";
 
 const defineSettings: SettingSchemaDesc[] = [
   {
@@ -66,6 +68,14 @@ const defineSettings: SettingSchemaDesc[] = [
     title: "Vim cursor color",
     description:
       "Hex color for the normal-mode character cursor. Reload Logseq after changing it.",
+  },
+  {
+    key: "dbTaskCaptureShortcut",
+    type: "string",
+    default: "mod+shift+space",
+    title: "Capture DB task",
+    description:
+      "Logseq keybinding notation. Leave blank to keep the capture command palette-only.",
   },
 ];
 
@@ -117,6 +127,23 @@ async function main() {
   registerOwnedCommands(logseq);
   lifecycle.add(
     registerOpenPdfCommand(logseq as unknown as OpenPdfApi)
+  );
+  const captureStore = useDbTaskCaptureStore();
+  lifecycle.add(
+    registerDbTaskCaptureCommand(logseq, {
+      getCursorState: () => {
+        const searchStore = useSearchStore();
+        return {
+          cursorMode: searchStore.cursorMode,
+          cursorBlockUUID: searchStore.cursorBlockUUID,
+        };
+      },
+      openCapture: async (anchorUUID) => {
+        captureStore.show(anchorUUID);
+        await logseq.showMainUI({ autoFocus: true });
+        captureStore.requestFocus();
+      },
+    })
   );
 
   // load marks

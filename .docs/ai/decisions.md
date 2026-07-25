@@ -48,3 +48,19 @@ moving the Vim cursor; issue repeated j/k actions; accept arbitrary CSS colors.
 **Rationale**: Viewport-derived distance follows the visible journal stream,
 one final selection preserves a single cursor mark, and hex validation keeps
 the setting predictable and safe to inject.
+
+## 2026-07-25 Capture tasks through Logseq DB properties
+
+**Context**: Logseq DB represents tasks through its Task class and built-in
+Status, Priority, and Scheduled properties; Markdown `TODO`, `SCHEDULED`, and
+`property::` syntax targets the retired file graph model.
+**Decision**: Keep the experiment local and deterministic: parse a compact
+natural-language shorthand, preview its interpretation, insert a plain sibling
+block after the selected or Vim-owned block, then set Logseq's built-in DB
+properties. Map p1-p4 to Urgent/High/Medium/Low and remove the inserted block if
+any property write fails.
+**Alternatives considered**: Generate Markdown task syntax; call an external
+LLM; create before preview; write custom properties instead of Logseq's built-ins.
+**Rationale**: Native properties make the result participate in Logseq DB task
+views, a preview keeps shorthand interpretation visible, and the local parser
+adds no network, credential, latency, or model-availability dependency.
