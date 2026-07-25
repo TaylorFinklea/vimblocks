@@ -12,7 +12,8 @@
 ## Grammar
 
 - Required: non-empty task title
-- Date: `today`, `tod`, `tomorrow`, or `tom`
+- Scheduled date: `today`, `tod`, `tomorrow`, or `tom`
+- Deadline date: `due today`, `due tod`, `due tomorrow`, or `due tom`
 - Time: `at H`, `at H:MM`, with optional `am` or `pm`
 - Priority: `p1` → Urgent, `p2` → High, `p3` → Medium, `p4` → Low
 - Bare `at 8` means 08:00 local time and is shown in the preview before create
@@ -24,6 +25,7 @@
 - Set `:logseq.property/status` to `Todo`
 - Set optional `:logseq.property/priority` to the parsed DB choice title
 - Set optional `:logseq.property/scheduled` to local epoch milliseconds
+- Set optional `:logseq.property/deadline` to local epoch milliseconds
 - Remove the newly inserted block if a property write fails
 
 ## Interaction

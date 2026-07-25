@@ -57,8 +57,9 @@ Status, Priority, and Scheduled properties; Markdown `TODO`, `SCHEDULED`, and
 **Decision**: Keep the experiment local and deterministic: parse a compact
 natural-language shorthand, preview its interpretation, insert a plain sibling
 block after the selected or Vim-owned block, then set Logseq's built-in DB
-properties. Map p1-p4 to Urgent/High/Medium/Low and remove the inserted block if
-any property write fails.
+properties. Treat bare dates as Scheduled and `due` dates as the distinct
+Deadline property. Map p1-p4 to Urgent/High/Medium/Low and remove the inserted
+block if any property write fails.
 **Alternatives considered**: Generate Markdown task syntax; call an external
 LLM; create before preview; write custom properties instead of Logseq's built-ins.
 **Rationale**: Native properties make the result participate in Logseq DB task

@@ -1,6 +1,7 @@
 export const DB_TASK_STATUS_PROPERTY = ":logseq.property/status";
 export const DB_TASK_PRIORITY_PROPERTY = ":logseq.property/priority";
 export const DB_TASK_SCHEDULED_PROPERTY = ":logseq.property/scheduled";
+export const DB_TASK_DEADLINE_PROPERTY = ":logseq.property/deadline";
 
 export type DbTaskPriority = "Urgent" | "High" | "Medium" | "Low";
 
@@ -9,6 +10,7 @@ export interface DbTaskCapture {
   status: "Todo";
   priority?: DbTaskPriority;
   scheduledAt?: number;
+  deadlineAt?: number;
 }
 
 export type DbTaskCaptureResult =
@@ -23,6 +25,7 @@ const PRIORITY_BY_TOKEN: Record<string, DbTaskPriority> = {
 };
 
 const DATE_PATTERN = /\b(today|tod|tomorrow|tom)\b/i;
+const DEADLINE_PATTERN = /\bdue\s+(today|tod|tomorrow|tom)\b/i;
 const TIME_PATTERN = /\bat\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/i;
 const PRIORITY_PATTERN = /(?:^|\s)(p[1-4])(?=\s|$)/i;
 
@@ -51,29 +54,46 @@ export const parseDbTaskCapture = (
 ): DbTaskCaptureResult => {
   let title = normalizeTitle(input);
   const priorityMatch = title.match(PRIORITY_PATTERN);
-  const dateMatch = title.match(DATE_PATTERN);
+  const deadlineMatch = title.match(DEADLINE_PATTERN);
+  const dateMatch = deadlineMatch
+    ? null
+    : title.match(DATE_PATTERN);
   const timeMatch = title.match(TIME_PATTERN);
   const priority = priorityMatch
     ? PRIORITY_BY_TOKEN[priorityMatch[1].toLowerCase()]
     : undefined;
   let scheduledAt: number | undefined;
+  let deadlineAt: number | undefined;
 
-  if (dateMatch && timeMatch) {
-    const rawHour = Number(timeMatch[1]);
-    const minute = timeMatch[2] ? Number(timeMatch[2]) : 0;
-    const hour = resolveHour(rawHour, timeMatch[3]);
-    if (hour === undefined || minute < 0 || minute > 59) {
-      return { ok: false, error: "Use a valid capture time." };
+  const temporalMatch = deadlineMatch || dateMatch;
+  if (temporalMatch) {
+    let hour = 0;
+    let minute = 0;
+    if (timeMatch) {
+      const rawHour = Number(timeMatch[1]);
+      minute = timeMatch[2] ? Number(timeMatch[2]) : 0;
+      const resolvedHour = resolveHour(rawHour, timeMatch[3]);
+      if (resolvedHour === undefined || minute < 0 || minute > 59) {
+        return { ok: false, error: "Use a valid capture time." };
+      }
+      hour = resolvedHour;
     }
 
-    const scheduled = new Date(now);
-    const dateToken = dateMatch[1].toLowerCase();
+    const temporalValue = new Date(now);
+    const dateToken = temporalMatch[1].toLowerCase();
     if (dateToken === "tom" || dateToken === "tomorrow") {
-      scheduled.setDate(scheduled.getDate() + 1);
+      temporalValue.setDate(temporalValue.getDate() + 1);
     }
-    scheduled.setHours(hour, minute, 0, 0);
-    scheduledAt = scheduled.getTime();
-    title = title.replace(dateMatch[0], " ").replace(timeMatch[0], " ");
+    temporalValue.setHours(hour, minute, 0, 0);
+    if (deadlineMatch) {
+      deadlineAt = temporalValue.getTime();
+    } else {
+      scheduledAt = temporalValue.getTime();
+    }
+    title = title.replace(temporalMatch[0], " ");
+    if (timeMatch) {
+      title = title.replace(timeMatch[0], " ");
+    }
   }
 
   if (priorityMatch) {
@@ -91,6 +111,7 @@ export const parseDbTaskCapture = (
       status: "Todo",
       ...(priority ? { priority } : {}),
       ...(scheduledAt !== undefined ? { scheduledAt } : {}),
+      ...(deadlineAt !== undefined ? { deadlineAt } : {}),
     },
   };
 };
@@ -144,6 +165,13 @@ export const createDbTaskAfterBlock = async (
         block.uuid,
         DB_TASK_SCHEDULED_PROPERTY,
         capture.scheduledAt
+      );
+    }
+    if (capture.deadlineAt !== undefined) {
+      await api.Editor.upsertBlockProperty(
+        block.uuid,
+        DB_TASK_DEADLINE_PROPERTY,
+        capture.deadlineAt
       );
     }
   } catch (error) {

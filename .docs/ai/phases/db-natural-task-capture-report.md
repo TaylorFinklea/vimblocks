@@ -12,8 +12,9 @@
 
 - Palette: `Vimblocks: Capture DB task`
 - Shortcut: `ctrl+shift+t`; blank setting disables shortcut only
-- Parser: local shorthand for today/tomorrow, time, and p1-p4
-- Writer: plain sibling block plus built-in Status/Priority/Scheduled DB properties
+- Parser: local shorthand for scheduled dates, due dates, time, and p1-p4
+- Writer: plain sibling block plus built-in Status/Priority/Scheduled/Deadline
+  DB properties
 - Anchor: selected block or Vim-owned cursor block
 - Failure: remove newly inserted block if a property write fails
 - Input: preview before mutation; Enter create; Esc cancel
@@ -29,6 +30,10 @@
 - Direct Computer Use: palette entry, Control-Shift-T shortcut, preview,
   create, cancel, ordinary palette Esc, and one enabled plugin card
 - Created block: `do this thing`; Task; Todo; Urgent; scheduled 2026-07-26 08:00
+- Bare date correction: `do this thing tom` created Scheduled Tomorrow at the
+  all-day value `1785042000000`, with no Deadline
+- Deadline correction: `do this thing due tomorrow` created Deadline Tomorrow
+  at `1785042000000`, with no Scheduled value
 - Final renderer reload: exact final asset loaded; immediate input focus/type pass
 - Renderer console errors: none
 - Plugin/page load errors: none

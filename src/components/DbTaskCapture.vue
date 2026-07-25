@@ -25,6 +25,20 @@ const scheduledLabel = computed(() => {
   });
 });
 
+const deadlineLabel = computed(() => {
+  const preview = captureStore.preview;
+  if (!preview.ok || preview.value.deadlineAt === undefined) {
+    return "Not set";
+  }
+  return new Date(preview.value.deadlineAt).toLocaleString([], {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+});
+
 const focusInput = async () => {
   if (!captureStore.visible) return;
   await nextTick();
@@ -90,7 +104,7 @@ const createTask = async () => {
         <div>
           <div class="font-bold">Capture Logseq DB task</div>
           <div class="text-xs text-gray-500">
-            Plain title + DB Status, Priority, and Scheduled properties
+            Plain title + DB Status, Priority, Scheduled, and Deadline properties
           </div>
         </div>
         <el-button title="Cancel (Esc)" @click="close">Esc</el-button>
@@ -117,6 +131,8 @@ const createTask = async () => {
         <span>{{ captureStore.preview.value.priority || "Not set" }}</span>
         <span class="text-gray-500">Scheduled</span>
         <span>{{ scheduledLabel }}</span>
+        <span class="text-gray-500">Deadline</span>
+        <span>{{ deadlineLabel }}</span>
         <span class="text-gray-500">Destination</span>
         <span>After selected block</span>
       </div>

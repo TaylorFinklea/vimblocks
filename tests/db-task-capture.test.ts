@@ -24,6 +24,41 @@ test("parses the prototype phrase into DB-native task values", async () => {
   );
 });
 
+test("treats a bare relative date as an all-day scheduled date", async () => {
+  const capture = await loadCaptureModule();
+  assert.ok(capture, "DB task capture module should exist");
+  if (!capture) return;
+
+  const now = new Date(2026, 6, 25, 14, 30);
+  assert.deepEqual(capture.parseDbTaskCapture("do this thing tom", now), {
+    ok: true,
+    value: {
+      title: "do this thing",
+      status: "Todo",
+      scheduledAt: new Date(2026, 6, 26, 0, 0).getTime(),
+    },
+  });
+});
+
+test("parses due tomorrow as a deadline instead of scheduled", async () => {
+  const capture = await loadCaptureModule();
+  assert.ok(capture, "DB task capture module should exist");
+  if (!capture) return;
+
+  const now = new Date(2026, 6, 25, 14, 30);
+  assert.deepEqual(
+    capture.parseDbTaskCapture("do this thing due tomorrow", now),
+    {
+      ok: true,
+      value: {
+        title: "do this thing",
+        status: "Todo",
+        deadlineAt: new Date(2026, 6, 26, 0, 0).getTime(),
+      },
+    }
+  );
+});
+
 test("supports explicit meridiem and all compact priority levels", async () => {
   const capture = await loadCaptureModule();
   assert.ok(capture, "DB task capture module should exist");
@@ -167,6 +202,41 @@ test("removes a newly inserted block when a DB property write fails", async () =
     /priority failed/
   );
   assert.deepEqual(calls, [["remove", "partial-task"]]);
+});
+
+test("writes deadlines through Logseq's distinct built-in property", async () => {
+  const capture = await loadCaptureModule();
+  assert.ok(capture, "DB task capture module should exist");
+  if (!capture) return;
+
+  const calls: unknown[][] = [];
+  const api = {
+    Editor: {
+      async insertBlock() {
+        return { uuid: "deadline-task" };
+      },
+      async upsertBlockProperty(
+        blockUUID: string,
+        property: string,
+        value: string | number
+      ) {
+        calls.push([blockUUID, property, value]);
+      },
+      async removeBlock() {},
+    },
+  };
+  const deadlineAt = new Date(2026, 6, 26, 0, 0).getTime();
+
+  await capture.createDbTaskAfterBlock(api, "anchor", {
+    title: "do this thing",
+    status: "Todo",
+    deadlineAt,
+  });
+
+  assert.deepEqual(calls, [
+    ["deadline-task", ":logseq.property/status", "Todo"],
+    ["deadline-task", ":logseq.property/deadline", deadlineAt],
+  ]);
 });
 
 test("prefers the Vim-owned cursor block as the capture anchor", async () => {
