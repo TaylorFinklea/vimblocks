@@ -10,7 +10,7 @@
 
 ## Blockers
 
-- None.
+- Physical PDF rerun: Computer Use `get_app_state("Logseq")` timed out twice.
 
 ## Open questions
 

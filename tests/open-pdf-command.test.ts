@@ -132,6 +132,30 @@ test("opens the current block through the public PDF API", async () => {
   assert.deepEqual(api.messages, []);
 });
 
+test("opens a file-backed PDF using its URL instead of the block UUID", async () => {
+  const api = createApi({
+    Editor: {
+      async getCurrentBlock() {
+        return {
+          uuid: "pdf-block",
+          content:
+            "![Understanding EXPLAIN.pdf](file:///tmp/Understanding%20EXPLAIN.pdf)",
+        };
+      },
+      async openPDFViewer(blockId) {
+        api.openedBlocks.push(blockId);
+      },
+    },
+  });
+
+  await openSelectedPdf(api);
+
+  assert.deepEqual(api.openedBlocks, [
+    "file:///tmp/Understanding%20EXPLAIN.pdf",
+  ]);
+  assert.deepEqual(api.messages, []);
+});
+
 test("reports a missing current block without invoking the viewer", async () => {
   const api = createApi({
     Editor: {

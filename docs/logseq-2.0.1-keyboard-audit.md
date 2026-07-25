@@ -2,8 +2,9 @@
 
 Date: 2026-07-23
 
-Status: implementation and disposable-graph smoke passed; five-day human pilot
-still required.
+Status: initial implementation and disposable-graph smoke passed. The
+file-backed PDF correction is automated-green but its physical Logseq rerun is
+still required, along with the five-day human pilot.
 
 ## Baseline
 
@@ -26,6 +27,17 @@ still required.
 
 No production graph, Tesela application source, Logseq application source,
 database schema, or storage was modified.
+
+## 2026-07-24 file-backed PDF follow-up
+
+- Root cause: `Editor.openPDFViewer(block.uuid)` makes Logseq treat a normal
+  content block as an uploaded PDF asset identity and synthesize
+  `../assets/<block-uuid>.pdf`.
+- Correction: pass the encoded `file://` target from the selected block;
+  preserve the UUID fallback for uploaded asset blocks.
+- Automated gate: `pnpm check`, 44 tests, and `pnpm package` passed.
+- Physical rerun: pending. Computer Use
+  `get_app_state(app: "Logseq")` timed out twice before any interaction.
 
 ## Production build and load path
 
@@ -75,7 +87,7 @@ supported route evaluated for a remaining gap.
 | 17 | Schedule / deadline | `p d` and property palette reach scheduling/deadline fields | Guard preserves property/date controls | Editor property APIs unnecessary | built-in and configurable |
 | 18 | Add / edit property | `Cmd+P`, choose property, edit value | Guard preserves property editor | Editor property APIs unnecessary | built-in and configurable |
 | 19 | Open / operate saved query or view | `Cmd+K` opens the Task DB view; task/property commands operate its records | Vim does not provide view-toolbar focus | No public API exposes direct focus/navigation for the current DB-view toolbar | acceptable keyboard approximation |
-| 20 | Open inline PDF | Stock PDF viewer has `Option+N/P/F/X` after opening, but an asset link itself is not keyboard-focusable | Vim does not open the asset viewer | `Editor.getCurrentBlock` plus `Editor.openPDFViewer(block.uuid)` closes the gap | implementable through a supported public plugin API |
+| 20 | Open inline PDF | Stock PDF viewer has `Option+N/P/F/X` after opening, but an asset link itself is not keyboard-focusable | Vim does not open the asset viewer | `Editor.getCurrentBlock` plus `Editor.openPDFViewer` closes the gap; file-backed links pass their encoded `file://` URL while uploaded asset blocks fall back to their UUID | implementable through a supported public plugin API |
 
 Result: all 20 actions have a mouse-free route in the tested desktop setup.
 Three use acceptable keyboard approximations. The only genuine application
@@ -106,7 +118,8 @@ Vimblocks owns one PDF registry entry:
   - Context: non-editing only
   - Setting: `openPdfShortcut`; blank means palette-only
   - Implementation: public `Editor.getCurrentBlock` and
-    `Editor.openPDFViewer`
+    `Editor.openPDFViewer`; file-backed links pass the encoded `file://` target
+    because Logseq otherwise treats a block UUID as an uploaded asset identity
   - Failure behavior: warning if no block is selected; error if the selected
     block is not openable as a PDF
 
@@ -166,6 +179,11 @@ Supported API used:
 - `Editor.getCurrentBlock`
 - `Editor.openPDFViewer`
 
+Logseq 2.0.1 accepts either an uploaded asset-block identity or an absolute
+file URL in `Editor.openPDFViewer`. Vimblocks preserves the UUID route for
+uploaded assets and extracts the encoded `file://` target for file-backed
+Markdown links.
+
 Compatibility finding:
 
 - The tagged Logseq 2.0.1 source and command guide describe a unified
@@ -209,7 +227,7 @@ The behavioral suites cover command registration, context guards, configurable
   typed register put planning, event-target text-entry guards, end-of-block
   change spacing, and idempotent unload/reload disposal.
 
-## Disposable-graph smoke evidence
+## Initial disposable-graph smoke evidence
 
 The smoke used only `tesela-keyboard-audit-2026-07-23`.
 
@@ -351,8 +369,9 @@ forced-mouse incident.
    Expected: view opens; operate records through task/property commands.
    Record a limitation if a required view-toolbar operation still forces the
    mouse.
-5. Select a PDF asset block and press `Cmd+Option+P`.
-   Expected: inline viewer opens.
+5. Select an uploaded PDF asset block and press `Cmd+Option+P`; repeat on a
+   block containing an encoded `file://` PDF link.
+   Expected: the inline viewer opens for both routes.
 6. Press `Option+N`, `Option+P`, `Option+F`, `Esc`, `Option+X`.
    Expected: next page, previous page, search, cancel search, close viewer.
 

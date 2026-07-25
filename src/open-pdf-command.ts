@@ -5,6 +5,7 @@ type CommandUnregister = () => void;
 
 export type CurrentBlock = {
   uuid: string;
+  content?: string;
 };
 
 export type OpenPdfApi = {
@@ -58,7 +59,10 @@ export async function openSelectedPdf(api: OpenPdfApi): Promise<void> {
   }
 
   try {
-    await api.Editor.openPDFViewer(block.uuid);
+    const fileUrl = block.content?.match(
+      /!?\[[^\]]*\]\((file:\/\/[^)]+\.pdf)\)/i
+    )?.[1];
+    await api.Editor.openPDFViewer(fileUrl ?? block.uuid);
   } catch {
     api.UI.showMsg("The selected block could not be opened as a PDF.", "error");
   }
