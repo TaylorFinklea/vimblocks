@@ -12,6 +12,7 @@ const loadApi = () => {
   return window.__vimblocksKeyToken as {
     eventToken(event: Record<string, unknown>): string;
     shouldCapture(input: Record<string, unknown>): boolean;
+    entersTextEntry(token: string): boolean;
   };
 };
 const event = (
@@ -57,4 +58,12 @@ test("captures only configured modal contexts", () => {
     api.shouldCapture({ ...base, normalModeActive: true, textEntryActive: true }),
     false
   );
+});
+
+test("identifies commands that synchronously enter Logseq text editing", () => {
+  const api = loadApi();
+  for (const token of ["i", "a", "shift+i", "shift+a", "o", "shift+o"]) {
+    assert.equal(api.entersTextEntry(token), true);
+  }
+  assert.equal(api.entersTextEntry("d"), false);
 });

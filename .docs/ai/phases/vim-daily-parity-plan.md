@@ -957,7 +957,7 @@ export const finishInsertSession = (
 ): Extract<ChangeDescriptor, { kind: "insert" }> | null;
 ```
 
-- [ ] **Step 1: Claim and write failing session tests**
+- [x] **Step 1: Claim and write failing session tests**
 
 Run: `bd update tesela-8c9v.4.16.4 --claim`
 
@@ -967,7 +967,7 @@ replacement between before/after content. A no-op returns `null`; changed
 content produces `{relativeStart, removedText, insertedText}` without claiming
 to reconstruct caret history.
 
-- [ ] **Step 2: Implement session capture**
+- [x] **Step 2: Implement session capture**
 
 Record the original block/content before entering Logseq editing. On the
 existing host-ready Esc transition, fetch final content, remove the longest
@@ -975,7 +975,7 @@ common prefix and suffix, and record the remaining minimal net replacement
 relative to the edit position. Dot replays that content delta at the equivalent
 target and does not claim to replay the original keystroke/caret sequence.
 
-- [ ] **Step 3: Route insert/open commands**
+- [x] **Step 3: Route insert/open commands**
 
 Make the shared dispatcher own `i/a/I/A/o/O`. Use
 `Editor.insertBlock(anchor, "", { before, sibling: true })` for `o/O`. Dot
@@ -987,7 +987,7 @@ IDs `insert`, `insert-before`, `next-new-block`, and `previous-new-block`.
 Add their configured tokens to host capture in the same commit and verify every
 configured binding still fires exactly once.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 Run:
 

@@ -1,11 +1,11 @@
 import { ILSPluginUser } from "@logseq/libs/dist/LSPlugin";
 import {
   debug,
-  getCurrentBlockUUID,
   getSettings,
   beforeActionExecute,
   beforeActionRegister,
 } from "@/common/funcs";
+import { useSearchStore } from "@/stores/search";
 
 export default (logseq: ILSPluginUser) => {
   // Check if this keybinding is disabled
@@ -24,10 +24,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: "vim-shortcut-prev-new-block-" + index,
         label: "Create new prev block",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook
@@ -36,20 +32,7 @@ export default (logseq: ILSPluginUser) => {
         }
 
         debug("Create new prev block");
-        let blockUUID = await getCurrentBlockUUID();
-        if (blockUUID) {
-          let block = await logseq.Editor.getBlock(blockUUID);
-          if (block?.uuid) {
-            const newBlock = await logseq.Editor.insertBlock(block.uuid, "", {
-              before: true,
-              sibling: true,
-            });
-
-            if (newBlock?.uuid) {
-              await logseq.Editor.editBlock(newBlock.uuid);
-            }
-          }
-        }
+        await useSearchStore().beginInsert("O");
       }
     );
   });

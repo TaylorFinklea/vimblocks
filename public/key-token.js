@@ -49,5 +49,12 @@
       captureTokens.includes(token) ||
       (normalModeActive && normalModeTokens.includes(token)));
 
-  window.__vimblocksKeyToken = { eventToken, shouldCapture };
+  const entersTextEntry = (token) =>
+    ["i", "a", "shift+i", "shift+a", "o", "shift+o"].includes(token);
+
+  window.__vimblocksKeyToken = {
+    eventToken,
+    shouldCapture,
+    entersTextEntry,
+  };
 })();

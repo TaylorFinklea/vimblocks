@@ -12,8 +12,9 @@
 - [x] Phase 1: shared modal reducer/host path; live disposable-graph gate.
 - [x] Phase 2: counted rendered motions; bidirectional Jul 23/24 live gate.
 - [x] Phase 3: operators/register/history; live subtree/repeat/history gate.
-- [ ] Phase 4: deterministic insert/open sessions.
-- [ ] Run phases 5-6 without human re-planning.
+- [x] Phase 4: deterministic insert/open sessions; live i/a/I/A/o/O gate.
+- [ ] Phase 5: rendered search and character navigation.
+- [ ] Phase 6: characterwise and linewise visual modes.
 - [ ] Phase 7: hardening and comparative Logseq product test.
 
 ## Blockers

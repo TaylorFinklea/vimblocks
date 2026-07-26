@@ -240,6 +240,19 @@
       shouldForwardEscape && normalModeActive && !textEntryActive;
 
     if (!shouldCapture && !shouldForwardEscape) return;
+    if (
+      shouldCapture &&
+      normalModeActive &&
+      !captureAll &&
+      (
+        typeof tokenApi.entersTextEntry === "function"
+          ? tokenApi.entersTextEntry(token)
+          : ["i", "a", "shift+i", "shift+a", "o", "shift+o"].includes(token)
+      )
+    ) {
+      normalModeActive = false;
+      optimisticNormalMode = false;
+    }
     if (shouldCapture || shouldCaptureNormalModeEscape) {
       event.preventDefault();
       event.stopImmediatePropagation();

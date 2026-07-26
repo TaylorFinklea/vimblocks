@@ -21,6 +21,14 @@ import {
   type VerticalDirection,
 } from "@/runtime/visible-block-navigation";
 import { useModalStore } from "@/stores/modal";
+import {
+  beginInsertSession,
+  finishInsertSession,
+  insertExitPosition,
+  openSiblingOptions,
+  type InsertCommand,
+  type InsertSession,
+} from "@/runtime/insert-session";
 
 export const disposeSearchEffects = (): void => {
   clearHostHighlights();
@@ -552,6 +560,7 @@ export const useSearchStore = defineStore("search", {
     cursorPosition: 0, // Current cursor position (character index)
     cursorBlockContent: "", // Content of the current cursor block
     cursorPreferredColumn: null as number | null,
+    insertSession: null as InsertSession | null,
     // Visual selection mode
     visualMode: false, // Whether in visual selection mode
     visualStartPosition: 0, // Selection start position
@@ -564,6 +573,72 @@ export const useSearchStore = defineStore("search", {
     lastCharSearchChar: "", // The character that was searched
   }),
   actions: {
+    async beginInsert(
+      command: InsertCommand,
+      count = 1,
+      eventBlockUUID?: string
+    ): Promise<boolean> {
+      const anchorUUID =
+        this.cursorMode && this.cursorBlockUUID
+          ? this.cursorBlockUUID
+          : eventBlockUUID ??
+            (await logseq.Editor.getCurrentBlock().then((block) => block?.uuid));
+      if (!anchorUUID) return false;
+
+      const anchor = await logseq.Editor.getBlock(anchorUUID);
+      if (!anchor?.uuid) return false;
+
+      let targetUUID = anchor.uuid;
+      let targetContent = anchor.content ?? "";
+      let cursor = this.cursorMode ? this.cursorPosition : 0;
+      if (command === "o" || command === "O") {
+        const inserted = await logseq.Editor.insertBlock(anchor.uuid, "", {
+          ...openSiblingOptions(command),
+        });
+        if (!inserted?.uuid) return false;
+        targetUUID = inserted.uuid;
+        targetContent = "";
+        cursor = 0;
+      }
+
+      const session = beginInsertSession(
+        command,
+        targetUUID,
+        targetContent,
+        cursor,
+        count
+      );
+      this.insertSession = session;
+      clearHostHighlights();
+      this.clearCursor();
+      try {
+        await logseq.Editor.editBlock(targetUUID, {
+          pos: session.editPosition,
+        });
+        return true;
+      } catch (error) {
+        this.insertSession = null;
+        throw error;
+      }
+    },
+
+    async finishInsert(): Promise<boolean> {
+      const session = this.insertSession;
+      this.insertSession = null;
+      if (!session) return false;
+
+      const block = await logseq.Editor.getBlock(session.blockUUID);
+      if (!block) return false;
+      const change = finishInsertSession(session, block.content ?? "");
+      if (change) useModalStore().recordChange(change);
+      await this.restoreCursor(
+        block.uuid,
+        block.content ?? "",
+        insertExitPosition(session, change)
+      );
+      return true;
+    },
+
     toggle() {
       this.visible = !this.visible;
     },

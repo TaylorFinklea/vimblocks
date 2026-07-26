@@ -71,6 +71,11 @@ import {
   NORMAL_MODE_CAPTURE_TOKENS,
   type ModalCommand,
 } from "@/runtime/modal-command";
+import {
+  applyInsertDelta,
+  beginInsertSession,
+  openSiblingOptions,
+} from "@/runtime/insert-session";
 
 type OperatorObject =
   | "inner-word"
@@ -883,8 +888,88 @@ export default (logseq: ILSPluginUser) => {
     if (!command) return;
     const searchStore = useSearchStore();
     if (command.kind === "escape") {
+      const finishedInsert = await searchStore.finishInsert();
+      if (finishedInsert) return;
       const entered = await searchStore.enterNormalMode(event.blockUUID);
       if (!entered) setHostNormalModeActive(false);
+      return;
+    }
+    if (command.kind === "insert") {
+      await searchStore.beginInsert(
+        command.command,
+        command.count,
+        event.blockUUID
+      );
+      return;
+    }
+    if (command.kind === "replay-insert") {
+      if (!searchStore.cursorMode || !searchStore.cursorBlockUUID) return;
+      const anchor = await logseq.Editor.getBlock(
+        searchStore.cursorBlockUUID
+      );
+      if (!anchor?.uuid) return;
+      const before = await captureHistorySnapshot(
+        event.visibleBlockUUIDs,
+        currentModalPoint()
+      );
+
+      if (command.command === "o" || command.command === "O") {
+        const insertedUUIDs: string[] = [];
+        let insertionAnchor = anchor.uuid;
+        for (let index = 0; index < command.count; index += 1) {
+          const inserted = await logseq.Editor.insertBlock(
+            insertionAnchor,
+            command.insertedText,
+            openSiblingOptions(command.command)
+          );
+          if (!inserted?.uuid) break;
+          insertedUUIDs.push(inserted.uuid);
+          if (command.command === "o") insertionAnchor = inserted.uuid;
+        }
+        const lastUUID = insertedUUIDs.at(-1);
+        if (lastUUID) {
+          await searchStore.restoreCursor(
+            lastUUID,
+            command.insertedText,
+            Math.max(command.insertedText.length - 1, 0)
+          );
+        }
+        await recordNativeHistory({
+          before,
+          scopeUUIDs: event.visibleBlockUUIDs,
+          extraScopeUUIDs: insertedUUIDs,
+          maxNativeSteps: insertedUUIDs.length,
+        });
+        return;
+      }
+
+      const session = beginInsertSession(
+        command.command,
+        anchor.uuid,
+        anchor.content ?? "",
+        searchStore.cursorPosition,
+        1
+      );
+      const result = applyInsertDelta(
+        anchor.content ?? "",
+        session.editPosition,
+        {
+          relativeStart: command.relativeStart,
+          removedText: command.removedText,
+          insertedText: command.insertedText.repeat(command.count),
+        }
+      );
+      await logseq.Editor.updateBlock(anchor.uuid, result.content);
+      await searchStore.restoreCursor(
+        anchor.uuid,
+        result.content,
+        result.cursor
+      );
+      await recordNativeHistory({
+        before,
+        scopeUUIDs: event.visibleBlockUUIDs,
+        maxNativeSteps: 1,
+      });
       return;
     }
     if (command.kind === "motion") {

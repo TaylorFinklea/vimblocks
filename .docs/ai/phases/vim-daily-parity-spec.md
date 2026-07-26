@@ -13,7 +13,7 @@
 - Opus adversarial rounds: `rethink`, then three `ship-with-changes` passes;
   every high/medium finding adjudicated and incorporated; shared architecture
   survived each pass
-- Pre-implementation review gate cleared; implementation phases 1-3 complete
+- Pre-implementation review gate cleared; implementation phases 1-4 complete
 
 ## Goal
 
