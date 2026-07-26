@@ -6,7 +6,7 @@ import {
   ILSPluginUser,
   PageEntity,
 } from "@logseq/libs/dist/LSPlugin";
-import { N, TempCache } from "./type";
+import { TempCache } from "./type";
 import { schemaVersion } from "../../package.json";
 import hotkeys from "hotkeys-js";
 import { useCommandStore } from "@/stores/command";
@@ -26,6 +26,11 @@ import {
   type VimRegisterValue,
 } from "@/runtime/vim-register";
 import { clearHostHighlights } from "@/runtime/host-bridge";
+import {
+  appendModalCountDigit,
+  getModalCountDigits,
+  resetModalCountDigits,
+} from "@/runtime/modal-count";
 
 export const clearBlocksHighlight = async (blocks: BlockEntity[]) => {
   const uuids: string[] = [];
@@ -132,48 +137,21 @@ export const readClipboard = (): string => {
 export const readVimRegister = (): VimRegisterValue =>
   unnamedRegister.read();
 
-const numberCache: N = {
-  n: 1,
-  lastChange: null,
-};
-
 export const resetNumber = () => {
-  numberCache.n = 1;
-  numberCache.lastChange = null;
+  resetModalCountDigits();
 };
 
 export const getNumber = (): number => {
-  const now = new Date();
-  if (
-    numberCache.lastChange &&
-    now.getTime() - numberCache.lastChange.getTime() >= 10000
-  ) {
-    resetNumber();
-  }
-  return numberCache.n;
+  const digits = getModalCountDigits();
+  return digits ? Number.parseInt(digits, 10) : 1;
 };
 
 export const hasExplicitNumber = (): boolean => {
-  return numberCache.lastChange !== null;
+  return getModalCountDigits().length > 0;
 };
 
 export const setNumber = (n: number) => {
-  const now = new Date();
-
-  if (numberCache.lastChange === null) {
-    if (n > 0) {
-      numberCache.n = n;
-      numberCache.lastChange = now;
-    }
-  } else {
-    if (now.getTime() - numberCache.lastChange.getTime() >= 1000) {
-      numberCache.n = n;
-      numberCache.lastChange = now;
-    } else {
-      numberCache.n = numberCache.n * 10 + n;
-      numberCache.lastChange = now;
-    }
-  }
+  if (n !== 0 || hasExplicitNumber()) appendModalCountDigit(n);
 };
 
 let commandHistory: string[] = [];
@@ -500,7 +478,7 @@ export const debug = (msg: any, status = "success") => {
   }
 };
 
-const settingsVersion = "v5";
+const settingsVersion = "v6";
 export const defaultSettings = {
   keyBindings: {
     bottom: "shift+g",
@@ -547,9 +525,12 @@ export const defaultSettings = {
     wordBackward: "b",
     wordEnd: "e",
     lineEnd: "shift+4",
+    lineStart: "0",
     firstNonBlank: "shift+6",
     findChar: "f",
     findCharBackward: "shift+f",
+    tillChar: "t",
+    tillCharBackward: "shift+t",
     repeatCharSearch: ";",
     repeatCharSearchReverse: ",",
     nextNewBlock: "o",
@@ -560,6 +541,7 @@ export const defaultSettings = {
     prevNewBlock: "shift+o",
     prevSibling: "shift+k",
     redo: "ctrl+r",
+    repeatChange: ".",
     search: "/",
     searchPrev: "shift+n",
     searchNext: "n",
@@ -570,7 +552,7 @@ export const defaultSettings = {
     searchStackoverflow: "s s",
     searchWikipedia: "s e",
     searchYoutube: "s y",
-    top: "shift+t",
+    top: "g g",
     undo: "u",
     up: "k",
     exitEditing: ["mod+j mod+j", "ctrl+["],
@@ -599,20 +581,32 @@ export const defaultSettings = {
   showRecentEmojis: false,
   openPdfShortcut: "mod+alt+p",
   cursorColor: "#ffff00",
+  vimBoundaryProfile: "logseq-first" as "logseq-first" | "vim-first",
 };
 
 export type DefaultSettingsType = typeof defaultSettings;
 
 export const initSettings = () => {
-  let settings = logseq.settings;
-
-  const shouldUpdateSettings =
-    !settings || settings.settingsVersion != defaultSettings.settingsVersion;
-
-  if (shouldUpdateSettings) {
-    settings = defaultSettings;
-    logseq.updateSettings(settings);
+  const existingSettings = structuredClone(logseq.settings ?? {}) as {
+    settingsVersion?: unknown;
+    keyBindings?: Record<string, unknown>;
+  };
+  const existingBindings = (
+    existingSettings as { keyBindings?: Record<string, unknown> }
+  ).keyBindings;
+  if (
+    existingSettings.settingsVersion === "v5" &&
+    existingBindings?.top === "shift+t"
+  ) {
+    existingBindings.top = "g g";
   }
+  const settings = deepAssign(
+    structuredClone(defaultSettings),
+    existingSettings as Partial<DefaultSettingsType>,
+    { settingsVersion }
+  );
+  logseq.updateSettings(settings);
+  invalidateSettingsCache();
 };
 
 export function deepAssign<T extends object>(
@@ -651,6 +645,11 @@ function isPlainObject(val: unknown): val is object {
 // Cache for merged settings to avoid repeated deep cloning
 let settingsCache: DefaultSettingsType | null = null;
 let lastSettingsVersion: string | null = null;
+
+export const invalidateSettingsCache = (): void => {
+  settingsCache = null;
+  lastSettingsVersion = null;
+};
 
 export const getSettings = (): DefaultSettingsType => {
   const settings = logseq.settings;

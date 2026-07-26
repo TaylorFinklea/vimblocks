@@ -26,10 +26,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: "vim-shortcut-down-" + index,
         label: "down or move cursor down",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook

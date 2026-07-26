@@ -101,8 +101,11 @@ export const installHostBridge = async (
     window.addEventListener("message", onMessage);
     installed = true;
   }
-  await api.Experiments.loadScripts("./host-bridge.js");
+  await api.Experiments.loadScripts("/key-token.js", "/host-bridge.js");
   return () => {
+    setHostCaptureAll(false);
+    setHostNormalModeActive(false);
+    postHostMessage({ type: "dispose" });
     listeners.clear();
     if (installed) {
       window.removeEventListener("message", onMessage);

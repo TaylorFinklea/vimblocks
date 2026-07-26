@@ -4,7 +4,6 @@ import test from "node:test";
 import {
   advanceOperatorSequence,
   expandOperatorBinding,
-  keyboardEventToken,
 } from "../src/runtime/operator-sequence.ts";
 import * as operatorSequence from "../src/runtime/operator-sequence.ts";
 
@@ -82,29 +81,6 @@ test("matches direct aliases and expands configured word-object prefixes", () =>
     consume: true,
     commandId: "paste-next",
   });
-});
-
-test("normalizes keyboard events to Logseq binding tokens", () => {
-  assert.equal(
-    keyboardEventToken({
-      key: "D",
-      ctrlKey: false,
-      altKey: false,
-      metaKey: false,
-      shiftKey: true,
-    }),
-    "shift+d"
-  );
-  assert.equal(
-    keyboardEventToken({
-      key: "$",
-      ctrlKey: false,
-      altKey: false,
-      metaKey: false,
-      shiftKey: true,
-    }),
-    "shift+4"
-  );
 });
 
 test("captures modal keys on a focused block before cursor mode is initialized", () => {

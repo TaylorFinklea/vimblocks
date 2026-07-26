@@ -10,13 +10,7 @@ export interface OperatorSequenceResult {
   commandId?: string;
 }
 
-export interface KeyboardEventLike {
-  key: string;
-  ctrlKey: boolean;
-  altKey: boolean;
-  metaKey: boolean;
-  shiftKey: boolean;
-}
+export { keyboardEventToken } from "./key-token.ts";
 
 export interface NormalModeKeyContext {
   composing: boolean;
@@ -89,55 +83,4 @@ export const expandOperatorBinding = (
     .split(/\s+/u)
     .filter(Boolean);
   return requiresFinalWord ? [...tokens, "w"] : tokens;
-};
-
-const SHIFTED_KEYS: Readonly<Record<string, string>> = {
-  "!": "1",
-  "@": "2",
-  "#": "3",
-  $: "4",
-  "%": "5",
-  "^": "6",
-  "&": "7",
-  "*": "8",
-  "(": "9",
-  ")": "0",
-  _: "-",
-  "+": "=",
-  "{": "[",
-  "}": "]",
-  "|": "\\",
-  ":": ";",
-  '"': "'",
-  "<": ",",
-  ">": ".",
-  "?": "/",
-  "~": "`",
-};
-
-export const keyboardEventToken = (
-  event: KeyboardEventLike
-): string => {
-  if (!event.key) {
-    return "";
-  }
-
-  const key = event.shiftKey
-    ? SHIFTED_KEYS[event.key] ?? event.key.toLowerCase()
-    : event.key.toLowerCase();
-  const modifiers: string[] = [];
-  if (event.metaKey) {
-    modifiers.push("mod");
-  }
-  if (event.ctrlKey) {
-    modifiers.push("ctrl");
-  }
-  if (event.altKey) {
-    modifiers.push("alt");
-  }
-  if (event.shiftKey) {
-    modifiers.push("shift");
-  }
-
-  return [...modifiers, key].join("+");
 };

@@ -14,10 +14,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: `vim-shortcut-number-${n}`,
         label: `${n}`,
-        keybinding: {
-          mode: "non-editing",
-          binding: `${n}`,
-        },
       },
       async () => {
         // Check before action hook

@@ -26,10 +26,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: "vim-shortcut-up-" + index,
         label: "up or move cursor up",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook

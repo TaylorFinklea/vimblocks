@@ -22,10 +22,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: `vim-shortcut-first-nonblank-${index}`,
         label: "Vim: Move to first nonblank character (^)",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         if (!beforeActionExecute()) {

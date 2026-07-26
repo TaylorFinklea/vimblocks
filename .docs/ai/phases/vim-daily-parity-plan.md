@@ -53,8 +53,8 @@ host-owned JavaScript bridge, Node's built-in test runner, Vite, pnpm.
   plan, and rerun a reviewer when a correction changes architecture.
 - [x] Stop rather than substitute another model if either requested OMP model
   is unavailable.
-- [ ] Use `superpowers:using-git-worktrees` to create the isolated worktree.
-- [ ] Record the worktree path and starting commit in
+- [x] Use `superpowers:using-git-worktrees` to create the isolated worktree.
+- [x] Record the worktree path and starting commit in
   `.docs/ai/current-state.md` and `tesela-8c9v.4.16`.
 
 ## File Map
@@ -237,7 +237,7 @@ export const stepModalKey = (state: ModalState, token: string): ModalStep;
 - `useModalStore()` wraps `ModalState`, exposes `step(token)`, `setProfile()`,
   `setVisualAnchor()`, `recordChange()`, and `resetPending()`.
 
-- [ ] **Step 1: Claim the phase and prove canonical token/capture parity**
+- [x] **Step 1: Claim the phase and prove canonical token/capture parity**
 
 Run:
 
@@ -288,7 +288,7 @@ normal, visual, text-entry, capture-all, and missing-tokenizer states. If
 required shifted/meta tokens cannot use one canonical tokenizer, stop before
 routing commands and evaluate approach 3.
 
-- [ ] **Step 2: Write failing reducer tests**
+- [x] **Step 2: Write failing reducer tests**
 
 Add table-driven tests proving:
 
@@ -322,13 +322,13 @@ Add traces for `x`, `p`, `P`, `.`, and `f` followed by a character. Prove
 character. In Task 3, require `replayChange()` to switch exhaustively over all
 four `ChangeDescriptor` kinds with a `never` default.
 
-- [ ] **Step 3: Verify the tests fail for the missing module**
+- [x] **Step 3: Verify the tests fail for the missing module**
 
 Run: `node --test --experimental-strip-types tests/modal-command.test.ts`
 
 Expected: FAIL because `src/runtime/modal-command.ts` does not exist.
 
-- [ ] **Step 4: Implement the pure reducer and Pinia adapter**
+- [x] **Step 4: Implement the pure reducer and Pinia adapter**
 
 Implement the interfaces above. `stepModalKey` must be deterministic and
 side-effect free. It must:
@@ -340,7 +340,7 @@ side-effect free. It must:
 - emit one command only when a sequence is complete;
 - leave `lastChange` unchanged for motion/search/profile commands.
 
-- [ ] **Step 5: Add safe settings migration and profile persistence**
+- [x] **Step 5: Add safe settings migration and profile persistence**
 
 Add this native Logseq setting in `src/main.ts`:
 
@@ -388,7 +388,7 @@ test requiring the metadata/default key sets to be identical and every
 `repeatChange` are host-dispatch-only settings; Task 5 registers `tillChar` and
 `tillCharBackward` through the existing find-character modules.
 
-- [ ] **Step 6: Route normal/visual-mode keys through one dispatcher**
+- [x] **Step 6: Route normal/visual-mode keys through one dispatcher**
 
 Expand the existing host listener in `src/keybindings/operators.ts` to call
 `useModalStore().step(keyboardEventToken(event))`. Dispatch emitted commands to
@@ -452,7 +452,7 @@ posts `capture-all:false` and `normal-mode:false`, then a new host `dispose`
 message that invokes the injected script's `dispose()`. Assert that exact
 message sequence in `tests/host-bridge.test.ts`.
 
-- [ ] **Step 7: Prove transport and run the first architecture gate**
+- [x] **Step 7: Prove transport and run the first architecture gate**
 
 Extend `tests/host-bridge.test.ts` so a digit forwarded while
 `normalModeActive` reaches `step()` exactly once, Escape synchronously claims
@@ -472,7 +472,7 @@ fails for a claimed scenario. The full 20-scenario threshold runs at Task 3;
 scenario 20 passes when a `vimBoundaryProfile` change reaches the shared modal
 store without reload.
 
-- [ ] **Step 8: Run focused and full verification**
+- [x] **Step 8: Run focused and full verification**
 
 Run:
 
@@ -486,7 +486,16 @@ pnpm package
 Expected: all pass; package contains `host-bridge.js`, package metadata,
 licenses, and the current capture feature.
 
-- [ ] **Step 9: Update handoff, commit, and close the Bead**
+- [x] **Step 9: Update handoff, commit, and close the Bead**
+
+Evidence (2026-07-25): canonical host/plugin token tests, pure reducer traces,
+and host exact-once/disposal tests pass. Installed the phase build into the
+stable plugin path and reloaded the single enabled Vimblocks card in Logseq.
+On disposable graph `tesela-keyboard-audit-2026-07-23`, Escape from editing
+painted the cursor immediately; second Escape retained a usable cursor;
+`h/j/k/l/w`, counted `3l`, and `2d3w` reached the shared path and repainted
+without a refresh. The edited block was restored to `alpha beta gamma`.
+`pnpm check`, all 70 tests, `pnpm package`, and `git diff --check` pass.
 
 Update the Task 1 checkbox/evidence in `.docs/ai/current-state.md` and this
 plan. Commit:

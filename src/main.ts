@@ -14,6 +14,7 @@ import {
   hideMainUI,
   cancelInputListener,
   getSettings,
+  invalidateSettingsCache,
 } from "./common/funcs";
 import { createPinia } from "pinia";
 
@@ -44,6 +45,7 @@ import {
 import { cursorHighlightStyle } from "./runtime/cursor-style";
 import { registerDbTaskCaptureCommand } from "./db-task-capture-command";
 import { useDbTaskCaptureStore } from "./stores/db-task-capture";
+import { useModalStore } from "./stores/modal";
 
 const defineSettings: SettingSchemaDesc[] = [
   {
@@ -76,6 +78,16 @@ const defineSettings: SettingSchemaDesc[] = [
     title: "Capture DB task",
     description:
       "Logseq keybinding notation. Leave blank to keep the capture command palette-only.",
+  },
+  {
+    key: "vimBoundaryProfile",
+    type: "enum",
+    default: "logseq-first",
+    title: "Vim block boundary behavior",
+    description:
+      "Vim-first treats rendered blocks as lines in one buffer; Logseq-first keeps character operations block-local.",
+    enumChoices: ["logseq-first", "vim-first"],
+    enumPicker: "select",
   },
 ];
 
@@ -120,6 +132,14 @@ async function main() {
   const app = createApp(App);
   app.use(createPinia());
   app.mount("#app");
+  const modalStore = useModalStore();
+  modalStore.setProfile(getSettings().vimBoundaryProfile);
+  lifecycle.add(
+    logseq.onSettingsChanged(() => {
+      invalidateSettingsCache();
+      modalStore.setProfile(getSettings().vimBoundaryProfile);
+    })
+  );
 
   const emojiStore = useEmojiStore();
   emojiStore.initPicker();
@@ -153,6 +173,8 @@ async function main() {
 
   // reload marks when graph changes
   lifecycle.add(logseq.App.onCurrentGraphChanged(async () => {
+    modalStore.resetPending();
+    useSearchStore().clearCursor();
     await loadMarks();
     markStore.reload();
   }));

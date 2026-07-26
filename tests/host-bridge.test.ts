@@ -72,7 +72,7 @@ test("loads the host script and relays validated key events", async () => {
       },
     });
 
-    assert.deepEqual(scripts, ["./host-bridge.js"]);
+    assert.deepEqual(scripts, ["/key-token.js", "/host-bridge.js"]);
     assert.equal(received, "x");
     assert.equal(receivedBlockUUID, "block-1");
     assert.deepEqual(visibleBlockUUIDs, ["block-2", "block-1"]);
@@ -112,6 +112,22 @@ test("loads the host script and relays validated key events", async () => {
     setHostNormalModeActive(false);
     removeKeydown();
     dispose();
+    assert.deepEqual(messages.slice(-3), [
+      {
+        channel: "vimblocks-host-bridge-v1",
+        type: "capture-all",
+        value: false,
+      },
+      {
+        channel: "vimblocks-host-bridge-v1",
+        type: "normal-mode",
+        value: false,
+      },
+      {
+        channel: "vimblocks-host-bridge-v1",
+        type: "dispose",
+      },
+    ]);
   } finally {
     globalThis.window = originalWindow;
   }

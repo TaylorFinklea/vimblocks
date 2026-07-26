@@ -13,7 +13,6 @@ import type { DefaultSettingsType } from "@/common/funcs";
 import {
   advanceOperatorSequence,
   expandOperatorBinding,
-  keyboardEventToken,
   shouldCaptureNormalModeKey,
 } from "@/runtime/operator-sequence";
 import type { OperatorSequence } from "@/runtime/operator-sequence";
@@ -45,8 +44,13 @@ import {
   addHostKeydownListener,
   configureHostCapture,
   configureHostNormalModeCapture,
+  setHostCaptureAll,
+  setHostNormalModeActive,
   type HostKeydownEvent,
 } from "@/runtime/host-bridge";
+import { keyboardEventToken } from "@/runtime/key-token";
+import { useModalStore } from "@/stores/modal";
+import { setModalCountDigits } from "@/runtime/modal-count";
 
 type OperatorObject =
   | "inner-word"
@@ -413,6 +417,10 @@ export default (logseq: ILSPluginUser) => {
     ["move-up", "up"],
     ["move-right", "right"],
     ["move-word-forward", "wordForward"],
+    ["move-word-backward", "wordBackward"],
+    ["move-word-end", "wordEnd"],
+    ["move-line-end", "lineEnd"],
+    ["move-first-nonblank", "firstNonBlank"],
     ["move-half-page-down", "halfPageDown"],
     ["move-half-page-up", "halfPageUp"],
   ] as const;
@@ -429,7 +437,10 @@ export default (logseq: ILSPluginUser) => {
   }
 
   disposeOperatorSequences();
-  configureHostCapture(sequences.flatMap((sequence) => sequence.tokens));
+  configureHostCapture([
+    ...sequences.flatMap((sequence) => sequence.tokens),
+    ..."0123456789",
+  ]);
   configureHostNormalModeCapture(
     normalModeSequences.flatMap((sequence) => sequence.tokens)
   );
@@ -440,20 +451,93 @@ export default (logseq: ILSPluginUser) => {
     pendingTokens = [];
     pendingMotionTokens = [];
   };
-  const handleKeydown = async (event: HostKeydownEvent) => {
-    const searchStore = useSearchStore();
-    if (event.key === "Escape") {
-      clearPending();
+  const withCount = async (
+    count: number,
+    action: () => Promise<void>
+  ): Promise<void> => {
+    setModalCountDigits(count > 1 ? String(count) : "");
+    try {
+      await action();
+    } finally {
       resetNumber();
-      if (
-        event.blockEditorActive ||
-        event.contentEditable ||
-        !event.textEntryActive
-      ) {
-        await searchStore.enterNormalMode(event.blockUUID);
+    }
+  };
+  const dispatchModalCommand = async (
+    command: ReturnType<ReturnType<typeof useModalStore>["step"]>["command"],
+    event: HostKeydownEvent
+  ): Promise<void> => {
+    if (!command) return;
+    const searchStore = useSearchStore();
+    if (command.kind === "escape") {
+      const entered = await searchStore.enterNormalMode(event.blockUUID);
+      if (!entered) setHostNormalModeActive(false);
+      return;
+    }
+    if (command.kind === "motion") {
+      for (let index = 0; index < command.count; index += 1) {
+        if (command.motion === "h") await searchStore.moveCursorLeft();
+        else if (command.motion === "l") await searchStore.moveCursorRight();
+        else if (command.motion === "j") await searchStore.moveCursorDown(event.visibleBlockUUIDs);
+        else if (command.motion === "k") await searchStore.moveCursorUp(event.visibleBlockUUIDs);
+        else if (command.motion === "w") await searchStore.moveWordForward();
+        else if (command.motion === "b") await searchStore.moveWordBackward();
+        else if (command.motion === "e") await searchStore.moveWordEnd();
+        else if (command.motion === "0") await searchStore.moveLineStart();
+        else if (command.motion === "$") await searchStore.moveLineEnd();
+        else if (command.motion === "^" && searchStore.cursorBlockUUID) {
+          await searchStore.restoreCursor(
+            searchStore.cursorBlockUUID,
+            searchStore.cursorBlockContent,
+            firstNonBlankPosition(searchStore.cursorBlockContent)
+          );
+        } else if (command.motion === "ctrl+d" || command.motion === "ctrl+u") {
+          await searchStore.moveCursorHalfPage(
+            event.visibleBlockUUIDs,
+            event.viewportBlockUUIDs,
+            command.motion === "ctrl+d" ? "down" : "up"
+          );
+        }
       }
       return;
     }
+    if (command.kind === "delete-char") {
+      await withCount(command.count, cutAtNormalCursor);
+      return;
+    }
+    if (command.kind === "put") {
+      await withCount(command.count, () => putVimRegister(command.before));
+      return;
+    }
+    if (command.kind === "operator") {
+      const object =
+        command.motion === "iw" ? "inner-word" :
+        command.motion === "aw" ? "around-word" :
+        command.motion === "w" ? (command.operator === "change" ? "word-end" : "word-forward") :
+        command.motion === "e" ? "word-end" :
+        command.motion === "$" ? "line-end" :
+        command.motion === "line" ? "line" : null;
+      const definition = object
+        ? OPERATOR_COMMANDS.find(
+            (item) => item.operator === command.operator && item.object === object
+          )
+        : undefined;
+      if (definition) await withCount(command.count, () => executeOperator(definition));
+    }
+  };
+  const handleKeydown = async (event: HostKeydownEvent) => {
+    const searchStore = useSearchStore();
+    const modalStore = useModalStore();
+    const step = modalStore.step(keyboardEventToken(event));
+    const pending =
+      step.state.mode === "operator-pending" ||
+      step.state.mode === "char-pending";
+    setHostCaptureAll(pending);
+    if (step.command) {
+      clearPending();
+      await dispatchModalCommand(step.command, event);
+      return;
+    }
+    if (pending || step.state.countDigits || step.state.pendingPrefix) return;
 
     if (
       pendingTokens.length === 0 &&

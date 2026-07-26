@@ -11,6 +11,7 @@
   const pendingObservers = new Set();
   let captureAll = false;
   let normalModeActive = false;
+  let optimisticNormalMode = false;
 
   const isTextEntry = (target) => {
     if (!(target instanceof Element)) return false;
@@ -19,17 +20,6 @@
     return ["combobox", "searchbox", "textbox"].includes(
       (target.getAttribute("role") || "").toLowerCase()
     );
-  };
-
-  const eventToken = (event) => {
-    const modifiers = [];
-    if (event.ctrlKey) modifiers.push("ctrl");
-    if (event.metaKey) modifiers.push("meta");
-    if (event.altKey) modifiers.push("alt");
-    if (event.shiftKey && event.key.length > 1) modifiers.push("shift");
-    const key =
-      event.key.length === 1 ? event.key.toLowerCase() : event.key.toLowerCase();
-    return [...modifiers, key].join("+");
   };
 
   const postToPluginFrames = (message) => {
@@ -206,15 +196,24 @@
       captureAll = Boolean(data.value);
     } else if (data.type === "normal-mode") {
       normalModeActive = Boolean(data.value);
+      optimisticNormalMode = false;
     } else if (data.type === "clear-highlights") {
       clearHighlights(data.uuids || []);
     } else if (data.type === "highlight") {
       highlight(data);
+    } else if (data.type === "dispose") {
+      window[bridgeKey]?.dispose();
     }
   };
 
   const onKeydown = (event) => {
-    const token = eventToken(event);
+    const tokenApi = window.__vimblocksKeyToken;
+    if (!tokenApi) return;
+    if (optimisticNormalMode && event.key !== "Escape") {
+      normalModeActive = false;
+      optimisticNormalMode = false;
+    }
+    const token = tokenApi.eventToken(event);
     const textEntryActive = isTextEntry(event.target);
     const contentEditable =
       event.target instanceof Element && event.target.isContentEditable;
@@ -223,11 +222,14 @@
       (event.target.matches('[data-testid="block editor"]') ||
         event.target.id.startsWith("edit-block-"));
     const blockUUID = blockUUIDForTarget(event.target);
-    const shouldCapture =
-      !textEntryActive &&
-      (captureAll ||
-        captureTokens.has(token) ||
-        (normalModeActive && normalModeTokens.has(token)));
+    const shouldCapture = tokenApi.shouldCapture({
+      token,
+      textEntryActive,
+      captureAll,
+      normalModeActive,
+      captureTokens: [...captureTokens],
+      normalModeTokens: [...normalModeTokens],
+    });
     const shouldForwardEscape = event.key === "Escape";
     const shouldCaptureNormalModeEscape =
       shouldForwardEscape && normalModeActive && !textEntryActive;
@@ -259,6 +261,8 @@
       shouldForwardEscape &&
       (contentEditable || blockEditorActive)
     ) {
+      normalModeActive = true;
+      optimisticNormalMode = true;
       postWhenBlockIsReady(blockUUID, message);
     } else {
       postToPluginFrames(message);
@@ -267,6 +271,11 @@
 
   window.addEventListener("message", onMessage);
   window.addEventListener("keydown", onKeydown, true);
+  const releaseCapture = () => {
+    captureAll = false;
+  };
+  window.addEventListener("blur", releaseCapture);
+  document.addEventListener("visibilitychange", releaseCapture);
 
   window[bridgeKey] = {
     get captureAll() {
@@ -280,6 +289,10 @@
       pendingObservers.clear();
       window.removeEventListener("message", onMessage);
       window.removeEventListener("keydown", onKeydown, true);
+      window.removeEventListener("blur", releaseCapture);
+      document.removeEventListener("visibilitychange", releaseCapture);
+      captureAll = false;
+      normalModeActive = false;
     },
   };
 
