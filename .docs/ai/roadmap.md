@@ -6,6 +6,15 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
 
 ## Now
 
+- [ ] Deliver Vimblocks 0.5.0 daily Vim parity with counts, composable
+  operators, repeat/history, insert transitions, rendered-view search,
+  character navigation, `v`/`V`, and persistent Vim-first/Logseq-first
+  profiles. `tesela-8c9v.4.16`; spec:
+  `.docs/ai/phases/vim-daily-parity-spec.md`; plan:
+  `.docs/ai/phases/vim-daily-parity-plan.md`. Run isolated phases without human
+  re-planning, then one comparative disposable-graph product test.
+  Verify: `pnpm check && pnpm test && pnpm package` plus the spec's complete
+  Logseq 2.0.1 live matrix.
 - [x] Consolidate Vimblocks and its PDF companion into one loadable package.
 - [x] Repair deterministic normal-mode activation, owned-cursor motion, and
   rendered journal-stream navigation. `tesela-8c9v.4.10`; Logseq 2.0.1 live

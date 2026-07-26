@@ -65,3 +65,60 @@ LLM; create before preview; write custom properties instead of Logseq's built-in
 **Rationale**: Native properties make the result participate in Logseq DB task
 views, a preview keeps shorthand interpretation visible, and the local parser
 adds no network, credential, latency, or model-availability dependency.
+
+## 2026-07-25 Centralize daily Vim behavior behind boundary profiles
+
+**Context**: Vimblocks contains many individual Vim command handlers, but the
+repaired owned-cursor behavior, counts, operator composition, repeat, and visual
+state need one deterministic model. Taylor also needs to experience strict
+Vim-stream and block-safe Logseq behavior before choosing a preferred default.
+**Decision**: Build one shared modal state/action layer and expose persistent
+Vim-first and Logseq-first boundary profiles. Include the full daily Vim set,
+characterwise `v`, linewise `V`, subtree-preserving linewise mutations,
+rendered-view search, and sibling-block `o/O`. Retain both profiles after the
+comparison and remember the last-used choice.
+**Alternatives considered**: Patch every handler independently; replace the
+command system immediately; choose one boundary model without live comparison;
+remove the losing profile after the test.
+**Rationale**: Shared grammar prevents command-specific state drift, policy
+adapters make the trade-off directly testable, subtree preservation respects
+Logseq's data model, and retaining both profiles provides instant rollback.
+Escalate to a replacement engine only when the objective triggers in
+`.docs/ai/phases/vim-daily-parity-spec.md` prove the shared-layer approach is
+not viable.
+
+## 2026-07-25 Make host capture static and group native history by snapshots
+
+**Context**: Logseq host events must be suppressed synchronously before the
+plugin-frame modal reducer receives them. The host and plugin previously
+normalized shifted/meta keys differently, raw block offsets differ from
+rendered DOM offsets, and Logseq exposes no multi-block transaction API.
+**Decision**: Load one canonical key-token implementation into both host and
+plugin frames. The host statically consumes configured modal grammar tokens
+while normal/visual mode is active; the asynchronous reducer does not expose a
+retroactive consume result. Keep modal points in raw block offsets and convert
+once at the paint boundary. For plugin-owned multi-block mutations, record
+before/after snapshots plus a maximum native-history step count; Vim `u` and
+Ctrl-R invoke Logseq history until the expected snapshot matches. Option/Alt
+tokens derive their unmodified base from `event.code`; Escape claims host normal
+mode synchronously. Remove each legacy Logseq palette keybinding only in the
+phase that replaces its keyboard path; intermediate commits must retain
+exactly one working route, and that same commit must add every configured token
+to host capture. Keep digits in ungated non-editing capture for legacy counted
+commands, and route any existing chord whose prefix becomes captured (notably
+`g u`/`g U`) through the shared dispatcher. Native history is permitted only
+after live update/subtree probes and aborts with a compensating inverse action
+on the first non-progressing step. Linewise put is one nested sibling batch.
+Retire the old Markdown-graph `property::` position special case instead of
+carrying it into the DB-only engine.
+**Alternatives considered**: Maintain two tokenizers with parity by convention;
+let the reducer decide browser suppression asynchronously; accept one undo per
+mutated root; replace Logseq history with a fully private undo stack; store DOM
+offsets in modal state.
+**Rationale**: One token source removes shifted/meta dispatch holes, static
+capture reflects the browser timing boundary honestly, raw offsets preserve
+content semantics across markup, and snapshot-bounded native history keeps one
+Vim undo per command without pretending Logseq offers transactions. The live
+probe plus progress guard keeps that bounded loop from wandering into unrelated
+user history; batch put and removal of the obsolete file-graph branch keep
+Logseq DB hierarchy and rendered offsets explicit.
