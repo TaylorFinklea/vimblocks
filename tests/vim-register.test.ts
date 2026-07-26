@@ -1,87 +1,79 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-const loadRegisterModule = async () =>
-  import("../src/runtime/vim-register.ts").catch(() => null);
+import {
+  describeUnnamedRegister,
+  planLinewisePut,
+  planRegisterPut,
+  VimRegisterStore,
+} from "../src/runtime/vim-register.ts";
 
-test("the unnamed register records characterwise and linewise values", async () => {
-  const registerModule = await loadRegisterModule();
-  assert.ok(registerModule, "Vim register module should exist");
-  if (!registerModule) {
-    return;
-  }
-
-  const store = new registerModule.VimRegisterStore();
-  store.write("alpha", "characterwise");
+test("the unnamed register records discriminated values defensively", () => {
+  const store = new VimRegisterStore();
+  store.write({ text: "alpha", kind: "characterwise" });
   assert.deepEqual(store.read(), {
     text: "alpha",
     kind: "characterwise",
   });
 
-  store.write("whole block", "linewise");
+  const blocks = [
+    {
+      content: "whole block",
+      children: [{ content: "child", children: [] }],
+    },
+  ];
+  store.write({ blocks, kind: "linewise" });
+  blocks[0].content = "mutated outside";
   assert.deepEqual(store.read(), {
-    text: "whole block",
     kind: "linewise",
+    blocks: [
+      {
+        content: "whole block",
+        children: [{ content: "child", children: [] }],
+      },
+    ],
   });
 });
 
-test("p and P put characterwise text after or before the cursor", async () => {
-  const registerModule = await loadRegisterModule();
-  assert.ok(registerModule, "Vim register module should exist");
-  if (!registerModule) {
-    return;
-  }
-
+test("p and P put characterwise text after or before the cursor", () => {
   const register = { text: "XY", kind: "characterwise" as const };
-  assert.deepEqual(
-    registerModule.planRegisterPut("abcd", 1, register, false),
-    {
-      kind: "characterwise",
-      content: "abXYcd",
-      cursor: 3,
-    }
-  );
-  assert.deepEqual(
-    registerModule.planRegisterPut("abcd", 1, register, true),
-    {
-      kind: "characterwise",
-      content: "aXYbcd",
-      cursor: 2,
-    }
-  );
+  assert.deepEqual(planRegisterPut("abcd", 1, register, false), {
+    kind: "characterwise",
+    content: "abXYcd",
+    cursor: 3,
+  });
+  assert.deepEqual(planRegisterPut("abcd", 1, register, true), {
+    kind: "characterwise",
+    content: "aXYbcd",
+    cursor: 2,
+  });
 });
 
-test("linewise puts remain sibling-block operations", async () => {
-  const registerModule = await loadRegisterModule();
-  assert.ok(registerModule, "Vim register module should exist");
-  if (!registerModule) {
-    return;
-  }
-
-  assert.deepEqual(
-    registerModule.planRegisterPut(
-      "current",
-      0,
-      { text: "whole block", kind: "linewise" },
-      false
-    ),
+test("linewise puts preserve nested sibling batches", () => {
+  const blocks = [
     {
-      kind: "linewise",
-      text: "whole block",
+      content: "whole block",
+      children: [{ content: "child", children: [] }],
+    },
+  ];
+  assert.deepEqual(
+    planLinewisePut({ blocks, kind: "linewise" }, "anchor", false),
+    {
+      batch: [
+        {
+          content: "whole block",
+          children: [{ content: "child" }],
+        },
+      ],
+      sibling: true,
       before: false,
     }
   );
 });
 
-test("register display exposes type and escaped content", async () => {
-  const registerModule = await loadRegisterModule();
-  assert.ok(registerModule, "Vim register module should exist");
-  if (!registerModule) {
-    return;
-  }
-
+test("register display exposes type and escaped content", () => {
   assert.equal(
-    registerModule.describeUnnamedRegister({
+    describeUnnamedRegister({
       text: "alpha\nbeta",
       kind: "characterwise",
     }),

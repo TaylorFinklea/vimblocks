@@ -89,10 +89,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: "vim-shortcut-cut-" + index,
         label: "Cut",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook

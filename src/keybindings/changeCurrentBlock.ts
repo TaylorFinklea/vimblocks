@@ -60,10 +60,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: "vim-shortcut-change-current-block-" + index,
         label: "Change current block (or delete match if searching)",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook

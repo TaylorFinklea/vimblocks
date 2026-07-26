@@ -1,4 +1,7 @@
-import { ILSPluginUser } from "@logseq/libs/dist/LSPlugin";
+import {
+  BlockEntity,
+  ILSPluginUser,
+} from "@logseq/libs/dist/LSPlugin";
 import * as changeCase from "change-case-all";
 
 import {
@@ -35,8 +38,6 @@ import type {
 import { useSearchStore } from "@/stores/search";
 import { putVimRegister } from "@/keybindings/pasteNext";
 import { cutAtNormalCursor } from "@/keybindings/cut";
-import { yankCurrentBlockContent } from "@/keybindings/copyCurrentBlockContent";
-import { deleteCurrentBlock } from "@/keybindings/deleteCurrentBlock";
 import {
   isTextEntryEvent,
 } from "@/runtime/context-guard";
@@ -51,7 +52,25 @@ import {
 } from "@/runtime/host-bridge";
 import { keyboardEventToken } from "@/runtime/key-token";
 import { useModalStore } from "@/stores/modal";
-import { setModalCountDigits } from "@/runtime/modal-count";
+import {
+  canonicalizeSubtreeRoots,
+  collectSubtreeUUIDs,
+  firstSurvivingUUID,
+  serializeSubtrees,
+  type BlockNode,
+} from "@/runtime/block-subtrees";
+import { unnamedRegister } from "@/runtime/vim-register";
+import {
+  planOperatorMutation,
+  replayChange,
+  runNativeHistoryToward,
+  snapshotDistance,
+  type NativeHistorySnapshot,
+} from "@/runtime/modal-change";
+import {
+  NORMAL_MODE_CAPTURE_TOKENS,
+  type ModalCommand,
+} from "@/runtime/modal-command";
 
 type OperatorObject =
   | "inner-word"
@@ -302,6 +321,377 @@ const executeOperator = async (
   });
 };
 
+const toBlockNode = (
+  block: BlockEntity,
+  parentUUID?: string
+): BlockNode => ({
+  uuid: block.uuid,
+  content: block.content ?? "",
+  ...(block.properties
+    ? { properties: { ...block.properties } }
+    : {}),
+  ...(parentUUID ? { parentUUID } : {}),
+  children: (block.children ?? [])
+    .filter(
+      (child): child is BlockEntity =>
+        typeof child === "object" && child !== null && "uuid" in child
+    )
+    .map((child) => toBlockNode(child, block.uuid)),
+});
+
+const currentModalPoint = (): NativeHistorySnapshot["cursor"] => {
+  const searchStore = useSearchStore();
+  return searchStore.cursorMode && searchStore.cursorBlockUUID
+    ? {
+        blockUUID: searchStore.cursorBlockUUID,
+        offset: searchStore.cursorPosition,
+      }
+    : null;
+};
+
+const captureHistorySnapshot = async (
+  scopeUUIDs: readonly string[],
+  cursor: NativeHistorySnapshot["cursor"]
+): Promise<NativeHistorySnapshot> => {
+  const roots = (
+    await Promise.all(
+      [...new Set(scopeUUIDs)].map((uuid) =>
+        logseq.Editor.getBlock(uuid, { includeChildren: true })
+      )
+    )
+  ).flatMap((block) => {
+    if (!block?.uuid) return [];
+    const node = toBlockNode(block);
+    return serializeSubtrees([node.uuid], [node]);
+  });
+  return { roots, cursor };
+};
+
+const recordNativeHistory = async (options: {
+  before: NativeHistorySnapshot;
+  scopeUUIDs: readonly string[];
+  extraScopeUUIDs?: readonly string[];
+  maxNativeSteps: number;
+}): Promise<void> => {
+  const scopeUUIDs = [
+    ...new Set([
+      ...options.scopeUUIDs,
+      ...(options.extraScopeUUIDs ?? []),
+    ]),
+  ];
+  const after = await captureHistorySnapshot(
+    scopeUUIDs,
+    currentModalPoint()
+  );
+  useModalStore().recordNativeHistoryGroup({
+    before: options.before,
+    after,
+    maxNativeSteps: Math.max(1, options.maxNativeSteps),
+    scopeUUIDs,
+  });
+};
+
+const invokeNativeHistory = async (
+  kind: "undo" | "redo"
+): Promise<void> => {
+  // @ts-ignore Logseq exposes editor history commands at runtime.
+  await logseq.App.invokeExternalCommand(`logseq.editor/${kind}`);
+};
+
+const waitForHistorySnapshotChange = async (
+  scopeUUIDs: readonly string[],
+  cursor: NativeHistorySnapshot["cursor"],
+  previous: NativeHistorySnapshot
+): Promise<NativeHistorySnapshot> => {
+  let current = await captureHistorySnapshot(scopeUUIDs, cursor);
+  for (
+    let attempt = 0;
+    attempt < 30 && snapshotDistance(current, previous) === 0;
+    attempt += 1
+  ) {
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 10));
+    current = await captureHistorySnapshot(scopeUUIDs, cursor);
+  }
+  return current;
+};
+
+const restoreHistoryCursor = async (
+  point: NativeHistorySnapshot["cursor"],
+  visibleUUIDs: readonly string[]
+): Promise<void> => {
+  const searchStore = useSearchStore();
+  const candidates = [
+    ...(point?.blockUUID ? [point.blockUUID] : []),
+    ...visibleUUIDs,
+  ];
+  for (const uuid of new Set(candidates)) {
+    const block = await logseq.Editor.getBlock(uuid);
+    if (!block?.uuid) continue;
+    await searchStore.restoreCursor(
+      block.uuid,
+      block.content ?? "",
+      point?.blockUUID === block.uuid
+        ? point.offset
+        : firstNonBlankPosition(block.content ?? "")
+    );
+    return;
+  }
+  searchStore.clearCursor();
+};
+
+const executeNativeHistory = async (
+  kind: "undo" | "redo",
+  event: HostKeydownEvent
+): Promise<void> => {
+  const modalStore = useModalStore();
+  const group = modalStore.nativeHistoryGroup;
+  if (!group) {
+    await invokeNativeHistory(kind);
+    return;
+  }
+
+  const source = kind === "undo" ? group.after : group.before;
+  const target = kind === "undo" ? group.before : group.after;
+  const current = await captureHistorySnapshot(
+    group.scopeUUIDs,
+    source.cursor
+  );
+  if (snapshotDistance(current, source) !== 0) {
+    modalStore.recordNativeHistoryGroup(null);
+    await invokeNativeHistory(kind);
+    return;
+  }
+
+  const result = await runNativeHistoryToward({
+    target,
+    maxNativeSteps: group.maxNativeSteps,
+    readSnapshot: () =>
+      captureHistorySnapshot(group.scopeUUIDs, target.cursor),
+    readSnapshotAfterStep: (previous) =>
+      waitForHistorySnapshotChange(
+        group.scopeUUIDs,
+        target.cursor,
+        previous
+      ),
+    step: () => invokeNativeHistory(kind),
+    compensate: () =>
+      invokeNativeHistory(kind === "undo" ? "redo" : "undo"),
+  });
+  await restoreHistoryCursor(target.cursor, event.visibleBlockUUIDs);
+  if (!result.matched) {
+    modalStore.recordNativeHistoryGroup(null);
+    logseq.UI.showMsg(
+      result.compensated
+        ? "Vimblocks stopped history because Logseq did not move toward the expected state."
+        : "Vimblocks could not reach the expected Logseq history state.",
+      "error"
+    );
+  }
+};
+
+const executePlannedTextOperator = async (
+  command: Extract<ModalCommand, { kind: "operator" }>,
+  event: HostKeydownEvent
+): Promise<void> => {
+  const searchStore = useSearchStore();
+  if (!searchStore.cursorMode || !searchStore.cursorBlockUUID) return;
+
+  const scopeUUIDs = [
+    ...new Set([
+      ...event.visibleBlockUUIDs,
+      searchStore.cursorBlockUUID,
+    ]),
+  ];
+  const fetched = await Promise.all(
+    scopeUUIDs.map((uuid) =>
+      logseq.Editor.getBlock(uuid, { includeChildren: true })
+    )
+  );
+  const blocks = fetched
+    .filter((block): block is BlockEntity => Boolean(block?.uuid))
+    .map((block) => ({
+      uuid: block.uuid,
+      content: block.content ?? "",
+    }));
+  const nodes = fetched
+    .filter((block): block is BlockEntity => Boolean(block?.uuid))
+    .map((block) => toBlockNode(block));
+  const before = await captureHistorySnapshot(
+    scopeUUIDs,
+    currentModalPoint()
+  );
+  const motion =
+    command.operator === "change" && command.motion === "w"
+      ? "e"
+      : command.motion;
+  if (
+    motion === "f" ||
+    motion === "F" ||
+    motion === "t" ||
+    motion === "T" ||
+    motion === ";" ||
+    motion === "," ||
+    motion === "line"
+  ) {
+    return;
+  }
+  const plan = planOperatorMutation(
+    { blocks },
+    nodes,
+    {
+      blockUUID: searchStore.cursorBlockUUID,
+      offset: searchStore.cursorPosition,
+    },
+    command.operator,
+    motion,
+    command.count,
+    useModalStore().state.profile
+  );
+  const hasSelection =
+    plan.register.kind === "linewise"
+      ? plan.register.blocks.length > 0
+      : plan.register.text.length > 0;
+  if (!hasSelection) return;
+
+  unnamedRegister.write(plan.register);
+  if (command.operator === "yank") return;
+
+  for (const update of plan.updates) {
+    await logseq.Editor.updateBlock(update.uuid, update.content);
+  }
+  for (const root of [...plan.removeRoots].reverse()) {
+    await logseq.Editor.removeBlock(root);
+  }
+
+  useModalStore().recordChange({
+    kind: "operator",
+    operator: command.operator,
+    motion: command.motion,
+    count: command.count,
+  });
+  if (command.operator === "change" && plan.cursor) {
+    searchStore.clearCursor();
+    await logseq.Editor.editBlock(plan.cursor.blockUUID, {
+      pos: plan.cursor.offset,
+    });
+  } else if (plan.cursor) {
+    const cursorBlock = await logseq.Editor.getBlock(
+      plan.cursor.blockUUID
+    );
+    if (cursorBlock?.uuid) {
+      await searchStore.restoreCursor(
+        cursorBlock.uuid,
+        cursorBlock.content ?? "",
+        plan.cursor.offset
+      );
+    }
+  }
+  await recordNativeHistory({
+    before,
+    scopeUUIDs,
+    maxNativeSteps: plan.updates.length + plan.removeRoots.length,
+  });
+};
+
+const executeLinewiseOperator = async (
+  command: Extract<ModalCommand, { kind: "operator" }>,
+  event: HostKeydownEvent
+): Promise<void> => {
+  const searchStore = useSearchStore();
+  if (!searchStore.cursorMode || !searchStore.cursorBlockUUID) return;
+
+  const visible = [...new Set(event.visibleBlockUUIDs)];
+  const startIndex = visible.indexOf(searchStore.cursorBlockUUID);
+  const selectedUUIDs =
+    startIndex >= 0 && command.motion === "k"
+      ? visible.slice(
+          Math.max(0, startIndex - command.count + 1),
+          startIndex + 1
+        )
+      : startIndex >= 0
+        ? visible.slice(startIndex, startIndex + command.count)
+      : [searchStore.cursorBlockUUID];
+  const fetched = await Promise.all(
+    selectedUUIDs.map((uuid) =>
+      logseq.Editor.getBlock(uuid, { includeChildren: true })
+    )
+  );
+  const nodes = fetched
+    .filter((block): block is BlockEntity => Boolean(block?.uuid))
+    .map((block) => toBlockNode(block));
+  const roots = canonicalizeSubtreeRoots(selectedUUIDs, nodes);
+  const blocks = serializeSubtrees(roots, nodes);
+  if (!blocks.length) return;
+
+  unnamedRegister.write({ kind: "linewise", blocks });
+  if (command.operator === "yank") return;
+  const before = await captureHistorySnapshot(
+    visible,
+    currentModalPoint()
+  );
+
+  if (command.operator === "change") {
+    const firstRoot = roots[0];
+    await logseq.Editor.updateBlock(firstRoot, "");
+    for (const root of roots.slice(1).reverse()) {
+      await logseq.Editor.removeBlock(root);
+    }
+    useModalStore().recordChange({
+      kind: "operator",
+      operator: command.operator,
+      motion: command.motion,
+      count: command.count,
+    });
+    searchStore.clearCursor();
+    await logseq.Editor.editBlock(firstRoot, { pos: 0 });
+    await recordNativeHistory({
+      before,
+      scopeUUIDs: visible,
+      maxNativeSteps: roots.length,
+    });
+    return;
+  }
+
+  for (const root of [...roots].reverse()) {
+    await logseq.Editor.removeBlock(root);
+  }
+  const removed = new Set(collectSubtreeUUIDs(roots, nodes));
+  const lastIndex = Math.max(
+    ...roots.map((uuid) => visible.indexOf(uuid)).filter((index) => index >= 0)
+  );
+  const survivorCandidates = [
+    ...visible.slice(lastIndex + 1),
+    ...visible.slice(0, Math.max(0, startIndex)).reverse(),
+  ].filter((uuid) => !removed.has(uuid));
+  const survivingUUID = await firstSurvivingUUID(
+    survivorCandidates,
+    async (uuid) => Boolean(await logseq.Editor.getBlock(uuid))
+  );
+  if (survivingUUID) {
+    const candidate = await logseq.Editor.getBlock(survivingUUID);
+    if (candidate?.uuid) {
+      await searchStore.restoreCursor(
+        candidate.uuid,
+        candidate.content ?? "",
+        firstNonBlankPosition(candidate.content ?? "")
+      );
+    }
+  } else {
+    searchStore.clearCursor();
+  }
+  useModalStore().recordChange({
+    kind: "operator",
+    operator: command.operator,
+    motion: command.motion,
+    count: command.count,
+  });
+  await recordNativeHistory({
+    before,
+    scopeUUIDs: visible,
+    maxNativeSteps: roots.length,
+  });
+};
+
 let disposeOperatorSequenceListener: (() => void) | null = null;
 
 export const disposeOperatorSequences = (): void => {
@@ -411,6 +801,31 @@ export default (logseq: ILSPluginUser) => {
       });
     });
   }
+  const structuralBindings = [
+    [
+      "change-current-block",
+      "changeCurrentBlock",
+    ],
+    [
+      "delete-current-and-next-blocks",
+      "deleteCurrentAndNextSiblingBlocks",
+    ],
+    [
+      "delete-current-and-prev-blocks",
+      "deleteCurrentAndPrevSiblingBlocks",
+    ],
+  ] as const;
+  for (const [commandId, settingKey] of structuralBindings) {
+    if (!beforeActionRegister(settingKey)) continue;
+    const configured = settings.keyBindings[settingKey];
+    const bindings = Array.isArray(configured) ? configured : [configured];
+    bindings.forEach((binding) => {
+      sequences.push({
+        commandId,
+        tokens: expandOperatorBinding(binding, false),
+      });
+    });
+  }
 
   const motionBindings = [
     ["move-left", "left"],
@@ -428,6 +843,8 @@ export default (logseq: ILSPluginUser) => {
     ["move-rendered-bottom", "bottom"],
     ["change-case-upper", "changeCaseUpper"],
     ["change-case-lower", "changeCaseLower"],
+    ["undo", "undo"],
+    ["redo", "redo"],
   ] as const;
   for (const [commandId, settingKey] of motionBindings) {
     if (!beforeActionRegister(settingKey)) continue;
@@ -447,7 +864,10 @@ export default (logseq: ILSPluginUser) => {
     ..."0123456789",
   ]);
   configureHostNormalModeCapture(
-    normalModeSequences.flatMap((sequence) => sequence.tokens)
+    [
+      ...NORMAL_MODE_CAPTURE_TOKENS,
+      ...normalModeSequences.flatMap((sequence) => sequence.tokens),
+    ]
   );
 
   let pendingTokens: string[] = [];
@@ -455,17 +875,6 @@ export default (logseq: ILSPluginUser) => {
   const clearPending = () => {
     pendingTokens = [];
     pendingMotionTokens = [];
-  };
-  const withCount = async (
-    count: number,
-    action: () => Promise<void>
-  ): Promise<void> => {
-    setModalCountDigits(count > 1 ? String(count) : "");
-    try {
-      await action();
-    } finally {
-      resetNumber();
-    }
   };
   const dispatchModalCommand = async (
     command: ReturnType<ReturnType<typeof useModalStore>["step"]>["command"],
@@ -501,6 +910,10 @@ export default (logseq: ILSPluginUser) => {
     }
     if (command.kind === "change-case") {
       if (!searchStore.cursorMode || !searchStore.cursorBlockUUID) return;
+      const before = await captureHistorySnapshot(
+        event.visibleBlockUUIDs,
+        currentModalPoint()
+      );
       const block = await logseq.Editor.getBlock(searchStore.cursorBlockUUID);
       if (!block?.content) return;
       const start = Math.min(
@@ -519,30 +932,99 @@ export default (logseq: ILSPluginUser) => {
         block.content.slice(end);
       await logseq.Editor.updateBlock(block.uuid, content);
       await searchStore.restoreCursor(block.uuid, content, start);
+      await recordNativeHistory({
+        before,
+        scopeUUIDs: event.visibleBlockUUIDs,
+        maxNativeSteps: 1,
+      });
       return;
     }
     if (command.kind === "delete-char") {
-      await withCount(command.count, cutAtNormalCursor);
+      const before = await captureHistorySnapshot(
+        event.visibleBlockUUIDs,
+        currentModalPoint()
+      );
+      for (let index = 0; index < command.count; index += 1) {
+        await cutAtNormalCursor();
+      }
+      useModalStore().recordChange({
+        kind: "delete-char",
+        count: command.count,
+      });
+      await recordNativeHistory({
+        before,
+        scopeUUIDs: event.visibleBlockUUIDs,
+        maxNativeSteps: command.count,
+      });
       return;
     }
     if (command.kind === "put") {
-      await withCount(command.count, () => putVimRegister(command.before));
+      const before = await captureHistorySnapshot(
+        event.visibleBlockUUIDs,
+        currentModalPoint()
+      );
+      const extraScopeUUIDs: string[] = [];
+      let maxNativeSteps = 0;
+      for (let index = 0; index < command.count; index += 1) {
+        const result = await putVimRegister(command.before);
+        extraScopeUUIDs.push(...result.uuids);
+        maxNativeSteps += result.nativeSteps;
+      }
+      useModalStore().recordChange({
+        kind: "put",
+        before: command.before,
+        count: command.count,
+      });
+      await recordNativeHistory({
+        before,
+        scopeUUIDs: event.visibleBlockUUIDs,
+        extraScopeUUIDs,
+        maxNativeSteps,
+      });
       return;
     }
     if (command.kind === "operator") {
+      if (
+        command.motion === "line" ||
+        command.motion === "j" ||
+        command.motion === "k"
+      ) {
+        await executeLinewiseOperator(command, event);
+        return;
+      }
       const object =
         command.motion === "iw" ? "inner-word" :
         command.motion === "aw" ? "around-word" :
         command.motion === "w" ? (command.operator === "change" ? "word-end" : "word-forward") :
         command.motion === "e" ? "word-end" :
         command.motion === "$" ? "line-end" :
-        command.motion === "line" ? "line" : null;
+        null;
       const definition = object
         ? OPERATOR_COMMANDS.find(
             (item) => item.operator === command.operator && item.object === object
           )
         : undefined;
-      if (definition) await withCount(command.count, () => executeOperator(definition));
+      if (definition) {
+        await executePlannedTextOperator(command, event);
+      }
+      return;
+    }
+    if (command.kind === "repeat-change") {
+      const lastChange = useModalStore().state.lastChange;
+      if (lastChange) {
+        await dispatchModalCommand(
+          replayChange(lastChange, command.count),
+          event
+        );
+        useModalStore().recordChange(lastChange);
+      }
+      return;
+    }
+    if (command.kind === "undo" || command.kind === "redo") {
+      for (let index = 0; index < command.count; index += 1) {
+        await executeNativeHistory(command.kind, event);
+      }
+      return;
     }
   };
   const handleKeydown = async (event: HostKeydownEvent) => {
@@ -639,30 +1121,118 @@ export default (logseq: ILSPluginUser) => {
 
     if (result.status === "matched" && result.commandId) {
       if (result.commandId === "paste-next") {
-        await putVimRegister(false);
+        const count = getNumber();
+        resetNumber();
+        await dispatchModalCommand(
+          { kind: "put", before: false, count },
+          event
+        );
         return;
       }
       if (result.commandId === "paste-previous") {
-        await putVimRegister(true);
+        const count = getNumber();
+        resetNumber();
+        await dispatchModalCommand(
+          { kind: "put", before: true, count },
+          event
+        );
         return;
       }
       if (result.commandId === "cut-character") {
-        await cutAtNormalCursor();
+        const count = getNumber();
+        resetNumber();
+        await dispatchModalCommand(
+          { kind: "delete-char", count },
+          event
+        );
         return;
       }
       if (result.commandId === "yank-line") {
-        await yankCurrentBlockContent();
+        const count = getNumber();
+        resetNumber();
+        await executeLinewiseOperator(
+          {
+            kind: "operator",
+            operator: "yank",
+            motion: "line",
+            count,
+          },
+          event
+        );
         return;
       }
       if (result.commandId === "delete-line") {
         const count = getNumber();
         resetNumber();
-        await deleteCurrentBlock(count);
+        await executeLinewiseOperator(
+          {
+            kind: "operator",
+            operator: "delete",
+            motion: "line",
+            count,
+          },
+          event
+        );
+        return;
+      }
+      if (result.commandId === "change-current-block") {
+        const count = getNumber();
+        resetNumber();
+        await executeLinewiseOperator(
+          {
+            kind: "operator",
+            operator: "change",
+            motion: "line",
+            count,
+          },
+          event
+        );
+        return;
+      }
+      if (
+        result.commandId === "delete-current-and-next-blocks" ||
+        result.commandId === "delete-current-and-prev-blocks"
+      ) {
+        const count = getNumber() + 1;
+        resetNumber();
+        await executeLinewiseOperator(
+          {
+            kind: "operator",
+            operator: "delete",
+            motion:
+              result.commandId === "delete-current-and-next-blocks"
+                ? "j"
+                : "k",
+            count,
+          },
+          event
+        );
         return;
       }
       const command = commandsById.get(result.commandId);
       if (command) {
-        await executeOperator(command);
+        const motionByObject: Record<
+          OperatorObject,
+          Extract<ModalCommand, { kind: "operator" }>["motion"]
+        > = {
+          "inner-word": "iw",
+          "around-word": "aw",
+          "word-forward": "w",
+          "word-end": "e",
+          "line-end": "$",
+          line: "line",
+        };
+        const count = getNumber();
+        resetNumber();
+        await dispatchModalCommand(
+          {
+            kind: "operator",
+            operator: command.operator,
+            motion: motionByObject[command.object],
+            count,
+          },
+          event
+        );
       }
     }
   };

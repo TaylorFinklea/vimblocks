@@ -69,6 +69,19 @@ export interface ModalStep {
   command?: ModalCommand;
 }
 
+export const NORMAL_MODE_CAPTURE_TOKENS = [
+  ..."0123456789",
+  "h", "j", "k", "l", "w", "b", "e",
+  "shift+6", "shift+4", "g", "shift+g",
+  "ctrl+u", "ctrl+d",
+  "d", "c", "y", "x", "p", "shift+p",
+  "v", "shift+v",
+  "i", "a", "shift+i", "shift+a", "o", "shift+o",
+  "/", "n", "shift+n",
+  "f", "shift+f", "t", "shift+t", ";", ",",
+  "u", "ctrl+r", ".",
+] as const;
+
 export const normalizeBoundaryProfile = (value: unknown): BoundaryProfile =>
   value === "vim-first" ? "vim-first" : "logseq-first";
 
@@ -134,6 +147,32 @@ export const stepModalKey = (state: ModalState, token: string): ModalStep => {
   }
   if (token === "g") return { state: { ...state, pendingPrefix: "g" } };
   if (state.operator) {
+    if (state.operator === "delete" && token === "c") {
+      return {
+        state: normal(state),
+        command: {
+          kind: "operator",
+          operator: "change",
+          motion: "line",
+          count: state.operatorCount * countOf(state.countDigits),
+        },
+      };
+    }
+    if (
+      state.operator === "delete" &&
+      (token === "j" || token === "k")
+    ) {
+      return {
+        state: normal(state),
+        command: {
+          kind: "operator",
+          operator: "delete",
+          motion: token,
+          count:
+            state.operatorCount * countOf(state.countDigits) + 1,
+        },
+      };
+    }
     const motion = token === "i" ? null : motionFor(token);
     if (token === "i" || token === "a") {
       return { state: { ...state, pendingPrefix: token } };

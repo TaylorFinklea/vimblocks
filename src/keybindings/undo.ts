@@ -25,10 +25,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: "vim-shortcut-undo-" + index,
         label: "Undo",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook

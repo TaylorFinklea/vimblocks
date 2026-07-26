@@ -11,10 +11,11 @@
 - [x] OMP review gate: GLM + Opus; all high/medium findings incorporated.
 - [x] Phase 1: shared modal reducer/host path; live disposable-graph gate.
 - [x] Phase 2: counted rendered motions; bidirectional Jul 23/24 live gate.
-- [ ] Create isolated worktree; run phases 1-3.
-- [ ] Run phases 4-6 without human re-planning.
+- [x] Phase 3: operators/register/history; live subtree/repeat/history gate.
+- [ ] Phase 4: deterministic insert/open sessions.
+- [ ] Run phases 5-6 without human re-planning.
 - [ ] Phase 7: hardening and comparative Logseq product test.
 
 ## Blockers
 
-- PDF rerun `tesela-8c9v.4.9`: Computer Use native pipe remains intermittent.
+- None.

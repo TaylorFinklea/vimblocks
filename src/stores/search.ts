@@ -9,6 +9,7 @@ import {
 } from "@/runtime/host-bridge";
 import { resolveNormalModeBlockUUID } from "@/runtime/cursor-block";
 import {
+  buildPositionMap as buildSharedPositionMap,
   normalizeRawOffset,
   resolveMotion,
   toRenderedOffset,
@@ -241,6 +242,8 @@ const buildRenderedBuffer = async (
 
 // Build a map from original content position to rendered text position
 function buildPositionMap(originalContent: string) {
+  return buildSharedPositionMap(originalContent);
+
   // Map: original position -> rendered position
   // For invisible characters in original, map to -1
   const map: number[] = [];

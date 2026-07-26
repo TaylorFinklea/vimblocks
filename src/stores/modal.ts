@@ -15,9 +15,11 @@ import {
   resetModalCountDigits,
   setModalCountDigits,
 } from "@/runtime/modal-count";
+import type { NativeHistoryGroup } from "@/runtime/modal-change";
 
 export const useModalStore = defineStore("modal", () => {
   const state = ref<ModalState>(createModalState("logseq-first"));
+  const nativeHistoryGroup = ref<NativeHistoryGroup | null>(null);
 
   const step = (token: string) => {
     state.value = {
@@ -41,6 +43,11 @@ export const useModalStore = defineStore("modal", () => {
   const recordChange = (change: ChangeDescriptor | null): void => {
     state.value = { ...state.value, lastChange: change };
   };
+  const recordNativeHistoryGroup = (
+    group: NativeHistoryGroup | null
+  ): void => {
+    nativeHistoryGroup.value = group;
+  };
   const resetPending = (): void => {
     resetModalCountDigits();
     state.value = {
@@ -51,10 +58,12 @@ export const useModalStore = defineStore("modal", () => {
 
   return {
     state,
+    nativeHistoryGroup,
     step,
     setProfile,
     setVisualAnchor,
     recordChange,
+    recordNativeHistoryGroup,
     resetPending,
   };
 });

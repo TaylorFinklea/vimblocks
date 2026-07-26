@@ -114,11 +114,14 @@ export const writeClipboard = (
   content: string,
   kind: VimRegisterKind = "characterwise"
 ) => {
-  unnamedRegister.write(content, kind);
-};
-
-export const readClipboard = (): string => {
-  return unnamedRegister.read().text;
+  unnamedRegister.write(
+    kind === "characterwise"
+      ? { kind, text: content }
+      : {
+          kind,
+          blocks: [{ content, children: [] }],
+        }
+  );
 };
 
 export const readVimRegister = (): VimRegisterValue =>

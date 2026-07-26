@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  NORMAL_MODE_CAPTURE_TOKENS,
   createModalState,
   normalizeBoundaryProfile,
   stepModalKey,
@@ -29,6 +30,24 @@ test("reduces counts, operators, zero, and mode transitions", () => {
     kind: "operator",
     operator: "delete",
     motion: "0",
+    count: 1,
+  });
+  assert.deepEqual(trace(["d", "j"]).command, {
+    kind: "operator",
+    operator: "delete",
+    motion: "j",
+    count: 2,
+  });
+  assert.deepEqual(trace(["2", "d", "k"]).command, {
+    kind: "operator",
+    operator: "delete",
+    motion: "k",
+    count: 3,
+  });
+  assert.deepEqual(trace(["d", "c"]).command, {
+    kind: "operator",
+    operator: "change",
+    motion: "line",
     count: 1,
   });
   assert.equal(trace(["1", "0", "l"]).command?.count, 10);
@@ -70,4 +89,12 @@ test("emits total commands for delete, put, repeat, and character find", () => {
     character: null,
     count: 1,
   });
+});
+
+test("host capture includes every reducer-owned normal-mode token", () => {
+  for (const token of [
+    ".", "d", "x", "p", "i", "o", "/", "f", "u", "ctrl+r",
+  ]) {
+    assert.equal(NORMAL_MODE_CAPTURE_TOKENS.includes(token), true, token);
+  }
 });

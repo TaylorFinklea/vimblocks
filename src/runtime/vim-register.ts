@@ -1,53 +1,63 @@
-export type VimRegisterKind = "characterwise" | "linewise";
+import type { IBatchBlock } from "@logseq/libs/dist/LSPlugin";
 
-export interface VimRegisterValue {
-  text: string;
-  kind: VimRegisterKind;
+import type { SerializedBlock } from "./block-subtrees.ts";
+
+export type VimRegisterKind = "characterwise" | "linewise";
+export type VimRegisterValue =
+  | { kind: "characterwise"; text: string }
+  | { kind: "linewise"; blocks: SerializedBlock[] };
+
+export interface CharacterwisePutPlan {
+  kind: "characterwise";
+  content: string;
+  cursor: number;
 }
 
-export type RegisterPutPlan =
-  | {
-      kind: "characterwise";
-      content: string;
-      cursor: number;
-    }
-  | {
-      kind: "linewise";
-      text: string;
-      before: boolean;
-    };
+export interface LinewisePutPlan {
+  batch: IBatchBlock[];
+  sibling: true;
+  before: boolean;
+}
 
 export class VimRegisterStore {
   private value: VimRegisterValue = {
-    text: "",
     kind: "characterwise",
+    text: "",
   };
 
-  write(text: string, kind: VimRegisterKind = "characterwise"): void {
-    this.value = { text, kind };
+  write(value: VimRegisterValue): void {
+    this.value =
+      value.kind === "characterwise"
+        ? { ...value }
+        : {
+            kind: "linewise",
+            blocks: structuredClone(value.blocks),
+          };
   }
 
   read(): VimRegisterValue {
-    return { ...this.value };
+    return this.value.kind === "characterwise"
+      ? { ...this.value }
+      : {
+          kind: "linewise",
+          blocks: structuredClone(this.value.blocks),
+        };
   }
 }
 
 export const unnamedRegister = new VimRegisterStore();
 
+export const isVimRegisterEmpty = (register: VimRegisterValue): boolean =>
+  register.kind === "characterwise"
+    ? register.text.length === 0
+    : register.blocks.length === 0;
+
 export const planRegisterPut = (
   content: string,
   cursor: number,
-  register: VimRegisterValue,
+  register: Extract<VimRegisterValue, { kind: "characterwise" }>,
   before: boolean
-): RegisterPutPlan => {
-  if (register.kind === "linewise") {
-    return {
-      kind: "linewise",
-      text: register.text,
-      before,
-    };
-  }
-
+): CharacterwisePutPlan => {
   const normalizedCursor =
     content.length === 0
       ? 0
@@ -71,7 +81,27 @@ export const planRegisterPut = (
   };
 };
 
+const toBatchBlock = (block: SerializedBlock): IBatchBlock => ({
+  content: block.content,
+  ...(block.properties ? { properties: block.properties } : {}),
+  ...(block.children.length
+    ? { children: block.children.map(toBatchBlock) }
+    : {}),
+});
+
+export const planLinewisePut = (
+  register: Extract<VimRegisterValue, { kind: "linewise" }>,
+  _anchorUUID: string,
+  before: boolean
+): LinewisePutPlan => ({
+  batch: register.blocks.map(toBatchBlock),
+  sibling: true,
+  before,
+});
+
 export const describeUnnamedRegister = (
   register: VimRegisterValue
 ): string =>
-  `Unnamed register (${register.kind}): ${JSON.stringify(register.text)}`;
+  register.kind === "characterwise"
+    ? `Unnamed register (characterwise): ${JSON.stringify(register.text)}`
+    : `Unnamed register (linewise): ${JSON.stringify(register.blocks)}`;

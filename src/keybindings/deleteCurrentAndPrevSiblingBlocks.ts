@@ -108,10 +108,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: "vim-shortcut-delete-current-and-prev-blocks-" + index,
         label: "Delete current and prev blocks",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook

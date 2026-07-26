@@ -784,7 +784,7 @@ export const replayChange = (
 ): ModalCommand;
 ```
 
-- [ ] **Step 1: Claim and write failing operator/subtree tests**
+- [x] **Step 1: Claim and write failing operator/subtree tests**
 
 Run: `bd update tesela-8c9v.4.16.3 --claim`
 
@@ -799,7 +799,7 @@ Test `replayChange()` against every `ChangeDescriptor` kind with an exhaustive
 Test `snapshotDistance()` and prove a mocked native step that fails to reduce
 distance invokes one compensating inverse action and aborts.
 
-- [ ] **Step 2: Verify tests fail**
+- [x] **Step 2: Verify tests fail**
 
 Run:
 
@@ -809,7 +809,7 @@ node --test --experimental-strip-types tests/modal-change.test.ts tests/block-su
 
 Expected: FAIL because both modules are missing.
 
-- [ ] **Step 3: Implement pure mutation and repeat planning**
+- [x] **Step 3: Implement pure mutation and repeat planning**
 
 Make characterwise operators produce content updates and linewise operators
 produce canonical subtree roots. Extend the unnamed register without flattening
@@ -826,7 +826,7 @@ preserving content, properties, hierarchy, and order. Keep
 `change` insert entry separate from persistence so a failed mutation cannot
 leave the engine in insert mode.
 
-- [ ] **Step 4: Block on native-history and subtree runtime probes**
+- [x] **Step 4: Block on native-history and subtree runtime probes**
 
 Before building history grouping, use the disposable DB graph to run and record
 both probes:
@@ -840,7 +840,7 @@ indentation. If either undo probe does not restore the expected snapshot, stop
 Task 3 and escalate the history design; do not implement an unproven native
 undo loop.
 
-- [ ] **Step 5: Execute plans through verified Logseq mutations**
+- [x] **Step 5: Execute plans through verified Logseq mutations**
 
 Extend `persistNormalModeContent` or add a sibling exported executor that:
 
@@ -859,7 +859,7 @@ The installed `@logseq/libs` types prove that
 `IBatchBlock.children` can represent nested hierarchy. The live probes, not the
 type declarations, prove cascade, batch insertion, and native history.
 
-- [ ] **Step 6: Route `.`, `u`, and Ctrl-R**
+- [x] **Step 6: Route `.`, `u`, and Ctrl-R**
 
 Make `.` dispatch `replayChange(lastChange, count)`. For plugin-owned history,
 `u` invokes native `logseq.editor/undo` one step at a time and re-fetches state
@@ -876,7 +876,7 @@ the owned cursor, show a Logseq error message, clear the plugin group, and
 abort. Never continue to `maxNativeSteps` after non-progress because that could
 undo unrelated user edits.
 
-- [ ] **Step 7: Run the second live architecture gate**
+- [x] **Step 7: Run the second live architecture gate**
 
 In the disposable graph, verify `2dd`, one `p`, a three-root linewise delete,
 one `u`, and one Ctrl-R. Confirm the put restores hierarchy and root order.
@@ -897,7 +897,7 @@ still fires exactly once. Score `{1–13,20}` here; scenario 20 passes on a
 profile change observed by the modal store without reload. More than 4 bypasses
 triggers approach 3. The full 20-scenario one-third gate waits for Task 7.
 
-- [ ] **Step 8: Verify and commit**
+- [x] **Step 8: Verify and commit**
 
 Run:
 
