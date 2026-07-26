@@ -584,7 +584,7 @@ export const toRenderedOffset = (
 ): number;
 ```
 
-- [ ] **Step 1: Claim the phase and write failing pure motion tests**
+- [x] **Step 1: Claim the phase and write failing pure motion tests**
 
 Run: `bd update tesela-8c9v.4.16.2 --claim`
 
@@ -602,13 +602,13 @@ assert.equal(move("**bold** and [[Page]]", 9, "w").point.offset, 15);
 assert.equal(toRenderedOffset("**bold**", 2), 0);
 ```
 
-- [ ] **Step 2: Verify the missing module fails**
+- [x] **Step 2: Verify the missing module fails**
 
 Run: `node --test --experimental-strip-types tests/rendered-buffer.test.ts`
 
 Expected: FAIL because the module does not exist.
 
-- [ ] **Step 3: Implement rendered points and motions**
+- [x] **Step 3: Implement rendered points and motions**
 
 Use the host-provided unique rendered UUID order and fetched block contents.
 Preserve the preferred column for `j/k`; do not let clamping on a short block
@@ -627,7 +627,7 @@ Before deletion, capture and record the raw `content` returned by live DB blocks
 containing a user property and `id::`; the unit fixture must be copied from that
 evidence rather than assumed.
 
-- [ ] **Step 4: Replace store-local motion algorithms**
+- [x] **Step 4: Replace store-local motion algorithms**
 
 Make `useSearchStore` build a `RenderedBuffer`, call `resolveMotion`, select the
 target block, update owned cursor content/position, synchronize Logseq
@@ -652,7 +652,18 @@ as `change-case` commands, delegate to their existing actions, and strip
 four commands' configured tokens to host capture and assert every stripped
 token is captured. Re-verify that every configured binding fires exactly once.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
+
+Evidence (2026-07-25): raw-to-rendered mapping and profile-boundary tests pass
+for emphasis, page references, tags, inline code, counted words, preferred
+columns, `gg/G`, and half pages. Installed/reloaded the phase build in Logseq.
+On disposable graph `tesela-keyboard-audit-2026-07-23`, `2w`, `e`, `0`, `$`,
+`gg`, `G`, Ctrl-U, and Ctrl-D moved and painted immediately. `k` from the
+first July 23 block selected/painted the final July 24 block; `j` crossed back
+to the first July 23 block. An initial offscreen-selection smoke exposed a
+viewport-sync defect; host painting now scrolls offscreen targets into view,
+and the repeated bidirectional test passed. `pnpm check`, all 75 tests,
+`pnpm package`, and `git diff --check` pass.
 
 Run:
 

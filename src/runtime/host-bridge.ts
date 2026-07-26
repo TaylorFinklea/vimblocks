@@ -157,8 +157,11 @@ export const setHostNormalModeActive = (value: boolean): void => {
 
 export const isHostTextEntryActive = (): boolean => textEntryActive;
 
-export const clearHostHighlights = (uuids: readonly string[]): void => {
-  postHostMessage({ type: "clear-highlights", uuids });
+export const clearHostHighlights = (uuids?: readonly string[]): void => {
+  postHostMessage({
+    type: "clear-highlights",
+    ...(uuids ? { uuids } : {}),
+  });
 };
 
 export const highlightHostText = (options: {

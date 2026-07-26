@@ -25,10 +25,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: "vim-shortcut-change-case-lower-" + index,
         label: "Change case lower",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook

@@ -32,6 +32,21 @@ test("reduces counts, operators, zero, and mode transitions", () => {
     count: 1,
   });
   assert.equal(trace(["1", "0", "l"]).command?.count, 10);
+  assert.deepEqual(trace(["g", "g"]).command, {
+    kind: "motion",
+    motion: "gg",
+    count: 1,
+  });
+  assert.deepEqual(trace(["shift+g"]).command, {
+    kind: "motion",
+    motion: "G",
+    count: 1,
+  });
+  assert.deepEqual(trace(["g", "shift+u"]).command, {
+    kind: "change-case",
+    case: "upper",
+    count: 1,
+  });
   assert.equal(trace(["v"]).state.mode, "visual-char");
   assert.equal(trace(["shift+v"]).state.mode, "visual-line");
   assert.deepEqual(trace(["escape", "escape"]).state, trace(["escape"]).state);

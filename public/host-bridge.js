@@ -138,6 +138,10 @@
     clearAllHighlights();
     const element = document.getElementById(`block-content-${uuid}`);
     if (!element) return;
+    const blockRect = element.getBoundingClientRect();
+    if (blockRect.bottom <= 0 || blockRect.top >= window.innerHeight) {
+      element.scrollIntoView({ block: "center", inline: "nearest" });
+    }
 
     const textNodes = [];
     const walker = document.createTreeWalker(
@@ -198,7 +202,8 @@
       normalModeActive = Boolean(data.value);
       optimisticNormalMode = false;
     } else if (data.type === "clear-highlights") {
-      clearHighlights(data.uuids || []);
+      if (Array.isArray(data.uuids)) clearHighlights(data.uuids);
+      else clearAllHighlights();
     } else if (data.type === "highlight") {
       highlight(data);
     } else if (data.type === "dispose") {

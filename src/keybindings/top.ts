@@ -25,10 +25,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: "vim-shortcut-top-" + index,
         label: "Go to current page top",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook

@@ -1,4 +1,5 @@
 import { ILSPluginUser } from "@logseq/libs/dist/LSPlugin";
+import * as changeCase from "change-case-all";
 
 import {
   beforeActionExecute,
@@ -423,6 +424,10 @@ export default (logseq: ILSPluginUser) => {
     ["move-first-nonblank", "firstNonBlank"],
     ["move-half-page-down", "halfPageDown"],
     ["move-half-page-up", "halfPageUp"],
+    ["move-rendered-top", "top"],
+    ["move-rendered-bottom", "bottom"],
+    ["change-case-upper", "changeCaseUpper"],
+    ["change-case-lower", "changeCaseLower"],
   ] as const;
   for (const [commandId, settingKey] of motionBindings) {
     if (!beforeActionRegister(settingKey)) continue;
@@ -474,30 +479,46 @@ export default (logseq: ILSPluginUser) => {
       return;
     }
     if (command.kind === "motion") {
-      for (let index = 0; index < command.count; index += 1) {
-        if (command.motion === "h") await searchStore.moveCursorLeft();
-        else if (command.motion === "l") await searchStore.moveCursorRight();
-        else if (command.motion === "j") await searchStore.moveCursorDown(event.visibleBlockUUIDs);
-        else if (command.motion === "k") await searchStore.moveCursorUp(event.visibleBlockUUIDs);
-        else if (command.motion === "w") await searchStore.moveWordForward();
-        else if (command.motion === "b") await searchStore.moveWordBackward();
-        else if (command.motion === "e") await searchStore.moveWordEnd();
-        else if (command.motion === "0") await searchStore.moveLineStart();
-        else if (command.motion === "$") await searchStore.moveLineEnd();
-        else if (command.motion === "^" && searchStore.cursorBlockUUID) {
-          await searchStore.restoreCursor(
-            searchStore.cursorBlockUUID,
-            searchStore.cursorBlockContent,
-            firstNonBlankPosition(searchStore.cursorBlockContent)
-          );
-        } else if (command.motion === "ctrl+d" || command.motion === "ctrl+u") {
-          await searchStore.moveCursorHalfPage(
-            event.visibleBlockUUIDs,
-            event.viewportBlockUUIDs,
-            command.motion === "ctrl+d" ? "down" : "up"
-          );
-        }
+      if (
+        command.motion !== "f" &&
+        command.motion !== "F" &&
+        command.motion !== "t" &&
+        command.motion !== "T" &&
+        command.motion !== ";" &&
+        command.motion !== "," &&
+        command.motion !== "iw" &&
+        command.motion !== "aw" &&
+        command.motion !== "line"
+      ) {
+        await searchStore.moveByMotion(
+          command.motion,
+          command.count,
+          event.visibleBlockUUIDs,
+          event.viewportBlockUUIDs
+        );
       }
+      return;
+    }
+    if (command.kind === "change-case") {
+      if (!searchStore.cursorMode || !searchStore.cursorBlockUUID) return;
+      const block = await logseq.Editor.getBlock(searchStore.cursorBlockUUID);
+      if (!block?.content) return;
+      const start = Math.min(
+        Math.max(searchStore.cursorPosition, 0),
+        block.content.length - 1
+      );
+      const end = Math.min(block.content.length, start + command.count);
+      const selected = block.content.slice(start, end);
+      const replacement =
+        command.case === "upper"
+          ? changeCase.upperCase(selected)
+          : changeCase.lowerCase(selected);
+      const content =
+        block.content.slice(0, start) +
+        replacement +
+        block.content.slice(end);
+      await logseq.Editor.updateBlock(block.uuid, content);
+      await searchStore.restoreCursor(block.uuid, content, start);
       return;
     }
     if (command.kind === "delete-char") {

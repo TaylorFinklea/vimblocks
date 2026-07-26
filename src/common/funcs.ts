@@ -47,20 +47,7 @@ export const clearBlocksHighlight = async (blocks: BlockEntity[]) => {
 };
 
 export const clearCurrentPageBlocksHighlight = async () => {
-  let page = await logseq.Editor.getCurrentPage();
-  let blocks;
-  if (page) {
-    blocks = await logseq.Editor.getCurrentPageBlocksTree();
-  } else {
-    const block = await logseq.Editor.getCurrentBlock();
-    if (block) {
-      page = await logseq.Editor.getPage(block.page.id);
-      blocks = await logseq.Editor.getPageBlocksTree(page.name);
-    }
-  }
-  if (blocks && blocks.length > 0) {
-    await clearBlocksHighlight(blocks);
-  }
+  clearHostHighlights();
 };
 
 export async function createPageIfNotExists(pageName): Promise<PageEntity> {

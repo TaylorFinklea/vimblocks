@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   addHostKeydownListener,
+  clearHostHighlights,
   configureHostCapture,
   configureHostNormalModeCapture,
   installHostBridge,
@@ -106,6 +107,20 @@ test("loads the host script and relays validated key events", async () => {
         normalModeTokens: ["h", "j", "k", "l"],
         captureAll: false,
         normalModeActive: true,
+      },
+    ]);
+
+    clearHostHighlights(["block-1"]);
+    clearHostHighlights();
+    assert.deepEqual(messages.slice(-2), [
+      {
+        channel: "vimblocks-host-bridge-v1",
+        type: "clear-highlights",
+        uuids: ["block-1"],
+      },
+      {
+        channel: "vimblocks-host-bridge-v1",
+        type: "clear-highlights",
       },
     ]);
 

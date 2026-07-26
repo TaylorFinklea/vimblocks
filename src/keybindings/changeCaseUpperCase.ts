@@ -25,10 +25,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: "vim-shortcut-change-case-upper-" + index,
         label: "Change case upper",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook

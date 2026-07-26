@@ -25,10 +25,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: "vim-shortcut-bottom-" + index,
         label: "Go to current page bottom",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook

@@ -2,24 +2,27 @@ import { clearCurrentPageBlocksHighlight, hideMainUI } from "@/common/funcs";
 import { BlockEntity, BlockUUID } from "@logseq/libs/dist/LSPlugin";
 import { defineStore } from "pinia";
 import {
+  clearHostHighlights,
   highlightHostText,
   setHostCaptureAll,
   setHostNormalModeActive,
 } from "@/runtime/host-bridge";
 import { resolveNormalModeBlockUUID } from "@/runtime/cursor-block";
 import {
+  normalizeRawOffset,
+  resolveMotion,
+  toRenderedOffset,
+  type MotionName,
+  type RenderedBuffer,
+} from "@/runtime/rendered-buffer";
+import {
   resolveAdjacentVisibleBlockUUID,
   type VerticalDirection,
 } from "@/runtime/visible-block-navigation";
-
-// Track pending highlight timeout to prevent multiple highlights
-let pendingHighlightTimeout: number | null = null;
+import { useModalStore } from "@/stores/modal";
 
 export const disposeSearchEffects = (): void => {
-  if (pendingHighlightTimeout !== null) {
-    clearTimeout(pendingHighlightTimeout);
-    pendingHighlightTimeout = null;
-  }
+  clearHostHighlights();
   setHostNormalModeActive(false);
 };
 
@@ -199,36 +202,42 @@ function addHighlight(word: string, input: string, highlightOffset?: number) {
 }
 
 async function highlightInput(block, input, matchOffset?: number) {
-  // Cancel any pending highlight operation
-  if (pendingHighlightTimeout !== null) {
-    clearTimeout(pendingHighlightTimeout);
-    pendingHighlightTimeout = null;
+  clearHostHighlights();
+  let renderedOffset: number | undefined;
+  if (matchOffset !== undefined) {
+    const blockData = await logseq.Editor.getBlock(block.uuid);
+    renderedOffset = blockData
+      ? toRenderedOffset(blockData.content, matchOffset)
+      : matchOffset;
   }
-
-  // Clear all existing highlights immediately (synchronously)
-  await clearCurrentPageBlocksHighlight();
-
-  // Schedule new highlight with a small delay
-  pendingHighlightTimeout = setTimeout(async () => {
-    let renderedOffset: number | undefined;
-    if (matchOffset !== undefined) {
-      const blockData = await logseq.Editor.getBlock(block.uuid);
-      renderedOffset = blockData
-        ? mapToRenderedPosition(blockData.content, matchOffset)
-        : matchOffset;
-    }
-    highlightHostText({
-      uuid: block.uuid,
-      offset:
-        renderedOffset !== undefined && renderedOffset !== -1
-          ? renderedOffset
-          : matchOffset,
-      length: input.length,
-      text: input,
-    });
-    pendingHighlightTimeout = null;
-  }, 50) as unknown as number;
+  highlightHostText({
+    uuid: block.uuid,
+    offset: renderedOffset,
+    length: Math.max(1, input.length),
+    text: input,
+  });
 }
+
+const buildRenderedBuffer = async (
+  visibleBlockUUIDs: readonly string[],
+  ownedBlockUUID: string
+): Promise<RenderedBuffer> => {
+  const orderedUUIDs = [...new Set(visibleBlockUUIDs)];
+  if (!orderedUUIDs.includes(ownedBlockUUID)) {
+    orderedUUIDs.push(ownedBlockUUID);
+  }
+  const blocks = await Promise.all(
+    orderedUUIDs.map((uuid) => logseq.Editor.getBlock(uuid))
+  );
+  return {
+    blocks: blocks
+      .filter((block): block is BlockEntity => Boolean(block?.uuid))
+      .map((block) => ({
+        uuid: block.uuid,
+        content: block.content ?? "",
+      })),
+  };
+};
 
 // Build a map from original content position to rendered text position
 function buildPositionMap(originalContent: string) {
@@ -539,6 +548,7 @@ export const useSearchStore = defineStore("search", {
     cursorBlockUUID: "", // Current block UUID for cursor
     cursorPosition: 0, // Current cursor position (character index)
     cursorBlockContent: "", // Content of the current cursor block
+    cursorPreferredColumn: null as number | null,
     // Visual selection mode
     visualMode: false, // Whether in visual selection mode
     visualStartPosition: 0, // Selection start position
@@ -753,6 +763,7 @@ export const useSearchStore = defineStore("search", {
       this.cursorBlockUUID = "";
       this.cursorPosition = 0;
       this.cursorBlockContent = "";
+      this.cursorPreferredColumn = null;
       this.visualMode = false;
       this.visualStartPosition = 0;
       this.visualEndPosition = 0;
@@ -767,6 +778,7 @@ export const useSearchStore = defineStore("search", {
       this.cursorMode = true;
       this.cursorBlockUUID = blockUUID;
       this.cursorBlockContent = content;
+      this.cursorPreferredColumn = null;
       this.cursorPosition =
         content.length === 0
           ? 0
@@ -817,6 +829,7 @@ export const useSearchStore = defineStore("search", {
         this.cursorMode = true;
         this.cursorBlockUUID = resolvedBlockUUID;
         this.cursorBlockContent = block.content;
+        this.cursorPreferredColumn = null;
         if (
           searchMatch &&
           searchMatch.uuid === resolvedBlockUUID &&
@@ -855,8 +868,78 @@ export const useSearchStore = defineStore("search", {
       return true;
     },
 
+    async moveByMotion(
+      motion: MotionName,
+      count = 1,
+      visibleBlockUUIDs: readonly string[] = [],
+      viewportBlockUUIDs: readonly string[] = []
+    ) {
+      if (!this.cursorMode || !this.cursorBlockUUID) {
+        const entered = await this.enterNormalMode();
+        if (!entered || !this.cursorBlockUUID) return;
+      }
+
+      const buffer = await buildRenderedBuffer(
+        visibleBlockUUIDs,
+        this.cursorBlockUUID
+      );
+      const currentBlock = buffer.blocks.find(
+        (block) => block.uuid === this.cursorBlockUUID
+      );
+      if (!currentBlock) return;
+
+      this.cursorBlockContent = currentBlock.content;
+      this.cursorPosition = normalizeRawOffset(
+        currentBlock.content,
+        this.cursorPosition
+      );
+      const result = resolveMotion(
+        buffer,
+        {
+          blockUUID: this.cursorBlockUUID,
+          offset: this.cursorPosition,
+        },
+        motion,
+        count,
+        {
+          profile: useModalStore().state.profile,
+          viewportBlockUUIDs,
+          preferredColumn: this.cursorPreferredColumn,
+        }
+      );
+      const targetBlock = buffer.blocks.find(
+        (block) => block.uuid === result.point.blockUUID
+      );
+      if (!targetBlock) return;
+
+      this.cursorBlockUUID = targetBlock.uuid;
+      this.cursorBlockContent = targetBlock.content;
+      this.cursorPosition = normalizeRawOffset(
+        targetBlock.content,
+        result.point.offset
+      );
+      this.cursorPreferredColumn = result.preferredColumn;
+      await logseq.Editor.selectBlock(targetBlock.uuid);
+
+      if (this.visualMode) {
+        this.visualEndPosition = this.cursorPosition;
+        await this.updateVisualSelection();
+        return;
+      }
+      if (targetBlock.content.length > 0) {
+        await highlightInput(
+          { uuid: targetBlock.uuid },
+          this.getCursorChar(),
+          this.cursorPosition
+        );
+      } else {
+        clearHostHighlights();
+      }
+    },
+
     // Move cursor right (l key)
     async moveCursorRight() {
+      return this.moveByMotion("l");
       if (!this.cursorMode || !this.cursorBlockUUID) {
         await this.enterNormalMode();
         return;
@@ -888,6 +971,7 @@ export const useSearchStore = defineStore("search", {
 
     // Move cursor left (h key)
     async moveCursorLeft() {
+      return this.moveByMotion("h");
       if (!this.cursorMode || !this.cursorBlockUUID) return;
 
       const blockUUID = this.cursorBlockUUID;
@@ -914,6 +998,7 @@ export const useSearchStore = defineStore("search", {
 
     // Move cursor down (j key) - switch to next visible block (cross-level)
     async moveCursorDown(visibleBlockUUIDs: readonly string[] = []) {
+      return this.moveByMotion("j", 1, visibleBlockUUIDs);
       if (!this.cursorMode || !this.cursorBlockUUID) return;
 
       const currentBlockUUID = this.cursorBlockUUID;
@@ -967,6 +1052,7 @@ export const useSearchStore = defineStore("search", {
 
     // Move cursor up (k key) - switch to previous visible block (cross-level)
     async moveCursorUp(visibleBlockUUIDs: readonly string[] = []) {
+      return this.moveByMotion("k", 1, visibleBlockUUIDs);
       if (!this.cursorMode || !this.cursorBlockUUID) return;
 
       const currentBlockUUID = this.cursorBlockUUID;
@@ -1026,6 +1112,12 @@ export const useSearchStore = defineStore("search", {
       viewportBlockUUIDs: readonly string[],
       direction: VerticalDirection
     ) {
+      return this.moveByMotion(
+        direction === "down" ? "ctrl+d" : "ctrl+u",
+        1,
+        visibleBlockUUIDs,
+        viewportBlockUUIDs
+      );
       if (!this.cursorMode || !this.cursorBlockUUID) return;
 
       const distance = Math.max(
@@ -1089,6 +1181,7 @@ export const useSearchStore = defineStore("search", {
 
     // Move to start of next word (w)
     async moveWordForward() {
+      return this.moveByMotion("w");
       if (!this.cursorMode || !this.cursorBlockUUID) return;
 
       const blockUUID = this.cursorBlockUUID;
@@ -1137,6 +1230,7 @@ export const useSearchStore = defineStore("search", {
 
     // Move to start of previous word (b)
     async moveWordBackward() {
+      return this.moveByMotion("b");
       if (!this.cursorMode) return;
 
       const blockUUID = await logseq.Editor.getCurrentBlock().then(b => b?.uuid);
@@ -1192,6 +1286,7 @@ export const useSearchStore = defineStore("search", {
 
     // Move to end of word (e)
     async moveWordEnd() {
+      return this.moveByMotion("e");
       if (!this.cursorMode) return;
 
       const blockUUID = await logseq.Editor.getCurrentBlock().then(b => b?.uuid);
@@ -1247,6 +1342,7 @@ export const useSearchStore = defineStore("search", {
 
     // Move to line start (0)
     async moveLineStart() {
+      return this.moveByMotion("0");
       if (!this.cursorMode) return;
 
       const blockUUID = await logseq.Editor.getCurrentBlock().then(b => b?.uuid);
@@ -1270,6 +1366,7 @@ export const useSearchStore = defineStore("search", {
 
     // Move to line end ($)
     async moveLineEnd() {
+      return this.moveByMotion("$");
       if (!this.cursorMode) return;
 
       const blockUUID = await logseq.Editor.getCurrentBlock().then(b => b?.uuid);
