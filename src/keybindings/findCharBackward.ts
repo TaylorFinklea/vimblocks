@@ -24,10 +24,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: "vim-shortcut-find-char-backward-" + index,
         label: "Find character backward (F)",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook
@@ -38,6 +34,23 @@ export default (logseq: ILSPluginUser) => {
         debug("Find character backward");
         const searchStore = useSearchStore();
         searchStore.startCharSearch("F");
+      }
+    );
+  });
+
+  const tillBindings = Array.isArray(settings.keyBindings.tillCharBackward)
+    ? settings.keyBindings.tillCharBackward
+    : [settings.keyBindings.tillCharBackward];
+  tillBindings.forEach((_binding, index) => {
+    logseq.App.registerCommandPalette(
+      {
+        key: "vim-shortcut-till-char-backward-" + index,
+        label: "Till character backward (T)",
+      },
+      async () => {
+        if (!beforeActionExecute()) return;
+        debug("Till character backward");
+        useSearchStore().startCharSearch("T");
       }
     );
   });

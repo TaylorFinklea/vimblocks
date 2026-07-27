@@ -29,6 +29,39 @@ import {
   type InsertCommand,
   type InsertSession,
 } from "@/runtime/insert-session";
+import {
+  buildRenderedBlocksQuery,
+  moveRenderedMatch,
+  planRenderedSearch,
+  resolveCharacterFind,
+  type RenderedBlockRow,
+} from "@/runtime/rendered-search";
+
+const fetchRenderedBlockRows = async (
+  uuids: readonly string[]
+): Promise<readonly RenderedBlockRow[]> => {
+  try {
+    const rows = await logseq.DB.datascriptQuery<unknown>(
+      buildRenderedBlocksQuery(uuids)
+    );
+    if (!Array.isArray(rows)) return [];
+    return rows.flatMap((row): RenderedBlockRow[] => {
+      if (!Array.isArray(row) || row.length < 2) return [];
+      return [[String(row[0]), typeof row[1] === "string" ? row[1] : ""]];
+    });
+  } catch (error) {
+    console.warn(
+      "[vimblocks] rendered search batch query failed; using block fallback",
+      error
+    );
+    const blocks = await Promise.all(
+      uuids.map((uuid) => logseq.Editor.getBlock(uuid))
+    );
+    return blocks.flatMap((block): RenderedBlockRow[] =>
+      block?.uuid ? [[block.uuid, block.content ?? ""]] : []
+    );
+  }
+};
 
 export const disposeSearchEffects = (): void => {
   clearHostHighlights();
@@ -552,6 +585,9 @@ export const useSearchStore = defineStore("search", {
     flatedBlocks: [],
     allMatches: [], // All match positions {blockIndex, matchOffset, uuid, content}
     currentPageName: "",
+    renderedBlockUUIDs: [] as string[],
+    lastSearchFetchAndMatchMs: null as number | null,
+    lastSearchKeyToPaintMs: null as number | null,
     timer: null,
     isSearching: false, // Flag to prevent concurrent searches
     // Aggressive cursor mode
@@ -573,6 +609,63 @@ export const useSearchStore = defineStore("search", {
     lastCharSearchChar: "", // The character that was searched
   }),
   actions: {
+    async moveCharacterFind(
+      motion: "f" | "F" | "t" | "T",
+      character: string,
+      count = 1,
+      recordHistory = true
+    ): Promise<boolean> {
+      if (!this.cursorMode || !this.cursorBlockUUID) return false;
+      const block = await logseq.Editor.getBlock(this.cursorBlockUUID);
+      if (!block) return false;
+      const position = resolveCharacterFind(
+        block.content ?? "",
+        this.cursorPosition,
+        motion,
+        character,
+        count
+      );
+      if (position === null) {
+        logseq.UI.showMsg(`Character not found: ${character}`, "warning");
+        return false;
+      }
+      this.cursorBlockContent = block.content ?? "";
+      this.cursorPosition = position;
+      if (recordHistory) {
+        this.lastCharSearchMode = motion;
+        this.lastCharSearchChar = character;
+      }
+      await highlightInput(
+        { uuid: block.uuid },
+        this.getCursorChar(),
+        this.cursorPosition
+      );
+      return true;
+    },
+
+    async repeatCharacterFind(
+      reverse: boolean,
+      count = 1
+    ): Promise<boolean> {
+      const mode = this.lastCharSearchMode as "f" | "F" | "t" | "T";
+      if (!mode || !this.lastCharSearchChar) {
+        logseq.UI.showMsg("No previous character search", "warning");
+        return false;
+      }
+      const reversed: Record<typeof mode, typeof mode> = {
+        f: "F",
+        F: "f",
+        t: "T",
+        T: "t",
+      };
+      return this.moveCharacterFind(
+        reverse ? reversed[mode] : mode,
+        this.lastCharSearchChar,
+        count,
+        false
+      );
+    },
+
     async beginInsert(
       command: InsertCommand,
       count = 1,
@@ -655,83 +748,102 @@ export const useSearchStore = defineStore("search", {
       this.input = "";
     },
 
+    setRenderedBlockOrder(uuids: readonly string[]) {
+      this.renderedBlockUUIDs = [...new Set(uuids.filter(Boolean))];
+    },
+
+    async paintRenderedSearchMatch(): Promise<void> {
+      if (this.cursor < 0 || this.cursor >= this.allMatches.length) return;
+      const match = this.allMatches[this.cursor];
+      const block = await logseq.Editor.getBlock(match.uuid);
+      if (!block) return;
+      this.cursorMode = true;
+      this.cursorBlockUUID = block.uuid;
+      this.cursorBlockContent = block.content ?? "";
+      this.cursorPosition = match.matchOffset;
+      await logseq.Editor.selectBlock(block.uuid);
+      await highlightInput(
+        { uuid: block.uuid },
+        this.input,
+        match.matchOffset
+      );
+    },
+
     async search(hideUI = false) {
-      if (this.timer) {
-        clearTimeout(this.timer);
+      if (this.isSearching) return;
+      if (!this.input || this.input.trim() === "") {
+        clearHostHighlights();
+        this.cursor = -1;
+        this.allMatches = [];
+        this.flatedBlocks = [];
+        return;
       }
 
-      this.timer = setTimeout(async () => {
-        // Prevent concurrent searches
-        if (this.isSearching) {
-          return;
+      this.isSearching = true;
+      try {
+        const startedAt = performance.now();
+        const plan = await planRenderedSearch(
+          this.renderedBlockUUIDs,
+          this.input,
+          fetchRenderedBlockRows
+        );
+        const contentByUUID = new Map(
+          plan.buffer.blocks.map((block) => [block.uuid, block.content])
+        );
+        this.flatedBlocks = plan.buffer.blocks;
+        this.allMatches = plan.matches.map((match) => ({
+          uuid: match.blockUUID,
+          matchOffset: match.offset,
+          content: contentByUUID.get(match.blockUUID) ?? "",
+        }));
+        this.lastSearchFetchAndMatchMs = plan.fetchAndMatchMs;
+        this.cursor = this.allMatches.length > 0 ? 0 : -1;
+        if (this.cursor >= 0) {
+          await this.paintRenderedSearchMatch();
+        } else {
+          logseq.UI.showMsg("Pattern not found: " + this.input);
         }
+        if (hideUI) hideMainUI();
+        this.lastSearchKeyToPaintMs = performance.now() - startedAt;
+        console.info(
+          `[vimblocks] rendered search timing fetch+match=${this.lastSearchFetchAndMatchMs.toFixed(1)}ms key-to-paint=${this.lastSearchKeyToPaintMs.toFixed(1)}ms blocks=${plan.buffer.blocks.length}`
+        );
+      } finally {
+        this.isSearching = false;
+      }
+    },
 
-        // Clear highlights if input is empty
-        if (!this.input || this.input.trim() === "") {
-          await clearCurrentPageBlocksHighlight();
-          this.cursor = -1;
-          this.allMatches = [];
-          this.flatedBlocks = [];
-          return;
-        }
-
-        this.isSearching = true;
-        try {
-          this.cursor = -1;
-          let flatedBlocks = [];
-          let page = await logseq.Editor.getCurrentPage();
-          if (page) {
-            const blocks = await logseq.Editor.getCurrentPageBlocksTree();
-            flatedBlocks = flatBlocks(blocks);
-          } else {
-            const block = await logseq.Editor.getCurrentBlock();
-            if (block) {
-              page = await logseq.Editor.getPage(block.page.id);
-              const blocks = await logseq.Editor.getPageBlocksTree(page.name);
-              flatedBlocks = flatBlocks(blocks);
-            }
-          }
-          this.flatedBlocks = flatedBlocks;
-          this.currentPageName = page ? page.name : "";
-
-          if (!this.currentPageName) {
-            logseq.UI.showMsg("No page selected");
-            return;
-          }
-
-          // Find all matches
-          this.allMatches = findAllMatches(this.input, this.flatedBlocks);
-
-          if (this.allMatches.length > 0) {
-            this.cursor = 0;
-            const match = this.allMatches[this.cursor];
-
-            // add highlight tag
-            await clearCurrentPageBlocksHighlight();
-
-            if (this.input) {
-              await expandParents(match.uuid);
-
-              logseq.Editor.scrollToBlockInPage(
-                this.currentPageName,
-                match.uuid
-              );
-              highlightInput({ uuid: match.uuid }, this.input, match.matchOffset);
-            }
-          } else {
-            logseq.UI.showMsg("Pattern not found: " + this.input);
-          }
-
-          if (hideUI) {
-            hideMainUI();
-          }
-        } finally {
-          this.isSearching = false;
-        }
-      }, 300);
+    async moveRenderedSearch(
+      direction: "next" | "previous",
+      count = 1
+    ): Promise<void> {
+      if (!this.input || this.allMatches.length === 0) {
+        logseq.UI.showMsg("No search pattern provided; press / to input");
+        return;
+      }
+      const movement = moveRenderedMatch(
+        this.allMatches.map((match) => ({
+          blockUUID: match.uuid,
+          offset: match.matchOffset,
+          length: this.input.length,
+        })),
+        this.cursor,
+        direction,
+        count
+      );
+      this.cursor = movement.index;
+      if (movement.wrapped) {
+        logseq.UI.showMsg(
+          direction === "next"
+            ? "search hit BOTTOM, continuing at TOP"
+            : "search hit TOP, continuing at BOTTOM"
+        );
+      }
+      await this.paintRenderedSearchMatch();
     },
 
     async searchNext() {
+      return this.moveRenderedSearch("next");
       if (!this.input) {
         logseq.UI.showMsg("No search pattern provide, press / to input!");
         return;
@@ -776,6 +888,7 @@ export const useSearchStore = defineStore("search", {
     },
 
     async searchPrev() {
+      return this.moveRenderedSearch("previous");
       if (!this.input) {
         logseq.UI.showMsg("No search pattern provide, press / to input!");
         return;
@@ -1535,10 +1648,11 @@ export const useSearchStore = defineStore("search", {
       const mode = this.charSearchMode;
       this.charSearchMode = "";
 
-      if (mode === "f") {
-        await this.findCharForward(char);
-      } else if (mode === "F") {
-        await this.findCharBackward(char);
+      if (["f", "F", "t", "T"].includes(mode)) {
+        await this.moveCharacterFind(
+          mode as "f" | "F" | "t" | "T",
+          char
+        );
       }
     },
 
@@ -1551,6 +1665,7 @@ export const useSearchStore = defineStore("search", {
 
     // Repeat last character search in same direction (;)
     async repeatCharSearch() {
+      return this.repeatCharacterFind(false);
       if (!this.lastCharSearchChar || !this.lastCharSearchMode) {
         logseq.UI.showMsg("No previous character search", "warning");
         return;
@@ -1565,6 +1680,7 @@ export const useSearchStore = defineStore("search", {
 
     // Repeat last character search in opposite direction (,)
     async repeatCharSearchReverse() {
+      return this.repeatCharacterFind(true);
       if (!this.lastCharSearchChar || !this.lastCharSearchMode) {
         logseq.UI.showMsg("No previous character search", "warning");
         return;

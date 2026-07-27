@@ -993,6 +993,39 @@ export default (logseq: ILSPluginUser) => {
       }
       return;
     }
+    if (command.kind === "char-find") {
+      if (command.motion === ";" || command.motion === ",") {
+        await searchStore.repeatCharacterFind(
+          command.motion === ",",
+          command.count
+        );
+      } else if (command.character) {
+        await searchStore.moveCharacterFind(
+          command.motion,
+          command.character,
+          command.count
+        );
+      }
+      return;
+    }
+    if (command.kind === "search") {
+      searchStore.setRenderedBlockOrder(event.visibleBlockUUIDs);
+      if (command.direction === "forward") {
+        searchStore.emptyInput();
+        searchStore.show();
+        logseq.showMainUI({ autoFocus: true });
+        const input = document.querySelector(
+          ".search-input input"
+        ) as HTMLInputElement | null;
+        input?.focus();
+      } else {
+        await searchStore.moveRenderedSearch(
+          command.direction,
+          command.count
+        );
+      }
+      return;
+    }
     if (command.kind === "change-case") {
       if (!searchStore.cursorMode || !searchStore.cursorBlockUUID) return;
       const before = await captureHistorySnapshot(

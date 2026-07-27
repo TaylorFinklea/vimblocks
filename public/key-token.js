@@ -52,9 +52,13 @@
   const entersTextEntry = (token) =>
     ["i", "a", "shift+i", "shift+a", "o", "shift+o"].includes(token);
 
+  const startsCaptureAll = (token) =>
+    ["f", "shift+f", "t", "shift+t"].includes(token);
+
   window.__vimblocksKeyToken = {
     eventToken,
     shouldCapture,
     entersTextEntry,
+    startsCaptureAll,
   };
 })();

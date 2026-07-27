@@ -1016,6 +1016,10 @@ bd close tesela-8c9v.4.16.4 --reason "Insert/open transitions and repeat capture
 
 - Create: `src/runtime/rendered-search.ts`
 - Create: `tests/rendered-search.test.ts`
+- Create: `tests/public-host-bridge.test.ts`
+- Modify: `public/host-bridge.js`
+- Modify: `public/key-token.js`
+- Modify: `src/runtime/key-token.ts`
 - Modify: `src/stores/search.ts`
 - Modify: `src/keybindings/search.ts`
 - Modify: `src/keybindings/findChar.ts`
@@ -1051,7 +1055,7 @@ export const resolveCharacterFind = (
 ): number | null;
 ```
 
-- [ ] **Step 1: Claim and write failing search/find tests**
+- [x] **Step 1: Claim and write failing search/find tests**
 
 Run: `bd update tesela-8c9v.4.16.5 --claim`
 
@@ -1059,7 +1063,7 @@ Cover display order, multiple matches per block, case behavior matching current
 Vimblocks search, wrap notices, counts, `t/T` offsets, `;/,`, missing matches,
 Esc cancellation, and text-entry guards.
 
-- [ ] **Step 2: Replace page-tree search with rendered-buffer search**
+- [x] **Step 2: Replace page-tree search with rendered-buffer search**
 
 Store the latest host-provided rendered UUID order before opening `/`. Fetch
 unique DB blocks through one inspected and live-probed batch seam:
@@ -1073,7 +1077,7 @@ Remove the existing 300 ms debounce and 50 ms highlight delay from the
 Enter/`n`/`N` modal path, and record both fetch+match and end-to-end key-to-paint
 latency in the final report.
 
-- [ ] **Step 3: Route character pending state through the modal engine**
+- [x] **Step 3: Route character pending state through the modal engine**
 
 Use `char-pending` for `f/F/t/T`; capture exactly one printable character or
 Esc. Keep `setHostCaptureAll(true)` only for the pending character interval and
@@ -1090,7 +1094,7 @@ owns `/`, `n`, `N`, and cleanup actions. Add every routed configured token to
 host capture in the same commit and verify every configured binding still
 fires exactly once.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 Run:
 
@@ -1108,6 +1112,22 @@ git add src/runtime/rendered-search.ts src/stores/search.ts src/keybindings/sear
 git commit -m "feat: add rendered Vim search and character find"
 bd close tesela-8c9v.4.16.5 --reason "Rendered search and f/F/t/T repeat behavior pass check, test, and package."
 ```
+
+Evidence (2026-07-27):
+
+- Computer Use target `Logseq`; disposable DB graph
+  `tesela-keyboard-audit-2026-07-23`; Journals with visible Jul 24/Jul 23.
+- `/alpha`, `n`, and `N` paint and traverse both journal days; forward and
+  reverse wrap notices observed.
+- DB batch uses `:block/title` plus typed `#uuid` literals; 23 rendered blocks.
+- Console timing: cold fetch+match 50.2 ms / key-to-paint 51.5 ms; warm
+  fetch+match 3.8 ms / key-to-paint 6.5 ms.
+- `f/F/t/T`, `;`, `,`, counts, and Esc cancellation pass live; synchronous
+  host capture prevents the pending target from deactivating normal mode.
+- Ordinary command-palette typing and Esc remain native; Plugins shows one
+  enabled `Vimblocks 0.5.0-capture.1`; no renderer/plugin-load errors observed.
+- Verification: targeted 17/17; full 112/112; `pnpm check` and `pnpm package`
+  exit 0; installed tree matches `dist`.
 
 ---
 

@@ -24,10 +24,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: "vim-shortcut-repeat-char-search-reverse-" + index,
         label: "Repeat character search reverse (,)",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook

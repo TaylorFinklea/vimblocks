@@ -24,10 +24,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: "vim-shortcut-repeat-char-search-" + index,
         label: "Repeat character search (;)",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook

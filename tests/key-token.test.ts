@@ -13,6 +13,7 @@ const loadApi = () => {
     eventToken(event: Record<string, unknown>): string;
     shouldCapture(input: Record<string, unknown>): boolean;
     entersTextEntry(token: string): boolean;
+    startsCaptureAll(token: string): boolean;
   };
 };
 const event = (
@@ -66,4 +67,12 @@ test("identifies commands that synchronously enter Logseq text editing", () => {
     assert.equal(api.entersTextEntry(token), true);
   }
   assert.equal(api.entersTextEntry("d"), false);
+});
+
+test("identifies character-find prefixes that synchronously capture the target", () => {
+  const api = loadApi();
+  for (const token of ["f", "shift+f", "t", "shift+t"]) {
+    assert.equal(api.startsCaptureAll(token), true);
+  }
+  assert.equal(api.startsCaptureAll("a"), false);
 });

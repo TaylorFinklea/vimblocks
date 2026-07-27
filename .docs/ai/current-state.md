@@ -13,7 +13,7 @@
 - [x] Phase 2: counted rendered motions; bidirectional Jul 23/24 live gate.
 - [x] Phase 3: operators/register/history; live subtree/repeat/history gate.
 - [x] Phase 4: deterministic insert/open sessions; live i/a/I/A/o/O gate.
-- [ ] Phase 5: rendered search and character navigation.
+- [x] Phase 5: rendered search/find; live cross-day and latency gate.
 - [ ] Phase 6: characterwise and linewise visual modes.
 - [ ] Phase 7: hardening and comparative Logseq product test.
 

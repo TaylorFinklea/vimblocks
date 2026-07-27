@@ -24,10 +24,6 @@ export default (logseq: ILSPluginUser) => {
       {
         key: "vim-shortcut-find-char-" + index,
         label: "Find character (f)",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook
@@ -38,6 +34,23 @@ export default (logseq: ILSPluginUser) => {
         debug("Find character");
         const searchStore = useSearchStore();
         searchStore.startCharSearch("f");
+      }
+    );
+  });
+
+  const tillBindings = Array.isArray(settings.keyBindings.tillChar)
+    ? settings.keyBindings.tillChar
+    : [settings.keyBindings.tillChar];
+  tillBindings.forEach((_binding, index) => {
+    logseq.App.registerCommandPalette(
+      {
+        key: "vim-shortcut-till-char-" + index,
+        label: "Till character (t)",
+      },
+      async () => {
+        if (!beforeActionExecute()) return;
+        debug("Till character");
+        useSearchStore().startCharSearch("t");
       }
     );
   });

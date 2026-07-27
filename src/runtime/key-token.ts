@@ -9,6 +9,8 @@ export interface KeyboardTokenEvent {
 
 export interface VimblocksKeyTokenApi {
   eventToken(event: KeyboardTokenEvent): string;
+  entersTextEntry?(token: string): boolean;
+  startsCaptureAll?(token: string): boolean;
   shouldCapture(input: {
     token: string;
     textEntryActive: boolean;

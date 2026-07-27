@@ -10,6 +10,7 @@
   const normalModeTokens = new Set();
   const pendingObservers = new Set();
   let captureAll = false;
+  let optimisticCaptureAll = false;
   let normalModeActive = false;
   let optimisticNormalMode = false;
 
@@ -198,6 +199,7 @@
       normalModeActive = Boolean(data.normalModeActive);
     } else if (data.type === "capture-all") {
       captureAll = Boolean(data.value);
+      optimisticCaptureAll = false;
     } else if (data.type === "normal-mode") {
       normalModeActive = Boolean(data.value);
       optimisticNormalMode = false;
@@ -219,6 +221,8 @@
       optimisticNormalMode = false;
     }
     const token = tokenApi.eventToken(event);
+    const pendingCaptureAll = optimisticCaptureAll;
+    const effectiveCaptureAll = captureAll || pendingCaptureAll;
     const textEntryActive = isTextEntry(event.target);
     const contentEditable =
       event.target instanceof Element && event.target.isContentEditable;
@@ -230,7 +234,7 @@
     const shouldCapture = tokenApi.shouldCapture({
       token,
       textEntryActive,
-      captureAll,
+      captureAll: effectiveCaptureAll,
       normalModeActive,
       captureTokens: [...captureTokens],
       normalModeTokens: [...normalModeTokens],
@@ -243,7 +247,7 @@
     if (
       shouldCapture &&
       normalModeActive &&
-      !captureAll &&
+      !effectiveCaptureAll &&
       (
         typeof tokenApi.entersTextEntry === "function"
           ? tokenApi.entersTextEntry(token)
@@ -252,6 +256,16 @@
     ) {
       normalModeActive = false;
       optimisticNormalMode = false;
+    }
+    if (pendingCaptureAll) optimisticCaptureAll = false;
+    if (
+      shouldCapture &&
+      normalModeActive &&
+      !effectiveCaptureAll &&
+      typeof tokenApi.startsCaptureAll === "function" &&
+      tokenApi.startsCaptureAll(token)
+    ) {
+      optimisticCaptureAll = true;
     }
     if (shouldCapture || shouldCaptureNormalModeEscape) {
       event.preventDefault();
@@ -291,6 +305,7 @@
   window.addEventListener("keydown", onKeydown, true);
   const releaseCapture = () => {
     captureAll = false;
+    optimisticCaptureAll = false;
   };
   window.addEventListener("blur", releaseCapture);
   document.addEventListener("visibilitychange", releaseCapture);
@@ -310,6 +325,7 @@
       window.removeEventListener("blur", releaseCapture);
       document.removeEventListener("visibilitychange", releaseCapture);
       captureAll = false;
+      optimisticCaptureAll = false;
       normalModeActive = false;
     },
   };
