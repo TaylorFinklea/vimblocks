@@ -95,6 +95,24 @@ export const collectSubtreeUUIDs = (
   return collected;
 };
 
+export const resolveLinewiseTargets = (
+  visibleBlockUUIDs: readonly string[],
+  cursorBlockUUID: string,
+  motion: string | undefined,
+  count: number
+): string[] => {
+  const visible = [...new Set(visibleBlockUUIDs)];
+  const startIndex = cursorBlockUUID ? visible.indexOf(cursorBlockUUID) : -1;
+  // A cursor that is not in the rendered stream is stale — it survives page
+  // navigation. Operating on it mutates an off-screen block on another page,
+  // and the history snapshot is scoped to the rendered blocks, so undo cannot
+  // restore it. Target nothing instead.
+  if (startIndex < 0) return [];
+  return motion === "k"
+    ? visible.slice(Math.max(0, startIndex - count + 1), startIndex + 1)
+    : visible.slice(startIndex, startIndex + count);
+};
+
 export const firstSurvivingUUID = async (
   candidates: readonly string[],
   exists: (uuid: string) => Promise<boolean>

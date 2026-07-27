@@ -56,6 +56,7 @@ import {
   canonicalizeSubtreeRoots,
   collectSubtreeUUIDs,
   firstSurvivingUUID,
+  resolveLinewiseTargets,
   serializeSubtrees,
   type BlockNode,
 } from "@/runtime/block-subtrees";
@@ -607,16 +608,16 @@ const executeLinewiseOperator = async (
   if (!searchStore.cursorMode || !searchStore.cursorBlockUUID) return;
 
   const visible = [...new Set(event.visibleBlockUUIDs)];
+  const selectedUUIDs = resolveLinewiseTargets(
+    visible,
+    searchStore.cursorBlockUUID,
+    command.motion,
+    command.count
+  );
+  if (!selectedUUIDs.length) return;
+  // Guaranteed >= 0: resolveLinewiseTargets returns [] for a cursor that is
+  // not in the rendered stream. Used below to scan backward for a survivor.
   const startIndex = visible.indexOf(searchStore.cursorBlockUUID);
-  const selectedUUIDs =
-    startIndex >= 0 && command.motion === "k"
-      ? visible.slice(
-          Math.max(0, startIndex - command.count + 1),
-          startIndex + 1
-        )
-      : startIndex >= 0
-        ? visible.slice(startIndex, startIndex + command.count)
-      : [searchStore.cursorBlockUUID];
   const fetched = await Promise.all(
     selectedUUIDs.map((uuid) =>
       logseq.Editor.getBlock(uuid, { includeChildren: true })

@@ -185,6 +185,12 @@ async function main() {
     markStore.reload();
   }));
 
+  // a cursor left on another page is stale once the route changes
+  lifecycle.add(logseq.App.onRouteChanged(() => {
+    modalStore.resetPending();
+    useSearchStore().clearCursor();
+  }));
+
   // setup ui hotkeys
   lifecycle.add(setHotkeys(logseq));
 

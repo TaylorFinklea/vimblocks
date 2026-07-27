@@ -5,6 +5,7 @@ import {
   canonicalizeSubtreeRoots,
   collectSubtreeUUIDs,
   firstSurvivingUUID,
+  resolveLinewiseTargets,
   serializeSubtrees,
   type BlockNode,
 } from "../src/runtime/block-subtrees.ts";
@@ -113,5 +114,52 @@ test("plans one nested sibling batch in original root order", () => {
       sibling: true,
       before: false,
     }
+  );
+});
+
+test("linewise targets start at the cursor and run forward by count", () => {
+  assert.deepEqual(
+    resolveLinewiseTargets(["a", "b", "c", "d"], "b", undefined, 2),
+    ["b", "c"]
+  );
+});
+
+test("linewise targets for k run backward and include the cursor", () => {
+  assert.deepEqual(
+    resolveLinewiseTargets(["a", "b", "c", "d"], "c", "k", 2),
+    ["b", "c"]
+  );
+});
+
+test("linewise targets clamp to the rendered stream edges", () => {
+  assert.deepEqual(
+    resolveLinewiseTargets(["a", "b"], "b", undefined, 5),
+    ["b"]
+  );
+  assert.deepEqual(resolveLinewiseTargets(["a", "b"], "a", "k", 5), ["a"]);
+});
+
+test("linewise targets are empty when the cursor block is not rendered", () => {
+  // Regression: the cursor survives page navigation, so a stale cursorBlockUUID
+  // used to fall back to itself and delete an off-screen block on another page,
+  // with an undo snapshot scoped to the visible blocks that could not restore it.
+  assert.deepEqual(
+    resolveLinewiseTargets(["a", "b", "c"], "off-screen", undefined, 1),
+    []
+  );
+  assert.deepEqual(
+    resolveLinewiseTargets(["a", "b", "c"], "off-screen", "k", 3),
+    []
+  );
+});
+
+test("linewise targets are empty without a cursor block", () => {
+  assert.deepEqual(resolveLinewiseTargets(["a", "b"], "", undefined, 1), []);
+});
+
+test("linewise targets ignore duplicate rendered instances", () => {
+  assert.deepEqual(
+    resolveLinewiseTargets(["a", "b", "a", "c"], "b", undefined, 2),
+    ["b", "c"]
   );
 });
