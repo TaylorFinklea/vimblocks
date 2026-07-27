@@ -76,3 +76,42 @@ test("identifies character-find prefixes that synchronously capture the target",
   }
   assert.equal(api.startsCaptureAll("a"), false);
 });
+
+test("does not capture operator tokens while normal mode is off", () => {
+  const api = loadApi();
+  // The configured capture set is the union of the operator sequences plus
+  // every digit -- i a c d y w e 0-9. Capturing those with normal mode off
+  // swallowed the key and did nothing, because the operators bail without a
+  // cursor. Worse, `i` fell through to editing whichever block was behind an
+  // open overlay.
+  const base = {
+    token: "i",
+    textEntryActive: false,
+    captureAll: false,
+    normalModeActive: false,
+    captureTokens: ["i", "d", "0"],
+    normalModeTokens: [],
+  };
+  assert.equal(api.shouldCapture(base), false);
+  assert.equal(api.shouldCapture({ ...base, token: "d" }), false);
+  assert.equal(api.shouldCapture({ ...base, token: "0" }), false);
+
+  assert.equal(api.shouldCapture({ ...base, normalModeActive: true }), true);
+});
+
+test("still captures everything while a character find is pending", () => {
+  const api = loadApi();
+  // captureAll is turned on deliberately by the plugin for f/F/t/T and r, and
+  // must keep working independently of the normal-mode flag.
+  assert.equal(
+    api.shouldCapture({
+      token: "z",
+      textEntryActive: false,
+      captureAll: true,
+      normalModeActive: false,
+      captureTokens: [],
+      normalModeTokens: [],
+    }),
+    true
+  );
+});

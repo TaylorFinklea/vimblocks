@@ -239,9 +239,28 @@ const setupBridge = () => {
     return prevented;
   };
 
+  const editableTarget = new FakeElement();
+  editableTarget.isContentEditable = true;
+  const pressEscapeInEditor = (): void => {
+    listeners.get("keydown")?.({
+      target: editableTarget,
+      code: "Escape",
+      key: "Escape",
+      shiftKey: false,
+      ctrlKey: false,
+      metaKey: false,
+      altKey: false,
+      repeat: false,
+      isComposing: false,
+      preventDefault() {},
+      stopImmediatePropagation() {},
+    });
+  };
+
   return {
     send,
     press,
+    pressEscapeInEditor,
     detachPeerFrame,
     hostWindow: window,
     pluginWindow,
@@ -435,4 +454,25 @@ test("never mutates rendered block DOM to paint highlights", () => {
       bridge.pluginWindow
     )
   );
+});
+
+test("captures an operator typed before the plugin confirms normal mode", () => {
+  const bridge = setupBridge();
+  bridge.send(
+    {
+      type: "configure",
+      tokens: ["d"],
+      normalModeTokens: ["j"],
+      captureAll: false,
+      normalModeActive: false,
+    },
+    bridge.pluginWindow
+  );
+
+  // Escape from a block editor puts the host into an optimistic normal mode.
+  // A fast typist can land the next key before the plugin confirms it, and
+  // that key must still be captured or it types into the block instead.
+  bridge.pressEscapeInEditor();
+
+  assert.equal(bridge.press("KeyD", "d"), true);
 });

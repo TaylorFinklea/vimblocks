@@ -344,6 +344,11 @@
       window[bridgeKey]?.dispose();
       return;
     }
+    // The optimistic assumption still counts for the key that revokes it.
+    // Escape from a block editor enters normal mode optimistically, and a fast
+    // typist can land the next key before the plugin confirms it; evaluating
+    // capture after the revoke would type that key into the block instead.
+    const normalModeForThisKey = normalModeActive;
     if (optimisticNormalMode && event.key !== "Escape") {
       normalModeActive = false;
       optimisticNormalMode = false;
@@ -363,7 +368,7 @@
       token,
       textEntryActive,
       captureAll: effectiveCaptureAll,
-      normalModeActive,
+      normalModeActive: normalModeForThisKey,
       captureTokens: [...captureTokens],
       normalModeTokens: [...normalModeTokens],
     });

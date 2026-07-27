@@ -45,9 +45,13 @@
     normalModeTokens,
   }) =>
     !textEntryActive &&
+    // captureAll is turned on deliberately for a pending character find or
+    // replace, so it stands on its own. Everything else belongs to normal
+    // mode: the operators bail without a cursor anyway, so capturing them
+    // outside normal mode only swallowed keys that then did nothing.
     (captureAll ||
-      captureTokens.includes(token) ||
-      (normalModeActive && normalModeTokens.includes(token)));
+      (normalModeActive &&
+        (captureTokens.includes(token) || normalModeTokens.includes(token))));
 
   const entersTextEntry = (token) =>
     ["i", "a", "shift+i", "shift+a", "o", "shift+o"].includes(token);
