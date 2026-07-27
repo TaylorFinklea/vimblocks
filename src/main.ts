@@ -429,11 +429,23 @@ async function main() {
   }
 
   logseq.beforeunload(async () => {
-    cancelInputListener();
-    disposeOperatorSequences();
-    disposeSearchEffects();
-    lifecycle.dispose();
-    app.unmount();
+    // Each step is independent, and one throwing must not strand the rest —
+    // skipping lifecycle.dispose() would leave the host bridge armed and
+    // swallowing keys for the rest of the session.
+    const teardown: Array<[string, () => void]> = [
+      ["input listener", cancelInputListener],
+      ["operator sequences", disposeOperatorSequences],
+      ["search effects", disposeSearchEffects],
+      ["lifecycle", () => lifecycle.dispose()],
+      ["vue app", () => app.unmount()],
+    ];
+    for (const [label, step] of teardown) {
+      try {
+        step();
+      } catch (error) {
+        console.error(`Vimblocks teardown failed: ${label}`, error);
+      }
+    }
   });
 }
 
