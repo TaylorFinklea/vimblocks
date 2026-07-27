@@ -180,31 +180,13 @@
     return segments;
   };
 
-  const fallbackHighlightRanges = (ranges) => {
-    const segments = ranges.flatMap((item) => {
-      const element = document.getElementById(`block-content-${item.uuid}`);
-      if (
-        !element ||
-        element.isContentEditable ||
-        element.querySelector('[contenteditable="true"]') ||
-        element.closest(".ls-page-title")
-      ) return [];
-      return domSegments(
-        element,
-        item.renderedOffset,
-        item.renderedLength
-      ).map((segment) => ({ ...segment, role: item.role }));
-    });
-    for (const segment of segments.reverse()) {
-      const range = document.createRange();
-      range.setStart(segment.node, segment.start);
-      range.setEnd(segment.node, segment.end);
-      const mark = document.createElement("mark");
-      mark.className =
-        `vim-shortcuts-highlight vimblocks-${segment.role}`;
-      range.surroundContents(mark);
-    }
-  };
+  // Painting must never mutate Logseq's rendered DOM. The old fallback wrapped
+  // text nodes in <mark> via surroundContents, which React then reconciled
+  // over, and the markup leaked into block content.
+  const highlightApiAvailable = () =>
+    Boolean(globalThis.CSS?.highlights) &&
+    typeof globalThis.Highlight === "function" &&
+    typeof document.createRange === "function";
 
   const highlightRanges = (ranges) => {
     clearAllHighlights();
@@ -219,14 +201,8 @@
             (item.role === "cursor" || item.role === "visual")
         )
       : [];
-    if (
-      !globalThis.CSS?.highlights ||
-      typeof globalThis.Highlight !== "function" ||
-      typeof document.createRange !== "function"
-    ) {
-      fallbackHighlightRanges(valid);
-      return;
-    }
+    // No painting is safer than mutating the host's rendered DOM.
+    if (!highlightApiAvailable()) return;
 
     const highlights = {
       cursor: new Highlight(),
@@ -260,53 +236,39 @@
   };
 
   const highlight = ({ uuid, offset, length, text }) => {
-    clearAllHighlights();
-    const element = document.getElementById(`block-content-${uuid}`);
-    if (!element) return;
-    const blockRect = element.getBoundingClientRect();
-    if (blockRect.bottom <= 0 || blockRect.top >= window.innerHeight) {
-      element.scrollIntoView({ block: "center", inline: "nearest" });
+    if (!highlightApiAvailable()) {
+      clearAllHighlights();
+      return;
     }
-
-    const textNodes = [];
-    const walker = document.createTreeWalker(
-      element,
-      NodeFilter.SHOW_TEXT
-    );
-    let node;
-    while ((node = walker.nextNode())) textNodes.push(node);
+    const element = document.getElementById(`block-content-${uuid}`);
+    if (!element) {
+      clearAllHighlights();
+      return;
+    }
 
     let targetOffset = offset;
     if (typeof targetOffset !== "number") {
-      const rendered = textNodes.map((item) => item.textContent || "").join("");
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+      let rendered = "";
+      let node;
+      while ((node = walker.nextNode())) rendered += node.textContent || "";
       targetOffset = rendered.toLowerCase().indexOf((text || "").toLowerCase());
     }
-    if (targetOffset < 0) return;
-
-    let currentOffset = 0;
-    for (const textNode of textNodes) {
-      const nodeLength = textNode.textContent?.length || 0;
-      if (
-        targetOffset >= currentOffset &&
-        targetOffset < currentOffset + nodeLength
-      ) {
-        const start = targetOffset - currentOffset;
-        const end = Math.min(start + length, nodeLength);
-        const before = textNode.textContent?.substring(0, start) || "";
-        const match = textNode.textContent?.substring(start, end) || "";
-        const after = textNode.textContent?.substring(end) || "";
-        const mark = document.createElement("mark");
-        mark.className = "vim-shortcuts-highlight";
-        mark.textContent = match;
-        const fragment = document.createDocumentFragment();
-        if (before) fragment.appendChild(document.createTextNode(before));
-        fragment.appendChild(mark);
-        if (after) fragment.appendChild(document.createTextNode(after));
-        textNode.parentNode?.replaceChild(fragment, textNode);
-        return;
-      }
-      currentOffset += nodeLength;
+    if (targetOffset < 0) {
+      clearAllHighlights();
+      return;
     }
+
+    // Reuse the range painter, which clears, scrolls into view, and paints
+    // through the Custom Highlight API without touching the DOM.
+    highlightRanges([
+      {
+        uuid,
+        renderedOffset: targetOffset,
+        renderedLength: Math.max(1, length || 1),
+        role: "cursor",
+      },
+    ]);
   };
 
   const onMessage = (event) => {

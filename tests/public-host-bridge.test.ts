@@ -163,6 +163,15 @@ const setupBridge = () => {
     querySelectorAll(selector: string) {
       return selector === "iframe" ? frames : [];
     },
+    getElementById() {
+      return new FakeElement();
+    },
+    createElement() {
+      throw new Error("unexpected DOM mutation");
+    },
+    createTextNode() {
+      throw new Error("unexpected DOM mutation");
+    },
   };
   let frames: { contentWindow: unknown }[] = [
     { contentWindow: pluginWindow },
@@ -394,4 +403,36 @@ test("blanket capture also stops once the plugin frame is gone", () => {
   bridge.detachPeerFrame();
 
   assert.equal(bridge.press("KeyQ", "q"), false);
+});
+
+test("never mutates rendered block DOM to paint highlights", () => {
+  const bridge = setupBridge();
+  configurePeer(bridge);
+
+  // Without the CSS Custom Highlight API the bridge used to fall back to
+  // wrapping text nodes in <mark>, mutating Logseq's React-rendered DOM. That
+  // leaked markup into block content, which is why search.ts still strips it.
+  assert.doesNotThrow(() =>
+    bridge.send(
+      {
+        type: "highlight-ranges",
+        ranges: [
+          {
+            uuid: "block-a",
+            renderedOffset: 0,
+            renderedLength: 3,
+            role: "cursor",
+          },
+        ],
+      },
+      bridge.pluginWindow
+    )
+  );
+
+  assert.doesNotThrow(() =>
+    bridge.send(
+      { type: "highlight", uuid: "block-a", length: 3, text: "abc" },
+      bridge.pluginWindow
+    )
+  );
 });
