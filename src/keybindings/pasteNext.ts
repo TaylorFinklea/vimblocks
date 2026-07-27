@@ -62,6 +62,7 @@ export const putVimRegister = async (
           content,
           options
         ),
+      removeBlock: (uuid) => logseq.Editor.removeBlock(uuid),
     };
     const insertion = await insertLinewiseBatch(
       editor,

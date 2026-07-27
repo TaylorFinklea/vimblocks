@@ -27,6 +27,9 @@ test("puts linewise values directly beside a valid anchor", async () => {
     getPage: async () => null,
     insertBlock: async () => null,
     prependBlockInPage: async () => null,
+    removeBlock: async () => {
+      throw new Error("unexpected removal");
+    },
   };
 
   const result = await insertLinewiseBatch(
@@ -72,6 +75,9 @@ test("retries a before-first put as the parent's first child", async () => {
     ) => {
       calls.push(["prepend", pageUUID, content]);
       return inserted[0];
+    },
+    removeBlock: async () => {
+      throw new Error("unexpected removal");
     },
   };
 
@@ -120,6 +126,9 @@ test("fallback preserves multiple roots and nested children", async () => {
     },
     prependBlockInPage: async () => {
       throw new Error("unexpected page insertion");
+    },
+    removeBlock: async () => {
+      throw new Error("unexpected removal");
     },
   };
 
@@ -234,6 +243,9 @@ test("does not retry unrelated insertion failures", async () => {
     prependBlockInPage: async () => {
       throw new Error("unexpected page insertion");
     },
+    removeBlock: async () => {
+      throw new Error("unexpected removal");
+    },
   };
 
   await assert.rejects(
@@ -241,6 +253,98 @@ test("does not retry unrelated insertion failures", async () => {
       editor,
       { uuid: "anchor", parent: { id: 42 } },
       [{ content: "new" }],
+      true
+    ),
+    failure
+  );
+});
+
+test("fallback removes already-inserted blocks when a later insert fails", async () => {
+  // Regression: the fallback inserts roots one at a time. A failure partway
+  // through used to leave every earlier root committed with no way back.
+  const failure = new Error("insert failed");
+  const removed: string[] = [];
+  let nextId = 0;
+  const editor: LinewisePutEditor = {
+    insertBatchBlock: async () => {
+      throw {
+        message:
+          "Expected number or lookup ref for entity id, got nil",
+      };
+    },
+    getBlock: async () => ({ uuid: "parent" }),
+    getPage: async () => null,
+    insertBlock: async (_anchor, content) => {
+      if (content === "root two") throw failure;
+      return {
+        uuid: `new-${++nextId}`,
+        content,
+        children: [],
+      } as unknown as BlockEntity;
+    },
+    prependBlockInPage: async () => {
+      throw new Error("unexpected page insertion");
+    },
+    removeBlock: async (uuid) => {
+      removed.push(uuid);
+    },
+  };
+
+  await assert.rejects(
+    insertLinewiseBatch(
+      editor,
+      { uuid: "first", parent: { id: 42 } },
+      [
+        {
+          content: "root one",
+          children: [{ content: "child", children: [] }],
+        },
+        { content: "root two", children: [] },
+      ],
+      true
+    ),
+    failure
+  );
+
+  // Deepest first, so no block is orphaned by removing its parent early.
+  assert.deepEqual(removed, ["new-2", "new-1"]);
+});
+
+test("fallback surfaces the original failure when rollback also fails", async () => {
+  const failure = new Error("insert failed");
+  const editor: LinewisePutEditor = {
+    insertBatchBlock: async () => {
+      throw {
+        message:
+          "Expected number or lookup ref for entity id, got nil",
+      };
+    },
+    getBlock: async () => ({ uuid: "parent" }),
+    getPage: async () => null,
+    insertBlock: async (_anchor, content) => {
+      if (content === "root two") throw failure;
+      return {
+        uuid: "new-1",
+        content,
+        children: [],
+      } as unknown as BlockEntity;
+    },
+    prependBlockInPage: async () => {
+      throw new Error("unexpected page insertion");
+    },
+    removeBlock: async () => {
+      throw new Error("removal failed");
+    },
+  };
+
+  await assert.rejects(
+    insertLinewiseBatch(
+      editor,
+      { uuid: "first", parent: { id: 42 } },
+      [
+        { content: "root one", children: [] },
+        { content: "root two", children: [] },
+      ],
       true
     ),
     failure

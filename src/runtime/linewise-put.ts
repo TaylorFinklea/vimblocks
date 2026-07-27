@@ -40,6 +40,7 @@ export interface LinewisePutEditor {
       properties?: Record<string, unknown>;
     }
   ): Promise<BlockEntity | null>;
+  removeBlock(uuid: string): Promise<unknown>;
 }
 
 export interface LinewiseInsertResult {
@@ -107,6 +108,7 @@ export const insertLinewiseBatch = async (
     }
 
     let nativeSteps = 0;
+    const insertedUUIDs: string[] = [];
     const insertNode = async (
       node: IBatchBlock,
       previousSibling: BlockEntity | null,
@@ -148,6 +150,7 @@ export const insertLinewiseBatch = async (
         throw error;
       }
       nativeSteps += 1;
+      insertedUUIDs.push(inserted.uuid);
 
       const insertedChildren: BlockEntity[] = [];
       let previousChild: BlockEntity | null = null;
@@ -169,15 +172,29 @@ export const insertLinewiseBatch = async (
 
     const blocks: BlockEntity[] = [];
     let previousRoot: BlockEntity | null = null;
-    for (const node of batch) {
-      const inserted = await insertNode(
-        node,
-        previousRoot,
-        parent.uuid,
-        Boolean(parentPage)
-      );
-      blocks.push(inserted);
-      previousRoot = inserted;
+    try {
+      for (const node of batch) {
+        const inserted = await insertNode(
+          node,
+          previousRoot,
+          parent.uuid,
+          Boolean(parentPage)
+        );
+        blocks.push(inserted);
+        previousRoot = inserted;
+      }
+    } catch (insertionError) {
+      // This path inserts one block at a time, so a failure partway through
+      // would otherwise leave every earlier block committed. Unwind
+      // deepest-first so no block is orphaned by removing its parent early.
+      for (const uuid of [...insertedUUIDs].reverse()) {
+        try {
+          await editor.removeBlock(uuid);
+        } catch {
+          // A failed rollback must never mask the insertion failure.
+        }
+      }
+      throw insertionError;
     }
     return {
       blocks,
