@@ -27,11 +27,26 @@
     );
   };
 
-  const postToPluginFrames = (message) => {
-    window.postMessage({ channel, ...message }, "*");
+  // The window that answered the ready handshake. Everything except that
+  // handshake is addressed to it alone: Logseq notes can embed third-party
+  // iframes, and fanning captured keystrokes out to every frame would hand
+  // them the user's typing.
+  let peer = null;
+
+  const broadcastReady = () => {
+    const message = { channel, type: "ready" };
+    window.postMessage(message, "*");
     for (const frame of document.querySelectorAll("iframe")) {
-      frame.contentWindow?.postMessage({ channel, ...message }, "*");
+      frame.contentWindow?.postMessage(message, "*");
     }
+  };
+
+  const postToPluginFrames = (message) => {
+    if (peer) {
+      peer.postMessage({ channel, ...message }, "*");
+      return;
+    }
+    window.postMessage({ channel, ...message }, "*");
   };
 
   const blockUUIDForTarget = (target) => {
@@ -297,6 +312,19 @@
   const onMessage = (event) => {
     const data = event.data;
     if (!data || data.channel !== channel) return;
+    // These are host->plugin only. The ready handshake is broadcast to this
+    // window too, so consuming it here would bind the bridge to itself and
+    // lock the real plugin frame out.
+    if (data.type === "ready" || data.type === "keydown") return;
+    if (event.source === window) return;
+    // Bind to the first window that answers the handshake, then refuse every
+    // other source. Without this, any frame that guesses the channel name can
+    // enable blanket capture, read the keystroke stream, or dispose the bridge.
+    if (peer) {
+      if (event.source !== peer) return;
+    } else if (event.source) {
+      peer = event.source;
+    }
     if (data.type === "configure") {
       captureTokens.clear();
       for (const token of data.tokens || []) captureTokens.add(token);
@@ -438,8 +466,12 @@
       captureAll = false;
       optimisticCaptureAll = false;
       normalModeActive = false;
+      normalModeTokens.clear();
+      captureTokens.clear();
+      clearAllHighlights();
+      peer = null;
     },
   };
 
-  postToPluginFrames({ type: "ready" });
+  broadcastReady();
 })();
