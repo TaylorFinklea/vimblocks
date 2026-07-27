@@ -352,9 +352,36 @@
     }
   };
 
+  const peerFrameAttached = () => {
+    for (const frame of document.querySelectorAll("iframe")) {
+      if (frame.contentWindow === peer) return true;
+    }
+    return false;
+  };
+
   const onKeydown = (event) => {
     const tokenApi = window.__vimblocksKeyToken;
     if (!tokenApi) return;
+    // Escape hatch. Never part of any capture set, so it stays reachable even
+    // when the bridge is wrongly swallowing everything else.
+    if (
+      event.ctrlKey &&
+      event.altKey &&
+      event.shiftKey &&
+      event.code === "KeyV"
+    ) {
+      event.preventDefault();
+      event.stopImmediatePropagation?.();
+      window[bridgeKey]?.dispose();
+      return;
+    }
+    // The plugin frame can die without a clean teardown. Nothing resets the
+    // capture set in that case, so the bridge would swallow these keys for the
+    // rest of the session.
+    if (peer && !peerFrameAttached()) {
+      window[bridgeKey]?.dispose();
+      return;
+    }
     if (optimisticNormalMode && event.key !== "Escape") {
       normalModeActive = false;
       optimisticNormalMode = false;

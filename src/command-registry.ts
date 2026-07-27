@@ -15,6 +15,7 @@ import cut from "@/keybindings/cut";
 import cutWord from "@/keybindings/cutWord";
 import decrease from "@/keybindings/decrease";
 import deleteCurrentAndNextSiblingBlocks from "@/keybindings/deleteCurrentAndNextSiblingBlocks";
+import disableCapture from "@/keybindings/disableCapture";
 import deleteCurrentAndPrevSiblingBlocks from "@/keybindings/deleteCurrentAndPrevSiblingBlocks";
 import deleteCurrentBlock from "@/keybindings/deleteCurrentBlock";
 import down from "@/keybindings/down";
@@ -128,6 +129,7 @@ export const COMMAND_REGISTRY: readonly OwnedCommandRegistrar[] = [
   { id: "search-wikipedia", register: searchWikipedia },
   { id: "search-youtube", register: searchYoutube },
   { id: "show-unnamed-register", register: showRegister },
+  { id: "disable-key-capture", register: disableCapture },
   { id: "exit-editing", register: exitEditing },
   { id: "jump-into", register: jumpInto },
   { id: "join-next-line", register: joinNextLine },

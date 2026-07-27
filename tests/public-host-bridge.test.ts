@@ -161,10 +161,15 @@ const setupBridge = () => {
     addEventListener() {},
     removeEventListener() {},
     querySelectorAll(selector: string) {
-      return selector === "iframe"
-        ? [{ contentWindow: attackerWindow }]
-        : [];
+      return selector === "iframe" ? frames : [];
     },
+  };
+  let frames: { contentWindow: unknown }[] = [
+    { contentWindow: pluginWindow },
+    { contentWindow: attackerWindow },
+  ];
+  const detachPeerFrame = () => {
+    frames = frames.filter((frame) => frame.contentWindow !== pluginWindow);
   };
   class FakeMutationObserver {
     disconnect() {}
@@ -196,16 +201,25 @@ const setupBridge = () => {
     });
   };
   const target = new FakeElement();
-  const press = (code: string, key: string): boolean => {
+  const press = (
+    code: string,
+    key: string,
+    modifiers: {
+      ctrlKey?: boolean;
+      altKey?: boolean;
+      shiftKey?: boolean;
+      metaKey?: boolean;
+    } = {}
+  ): boolean => {
     let prevented = false;
     listeners.get("keydown")?.({
       target,
       code,
       key,
-      shiftKey: false,
-      ctrlKey: false,
-      metaKey: false,
-      altKey: false,
+      shiftKey: Boolean(modifiers.shiftKey),
+      ctrlKey: Boolean(modifiers.ctrlKey),
+      metaKey: Boolean(modifiers.metaKey),
+      altKey: Boolean(modifiers.altKey),
       repeat: false,
       isComposing: false,
       preventDefault() {
@@ -219,6 +233,7 @@ const setupBridge = () => {
   return {
     send,
     press,
+    detachPeerFrame,
     hostWindow: window,
     pluginWindow,
     attackerWindow,
@@ -319,4 +334,64 @@ test("delivers captured keystrokes only to the bound peer", () => {
     bridge.foreignFrameMessages.map((message) => message.type),
     ["ready"]
   );
+});
+
+const configurePeer = (bridge: ReturnType<typeof setupBridge>) =>
+  bridge.send(
+    {
+      type: "configure",
+      tokens: [],
+      normalModeTokens: ["j"],
+      captureAll: false,
+      normalModeActive: true,
+    },
+    bridge.pluginWindow
+  );
+
+test("stops capturing once the plugin frame is gone", () => {
+  const bridge = setupBridge();
+  configurePeer(bridge);
+  assert.equal(bridge.press("KeyJ", "j"), true);
+
+  // If the plugin iframe dies without a clean teardown, nothing resets the
+  // capture set and the bridge would swallow these keys forever.
+  bridge.detachPeerFrame();
+
+  assert.equal(bridge.press("KeyJ", "j"), false);
+});
+
+test("panic chord releases the keyboard", () => {
+  const bridge = setupBridge();
+  configurePeer(bridge);
+  assert.equal(bridge.press("KeyJ", "j"), true);
+
+  assert.equal(
+    bridge.press("KeyV", "v", {
+      ctrlKey: true,
+      altKey: true,
+      shiftKey: true,
+    }),
+    true
+  );
+
+  assert.equal(bridge.press("KeyJ", "j"), false);
+});
+
+test("blanket capture also stops once the plugin frame is gone", () => {
+  const bridge = setupBridge();
+  bridge.send(
+    {
+      type: "configure",
+      tokens: [],
+      normalModeTokens: [],
+      captureAll: true,
+      normalModeActive: false,
+    },
+    bridge.pluginWindow
+  );
+  assert.equal(bridge.press("KeyQ", "q"), true);
+
+  bridge.detachPeerFrame();
+
+  assert.equal(bridge.press("KeyQ", "q"), false);
 });
