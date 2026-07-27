@@ -28,6 +28,13 @@ export interface HostKeydownEvent {
   stopImmediatePropagation(): void;
 }
 
+export interface HostHighlightRange {
+  uuid: string;
+  renderedOffset: number;
+  renderedLength: number;
+  role: "cursor" | "visual";
+}
+
 type HostKeydownListener = (event: HostKeydownEvent) => void | Promise<void>;
 
 const listeners = new Set<HostKeydownListener>();
@@ -171,4 +178,19 @@ export const highlightHostText = (options: {
   text?: string;
 }): void => {
   postHostMessage({ type: "highlight", ...options });
+};
+
+export const highlightHostRanges = (
+  ranges: readonly HostHighlightRange[]
+): void => {
+  postHostMessage({
+    type: "highlight-ranges",
+    ranges: ranges.filter(
+      (range) =>
+        range.uuid &&
+        Number.isFinite(range.renderedOffset) &&
+        Number.isFinite(range.renderedLength) &&
+        range.renderedLength > 0
+    ),
+  });
 };

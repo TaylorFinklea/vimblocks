@@ -76,6 +76,7 @@ import {
   beginInsertSession,
   openSiblingOptions,
 } from "@/runtime/insert-session";
+import { resolveVisualRange } from "@/runtime/rendered-buffer";
 
 type OperatorObject =
   | "inner-word"
@@ -697,6 +698,173 @@ const executeLinewiseOperator = async (
   });
 };
 
+const executeVisualOperator = async (
+  operator: "delete" | "change" | "yank",
+  event: HostKeydownEvent
+): Promise<void> => {
+  const searchStore = useSearchStore();
+  const anchor = searchStore.visualAnchorPoint;
+  const kind = searchStore.visualKind;
+  if (
+    !searchStore.cursorMode ||
+    !searchStore.cursorBlockUUID ||
+    !anchor ||
+    !kind
+  ) return;
+
+  const visible = [...new Set([
+    ...event.visibleBlockUUIDs,
+    anchor.blockUUID,
+    searchStore.cursorBlockUUID,
+  ])];
+  const fetched = await Promise.all(
+    visible.map((uuid) =>
+      logseq.Editor.getBlock(uuid, { includeChildren: true })
+    )
+  );
+  const entities = fetched.filter(
+    (block): block is BlockEntity => Boolean(block?.uuid)
+  );
+  const nodes = entities.map((block) => toBlockNode(block));
+  const buffer = {
+    blocks: entities
+      .sort(
+        (left, right) =>
+          visible.indexOf(left.uuid) - visible.indexOf(right.uuid)
+      )
+      .map((block) => ({
+        uuid: block.uuid,
+        content: block.content ?? "",
+      })),
+  };
+  const range = resolveVisualRange(
+    buffer,
+    nodes,
+    anchor,
+    {
+      blockUUID: searchStore.cursorBlockUUID,
+      offset: searchStore.cursorPosition,
+    },
+    kind,
+    useModalStore().state.profile
+  );
+  const before = await captureHistorySnapshot(visible, currentModalPoint());
+
+  if (kind === "linewise") {
+    const roots = range.rootUUIDs;
+    const blocks = serializeSubtrees(roots, nodes);
+    if (!blocks.length) return;
+    unnamedRegister.write({ kind: "linewise", blocks });
+    searchStore.exitVisualMode();
+    if (operator === "yank") {
+      const block = await logseq.Editor.getBlock(range.start.blockUUID);
+      if (block?.uuid) {
+        await searchStore.restoreCursor(
+          block.uuid,
+          block.content ?? "",
+          firstNonBlankPosition(block.content ?? "")
+        );
+      }
+      return;
+    }
+    if (operator === "change") {
+      const firstRoot = roots[0];
+      await logseq.Editor.updateBlock(firstRoot, "");
+      for (const root of roots.slice(1).reverse()) {
+        await logseq.Editor.removeBlock(root);
+      }
+      searchStore.clearCursor();
+      await logseq.Editor.editBlock(firstRoot, { pos: 0 });
+    } else {
+      for (const root of [...roots].reverse()) {
+        await logseq.Editor.removeBlock(root);
+      }
+      const removed = new Set(collectSubtreeUUIDs(roots, nodes));
+      const survivor = await firstSurvivingUUID(
+        visible.filter((uuid) => !removed.has(uuid)),
+        async (uuid) => Boolean(await logseq.Editor.getBlock(uuid))
+      );
+      if (survivor) {
+        const block = await logseq.Editor.getBlock(survivor);
+        if (block?.uuid) {
+          await searchStore.restoreCursor(
+            block.uuid,
+            block.content ?? "",
+            firstNonBlankPosition(block.content ?? "")
+          );
+        }
+      } else {
+        searchStore.clearCursor();
+      }
+    }
+    await recordNativeHistory({
+      before,
+      scopeUUIDs: visible,
+      maxNativeSteps: roots.length,
+    });
+    return;
+  }
+
+  const firstIndex = buffer.blocks.findIndex(
+    (block) => block.uuid === range.start.blockUUID
+  );
+  const lastIndex = buffer.blocks.findIndex(
+    (block) => block.uuid === range.end.blockUUID
+  );
+  const selected = buffer.blocks.slice(firstIndex, lastIndex + 1);
+  const pieces = selected.map((block) => {
+    const start =
+      block.uuid === range.start.blockUUID ? range.start.offset : 0;
+    const end =
+      block.uuid === range.end.blockUUID
+        ? range.end.offset + 1
+        : block.content.length;
+    return { block, start, end, text: block.content.slice(start, end) };
+  });
+  unnamedRegister.write({
+    kind: "characterwise",
+    text: pieces.map((piece) => piece.text).join("\n"),
+  });
+  searchStore.exitVisualMode();
+  if (operator === "yank") {
+    const block = await logseq.Editor.getBlock(range.start.blockUUID);
+    if (block?.uuid) {
+      await searchStore.restoreCursor(
+        block.uuid,
+        block.content ?? "",
+        range.start.offset
+      );
+    }
+    return;
+  }
+  for (const piece of pieces) {
+    await logseq.Editor.updateBlock(
+      piece.block.uuid,
+      piece.block.content.slice(0, piece.start) +
+        piece.block.content.slice(piece.end)
+    );
+  }
+  const first = await logseq.Editor.getBlock(range.start.blockUUID);
+  if (!first?.uuid) return;
+  if (operator === "change") {
+    searchStore.clearCursor();
+    await logseq.Editor.editBlock(first.uuid, {
+      pos: Math.min(range.start.offset, (first.content ?? "").length),
+    });
+  } else {
+    await searchStore.restoreCursor(
+      first.uuid,
+      first.content ?? "",
+      Math.min(range.start.offset, Math.max(0, (first.content ?? "").length - 1))
+    );
+  }
+  await recordNativeHistory({
+    before,
+    scopeUUIDs: visible,
+    maxNativeSteps: pieces.length,
+  });
+};
+
 let disposeOperatorSequenceListener: (() => void) | null = null;
 
 export const disposeOperatorSequences = (): void => {
@@ -888,10 +1056,35 @@ export default (logseq: ILSPluginUser) => {
     if (!command) return;
     const searchStore = useSearchStore();
     if (command.kind === "escape") {
+      if (searchStore.visualMode) {
+        searchStore.exitVisualMode();
+        await searchStore.restoreCursor(
+          searchStore.cursorBlockUUID,
+          searchStore.cursorBlockContent,
+          searchStore.cursorPosition
+        );
+        return;
+      }
       const finishedInsert = await searchStore.finishInsert();
       if (finishedInsert) return;
       const entered = await searchStore.enterNormalMode(event.blockUUID);
       if (!entered) setHostNormalModeActive(false);
+      return;
+    }
+    if (command.kind === "visual") {
+      await searchStore.enterVisualMode(
+        command.mode === "char" ? "characterwise" : "linewise",
+        event.visibleBlockUUIDs
+      );
+      useModalStore().setVisualAnchor({
+        blockUUID: searchStore.cursorBlockUUID,
+        offset: searchStore.cursorPosition,
+      });
+      return;
+    }
+    if (command.kind === "visual-operator") {
+      await executeVisualOperator(command.operator, event);
+      useModalStore().setVisualAnchor(null);
       return;
     }
     if (command.kind === "insert") {

@@ -20,15 +20,11 @@ export default (logseq: ILSPluginUser) => {
     ? settings.keyBindings.visualLineMode
     : [settings.keyBindings.visualLineMode];
 
-  bindings.forEach((binding, index) => {
+  bindings.forEach((_binding, index) => {
     logseq.App.registerCommandPalette(
       {
         key: "vim-shortcut-visual-line-mode-" + index,
         label: "Visual line selection mode (select entire line)",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook
@@ -46,21 +42,10 @@ export default (logseq: ILSPluginUser) => {
           return;
         }
 
-        const blockUUID = await logseq.Editor.getCurrentBlock().then(
-          (b) => b?.uuid
-        );
-        if (!blockUUID || searchStore.cursorBlockUUID !== blockUUID) return;
-
-        const block = await logseq.Editor.getBlock(blockUUID);
-        if (!block || !block.content) return;
-
-        // Check if already in visual line mode (entire line selected)
-        const isInVisualLineMode =
+        if (
           searchStore.visualMode &&
-          searchStore.visualStartPosition === 0 &&
-          searchStore.visualEndPosition === Math.max(0, block.content.length - 1);
-
-        if (isInVisualLineMode) {
+          searchStore.visualKind === "linewise"
+        ) {
           // Exit visual mode and restore to single cursor
           searchStore.exitVisualMode();
 
@@ -69,13 +54,10 @@ export default (logseq: ILSPluginUser) => {
           await searchStore.moveCursorRight();
           await searchStore.moveCursorLeft();
         } else {
-          // Enter visual mode and select entire line
-          searchStore.visualMode = true;
-          searchStore.visualStartPosition = 0;
-          searchStore.visualEndPosition = Math.max(0, block.content.length - 1);
-
-          // Update the visual selection highlight
-          await searchStore.updateVisualSelection();
+          await searchStore.enterVisualMode(
+            "linewise",
+            searchStore.renderedBlockUUIDs
+          );
         }
       }
     );

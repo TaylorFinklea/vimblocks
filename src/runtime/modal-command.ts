@@ -44,6 +44,7 @@ export type ModalCommand =
   | { kind: "put"; before: boolean; count: number }
   | { kind: "operator"; operator: VimOperator; motion: ModalMotionToken; count: number }
   | { kind: "visual"; mode: "char" | "line" }
+  | { kind: "visual-operator"; operator: VimOperator }
   | { kind: "insert"; command: "i" | "a" | "I" | "A" | "o" | "O"; count: number }
   | {
       kind: "replay-insert";
@@ -135,6 +136,39 @@ export const stepModalKey = (state: ModalState, token: string): ModalStep => {
   }
   if (/^[0-9]$/.test(token) && (token !== "0" || state.countDigits)) {
     return { state: { ...state, countDigits: state.countDigits + token } };
+  }
+  if (state.mode === "visual-char" || state.mode === "visual-line") {
+    if (token === "d" || token === "c" || token === "y") {
+      const operator =
+        token === "d" ? "delete" : token === "c" ? "change" : "yank";
+      return {
+        state: normal(state),
+        command: { kind: "visual-operator", operator },
+      };
+    }
+    if (token === "v" || token === "shift+v") {
+      const mode = token === "v" ? "char" : "line";
+      const nextMode = mode === "char" ? "visual-char" : "visual-line";
+      if (state.mode === nextMode) {
+        return { state: normal(state), command: { kind: "escape" } };
+      }
+      return {
+        state: { ...state, mode: nextMode, countDigits: "" },
+        command: { kind: "visual", mode },
+      };
+    }
+    const visualMotion = motionFor(token);
+    if (visualMotion) {
+      return {
+        state: { ...state, countDigits: "" },
+        command: {
+          kind: "motion",
+          motion: visualMotion,
+          count: countOf(state.countDigits),
+        },
+      };
+    }
+    return { state: { ...state, countDigits: "" } };
   }
   if (state.pendingPrefix === "g") {
     if (token === "g") {

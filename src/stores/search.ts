@@ -3,6 +3,7 @@ import { BlockEntity, BlockUUID } from "@logseq/libs/dist/LSPlugin";
 import { defineStore } from "pinia";
 import {
   clearHostHighlights,
+  highlightHostRanges,
   highlightHostText,
   setHostCaptureAll,
   setHostNormalModeActive,
@@ -12,10 +13,13 @@ import {
   buildPositionMap as buildSharedPositionMap,
   normalizeRawOffset,
   resolveMotion,
+  resolveVisualRange,
   toRenderedOffset,
   type MotionName,
   type RenderedBuffer,
+  type VisualRange,
 } from "@/runtime/rendered-buffer";
+import type { BlockNode } from "@/runtime/block-subtrees";
 import {
   resolveAdjacentVisibleBlockUUID,
   type VerticalDirection,
@@ -244,7 +248,6 @@ function addHighlight(word: string, input: string, highlightOffset?: number) {
 }
 
 async function highlightInput(block, input, matchOffset?: number) {
-  clearHostHighlights();
   let renderedOffset: number | undefined;
   if (matchOffset !== undefined) {
     const blockData = await logseq.Editor.getBlock(block.uuid);
@@ -252,12 +255,20 @@ async function highlightInput(block, input, matchOffset?: number) {
       ? toRenderedOffset(blockData.content, matchOffset)
       : matchOffset;
   }
-  highlightHostText({
-    uuid: block.uuid,
-    offset: renderedOffset,
-    length: Math.max(1, input.length),
-    text: input,
-  });
+  if (renderedOffset !== undefined) {
+    highlightHostRanges([{
+      uuid: block.uuid,
+      renderedOffset,
+      renderedLength: 1,
+      role: "cursor",
+    }]);
+  } else {
+    highlightHostText({
+      uuid: block.uuid,
+      length: Math.max(1, input.length),
+      text: input,
+    });
+  }
 }
 
 const buildRenderedBuffer = async (
@@ -601,6 +612,11 @@ export const useSearchStore = defineStore("search", {
     visualMode: false, // Whether in visual selection mode
     visualStartPosition: 0, // Selection start position
     visualEndPosition: 0, // Selection end position
+    visualKind: null as VisualRange["kind"] | null,
+    visualAnchorPoint: null as {
+      blockUUID: string;
+      offset: number;
+    } | null,
     // Character search mode (f/t commands)
     waitingForChar: false, // Whether waiting for character input
     charSearchMode: "", // "f" or "F"
@@ -958,6 +974,8 @@ export const useSearchStore = defineStore("search", {
       this.visualMode = false;
       this.visualStartPosition = 0;
       this.visualEndPosition = 0;
+      this.visualKind = null;
+      this.visualAnchorPoint = null;
       setHostNormalModeActive(false);
     },
 
@@ -1114,7 +1132,7 @@ export const useSearchStore = defineStore("search", {
 
       if (this.visualMode) {
         this.visualEndPosition = this.cursorPosition;
-        await this.updateVisualSelection();
+        await this.updateVisualSelection(visibleBlockUUIDs);
         return;
       }
       if (targetBlock.content.length > 0) {
@@ -1695,47 +1713,127 @@ export const useSearchStore = defineStore("search", {
     },
 
     // Toggle visual selection mode (v key)
-    async toggleVisualMode() {
+    async enterVisualMode(
+      kind: VisualRange["kind"],
+      visibleBlockUUIDs: readonly string[] = []
+    ) {
       if (!this.cursorMode) {
         logseq.UI.showMsg("Visual mode requires cursor mode", "warning");
         return;
       }
+      this.visualMode = true;
+      this.visualKind = kind;
+      this.visualAnchorPoint = {
+        blockUUID: this.cursorBlockUUID,
+        offset: this.cursorPosition,
+      };
+      this.visualStartPosition = this.cursorPosition;
+      this.visualEndPosition = this.cursorPosition;
+      await this.updateVisualSelection(visibleBlockUUIDs);
+    },
 
-      const blockUUID = await logseq.Editor.getCurrentBlock().then(b => b?.uuid);
-      if (!blockUUID || this.cursorBlockUUID !== blockUUID) return;
-
-      if (!this.visualMode) {
-        // Enter visual mode
-        this.visualMode = true;
-        this.visualStartPosition = this.cursorPosition;
-        this.visualEndPosition = this.cursorPosition;
-
-        // Highlight the selection (just the current character)
-        await this.updateVisualSelection();
-      } else {
-        // Exit visual mode
-        this.visualMode = false;
-        this.visualStartPosition = 0;
-        this.visualEndPosition = 0;
-
-        // Restore normal cursor highlight
-        highlightInput({ uuid: blockUUID }, this.getCursorChar(), this.cursorPosition);
+    async toggleVisualMode() {
+      if (this.visualMode) {
+        this.exitVisualMode();
+        await highlightInput(
+          { uuid: this.cursorBlockUUID },
+          this.getCursorChar(),
+          this.cursorPosition
+        );
+        return;
       }
+      await this.enterVisualMode("characterwise", this.renderedBlockUUIDs);
     },
 
     // Update visual selection highlight
-    async updateVisualSelection() {
-      if (!this.visualMode || !this.cursorBlockUUID) return;
-
-      const block = await logseq.Editor.getBlock(this.cursorBlockUUID);
-      if (!block) return;
-
-      // Calculate selection range (always from smaller to larger position)
-      const startPos = Math.min(this.visualStartPosition, this.visualEndPosition);
-      const endPos = Math.max(this.visualStartPosition, this.visualEndPosition);
-
-      // Highlight the selection range
-      highlightInput({ uuid: this.cursorBlockUUID }, block.content.substring(startPos, endPos + 1), startPos);
+    async updateVisualSelection(
+      visibleBlockUUIDs: readonly string[] = this.renderedBlockUUIDs
+    ) {
+      if (
+        !this.visualMode ||
+        !this.cursorBlockUUID ||
+        !this.visualAnchorPoint ||
+        !this.visualKind
+      ) return;
+      const anchor = { ...this.visualAnchorPoint };
+      const kind = this.visualKind;
+      const head = {
+        blockUUID: this.cursorBlockUUID,
+        offset: this.cursorPosition,
+      };
+      const buffer = await buildRenderedBuffer(
+        visibleBlockUUIDs,
+        head.blockUUID
+      );
+      const fetched = await Promise.all(
+        buffer.blocks.map((block) =>
+          logseq.Editor.getBlock(block.uuid, { includeChildren: true })
+        )
+      );
+      const toNode = (block: BlockEntity, parentUUID?: string): BlockNode => ({
+        uuid: block.uuid,
+        content: block.content ?? "",
+        ...(parentUUID ? { parentUUID } : {}),
+        children: (block.children ?? []).flatMap((child) =>
+          typeof child === "object" && child && "uuid" in child
+            ? [toNode(child as BlockEntity, block.uuid)]
+            : []
+        ),
+      });
+      const nodes = fetched.flatMap((block) =>
+        block?.uuid ? [toNode(block)] : []
+      );
+      if (
+        !this.visualMode ||
+        !this.visualAnchorPoint ||
+        this.visualAnchorPoint.blockUUID !== anchor.blockUUID ||
+        this.visualAnchorPoint.offset !== anchor.offset ||
+        this.visualKind !== kind
+      ) return;
+      const range = resolveVisualRange(
+        buffer,
+        nodes,
+        anchor,
+        head,
+        kind,
+        useModalStore().state.profile
+      );
+      if (
+        useModalStore().state.profile === "logseq-first" &&
+        kind === "characterwise" &&
+        range.end.blockUUID === anchor.blockUUID &&
+        this.cursorBlockUUID !== anchor.blockUUID
+      ) {
+        this.cursorBlockUUID = anchor.blockUUID;
+        this.cursorPosition = anchor.offset;
+      }
+      const firstIndex = buffer.blocks.findIndex(
+        (block) => block.uuid === range.start.blockUUID
+      );
+      const lastIndex = buffer.blocks.findIndex(
+        (block) => block.uuid === range.end.blockUUID
+      );
+      const selected = buffer.blocks.slice(firstIndex, lastIndex + 1);
+      highlightHostRanges(selected.flatMap((block) => {
+        const firstRaw = kind === "linewise"
+          ? 0
+          : block.uuid === range.start.blockUUID ? range.start.offset : 0;
+        const lastRaw = kind === "linewise"
+          ? Math.max(0, block.content.length - 1)
+          : block.uuid === range.end.blockUUID
+            ? range.end.offset
+            : Math.max(0, block.content.length - 1);
+        const renderedStart = toRenderedOffset(block.content, firstRaw);
+        const renderedEnd = toRenderedOffset(block.content, lastRaw);
+        return block.content
+          ? [{
+              uuid: block.uuid,
+              renderedOffset: renderedStart,
+              renderedLength: Math.max(1, renderedEnd - renderedStart + 1),
+              role: "visual" as const,
+            }]
+          : [];
+      }));
     },
 
     // Get selected text in visual mode
@@ -1757,6 +1855,8 @@ export const useSearchStore = defineStore("search", {
       this.visualMode = false;
       this.visualStartPosition = 0;
       this.visualEndPosition = 0;
+      this.visualKind = null;
+      this.visualAnchorPoint = null;
     },
   },
 });

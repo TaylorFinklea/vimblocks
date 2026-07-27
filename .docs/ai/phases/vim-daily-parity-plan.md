@@ -1181,7 +1181,7 @@ export const resolveVisualRange = (
 ): VisualRange;
 ```
 
-- [ ] **Step 1: Claim and write failing visual traces**
+- [x] **Step 1: Claim and write failing visual traces**
 
 Run: `bd update tesela-8c9v.4.16.6 --claim`
 
@@ -1190,7 +1190,7 @@ character ranges, Vim-first cross-block ranges, Logseq-first boundary stops,
 linewise canonical roots, hidden descendants, `d/c/y`, and Esc restoration.
 Include a selection spanning emphasis, inline code, and a page reference.
 
-- [ ] **Step 2: Add multi-range host painting**
+- [x] **Step 2: Add multi-range host painting**
 
 Before cutover, prove `CSS.highlights`, `Highlight`, and DOM `Range` exist in
 Logseq 2.0.1. Add a `highlight-ranges` bridge message that turns every block
@@ -1212,7 +1212,7 @@ Preserve the existing `cursorHighlightStyle()` mark fallback, add
 `highlightPseudoStyle()` for the cursor and visual pseudo-elements, and emit
 both from the single `logseq.provideStyle` call in `src/main.ts`.
 
-- [ ] **Step 3: Replace single-block visual state**
+- [x] **Step 3: Replace single-block visual state**
 
 Store anchor/head as `ModalPoint`s. Characterwise Logseq-first clamps the head
 to the anchor block; Vim-first follows rendered order. Linewise `V` resolves
@@ -1226,7 +1226,32 @@ Visual-range mutations pass `null` as the executor's optional
 `ChangeDescriptor`, leaving `lastChange` untouched rather than fabricating a
 motion-shaped repeat.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
+
+Verification 2026-07-27:
+
+- Targeted 14/14, `pnpm check`, `pnpm test` 117/117, and `pnpm package`
+  passed; stable install exactly matches `dist`.
+- Computer Use target `Logseq`; graph link and plugin storage paths confirmed
+  only `tesela-keyboard-audit-2026-07-23`.
+- Logseq 2.0.1 probe: `CSS.highlights`, `Highlight`, and `Range` returned
+  `true,function,function`.
+- `v l l d`: `alpha beta gamma` → `ha beta gamma`; no wake-up mutation.
+- `v l l Esc l x`: cursor remained usable after visual Esc and produced
+  `alpa beta gamma`.
+- `v l l c`: selected characters disappeared and contenteditable opened.
+- `V y`, then `l x`: yank returned to a usable cursor and `x` repainted
+  immediately.
+- Disposable sibling `visual line delete`, then `V d`: block disappeared.
+- Ordinary command palette accepted typing and Esc; visual commands remained
+  discoverable.
+- Plugin dashboard: exactly one enabled `Vimblocks 0.5.0-capture.1`.
+- Rapid `v l l d` exposed a stale async paint dereference; visual session
+  snapshots now discard obsolete paints. Rebuild/reinstall/reload repeated the
+  rapid action with no Vimblocks renderer or plugin-load error.
+- Console retained one unrelated Logseq `url-target/unresolved-graph-id`
+  warning for a stale plugin-dashboard page route.
+- Fixture restored to `alpha beta gamma` before closeout.
 
 Run:
 

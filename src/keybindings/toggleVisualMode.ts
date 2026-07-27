@@ -19,15 +19,11 @@ export default (logseq: ILSPluginUser) => {
     ? settings.keyBindings.toggleVisualMode
     : [settings.keyBindings.toggleVisualMode];
 
-  bindings.forEach((binding, index) => {
+  bindings.forEach((_binding, index) => {
     logseq.App.registerCommandPalette(
       {
         key: "vim-shortcut-toggleVisualMode-" + index,
         label: "Toggle visual selection mode",
-        keybinding: {
-          mode: "non-editing",
-          binding,
-        },
       },
       async () => {
         // Check before action hook

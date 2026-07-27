@@ -7,6 +7,7 @@ import {
   configureHostCapture,
   configureHostNormalModeCapture,
   installHostBridge,
+  highlightHostRanges,
   setHostNormalModeActive,
 } from "../src/runtime/host-bridge.ts";
 
@@ -123,6 +124,25 @@ test("loads the host script and relays validated key events", async () => {
         type: "clear-highlights",
       },
     ]);
+
+    highlightHostRanges([
+      {
+        uuid: "block-1",
+        renderedOffset: 2,
+        renderedLength: 4,
+        role: "visual",
+      },
+    ]);
+    assert.deepEqual(messages.at(-1), {
+      channel: "vimblocks-host-bridge-v1",
+      type: "highlight-ranges",
+      ranges: [{
+        uuid: "block-1",
+        renderedOffset: 2,
+        renderedLength: 4,
+        role: "visual",
+      }],
+    });
 
     setHostNormalModeActive(false);
     removeKeydown();

@@ -42,7 +42,10 @@ import {
   installHostBridge,
   type HostKeydownEvent,
 } from "./runtime/host-bridge";
-import { cursorHighlightStyle } from "./runtime/cursor-style";
+import {
+  cursorHighlightStyle,
+  highlightPseudoStyle,
+} from "./runtime/cursor-style";
 import { registerDbTaskCaptureCommand } from "./db-task-capture-command";
 import { useDbTaskCaptureStore } from "./stores/db-task-capture";
 import { useModalStore } from "./stores/modal";
@@ -101,7 +104,10 @@ async function main() {
   initSettings();
 
   // Inject CSS for vim-shortcuts-highlight to Logseq main page
-  logseq.provideStyle(cursorHighlightStyle(getSettings().cursorColor));
+  logseq.provideStyle(
+    cursorHighlightStyle(getSettings().cursorColor) +
+      highlightPseudoStyle(getSettings().cursorColor)
+  );
 
   logseq.provideModel({
     async openMarks() {

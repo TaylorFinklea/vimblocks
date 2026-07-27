@@ -14,3 +14,21 @@ export const cursorHighlightStyle = (value: unknown): string => `
     background-color: ${normalizeCursorColor(value)} !important;
   }
 `;
+
+export const highlightPseudoStyle = (value: unknown): string => {
+  const color = normalizeCursorColor(value);
+  return `
+  ::highlight(vimblocks-cursor) {
+    background-color: ${color};
+  }
+  ::highlight(vimblocks-visual) {
+    background-color: color-mix(in srgb, ${color} 55%, transparent);
+  }
+  mark.vim-shortcuts-highlight.vimblocks-cursor {
+    background-color: ${color} !important;
+  }
+  mark.vim-shortcuts-highlight.vimblocks-visual {
+    background-color: color-mix(in srgb, ${color} 55%, transparent) !important;
+  }
+`;
+};

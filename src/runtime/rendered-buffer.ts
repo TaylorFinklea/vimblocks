@@ -3,6 +3,10 @@ import type {
   ModalMotionToken,
   ModalPoint,
 } from "./modal-command.ts";
+import {
+  canonicalizeSubtreeRoots,
+  type BlockNode,
+} from "./block-subtrees.ts";
 
 export interface RenderedBlock {
   uuid: string;
@@ -28,6 +32,13 @@ export interface MotionResult {
   point: ModalPoint;
   preferredColumn: number | null;
   crossedBlock: boolean;
+}
+
+export interface VisualRange {
+  kind: "characterwise" | "linewise";
+  start: ModalPoint;
+  end: ModalPoint;
+  rootUUIDs: string[];
 }
 
 type CharacterClass = "word" | "punctuation" | "whitespace";
@@ -146,6 +157,63 @@ const uniqueBlocks = (buffer: RenderedBuffer): RenderedBlock[] => {
     seen.add(block.uuid);
     return true;
   });
+};
+
+export const resolveVisualRange = (
+  buffer: RenderedBuffer,
+  nodes: readonly BlockNode[],
+  anchor: ModalPoint,
+  head: ModalPoint,
+  kind: VisualRange["kind"],
+  profile: BoundaryProfile
+): VisualRange => {
+  const blocks = uniqueBlocks(buffer);
+  const anchorIndex = blocks.findIndex(
+    (block) => block.uuid === anchor.blockUUID
+  );
+  let headIndex = blocks.findIndex((block) => block.uuid === head.blockUUID);
+  const safeAnchor = {
+    blockUUID: anchor.blockUUID,
+    offset: normalizeRawOffset(
+      blocks[anchorIndex]?.content ?? "",
+      anchor.offset
+    ),
+  };
+  let safeHead = {
+    blockUUID: head.blockUUID,
+    offset: normalizeRawOffset(blocks[headIndex]?.content ?? "", head.offset),
+  };
+
+  if (
+    kind === "characterwise" &&
+    profile === "logseq-first" &&
+    safeHead.blockUUID !== safeAnchor.blockUUID
+  ) {
+    safeHead = safeAnchor;
+    headIndex = anchorIndex;
+  }
+
+  const anchorBeforeHead =
+    anchorIndex < headIndex ||
+    (anchorIndex === headIndex && safeAnchor.offset <= safeHead.offset);
+  const start = anchorBeforeHead ? safeAnchor : safeHead;
+  const end = anchorBeforeHead ? safeHead : safeAnchor;
+  const firstIndex = Math.min(anchorIndex, headIndex);
+  const lastIndex = Math.max(anchorIndex, headIndex);
+  const selectedUUIDs =
+    firstIndex >= 0
+      ? blocks.slice(firstIndex, lastIndex + 1).map((block) => block.uuid)
+      : [anchor.blockUUID];
+
+  return {
+    kind,
+    start,
+    end,
+    rootUUIDs:
+      kind === "linewise"
+        ? canonicalizeSubtreeRoots(selectedUUIDs, nodes)
+        : [],
+  };
 };
 
 const rawAtRenderedColumn = (

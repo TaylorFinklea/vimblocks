@@ -14,7 +14,7 @@
 - [x] Phase 3: operators/register/history; live subtree/repeat/history gate.
 - [x] Phase 4: deterministic insert/open sessions; live i/a/I/A/o/O gate.
 - [x] Phase 5: rendered search/find; live cross-day and latency gate.
-- [ ] Phase 6: characterwise and linewise visual modes.
+- [x] Phase 6: characterwise/linewise visual modes; live disposable-graph gate.
 - [ ] Phase 7: hardening and comparative Logseq product test.
 
 ## Blockers

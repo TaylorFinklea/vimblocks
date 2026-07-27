@@ -13,6 +13,10 @@
   let optimisticCaptureAll = false;
   let normalModeActive = false;
   let optimisticNormalMode = false;
+  const customHighlightNames = [
+    "vimblocks-cursor",
+    "vimblocks-visual",
+  ];
 
   const isTextEntry = (target) => {
     if (!(target instanceof Element)) return false;
@@ -128,11 +132,116 @@
   };
 
   const clearAllHighlights = () => {
+    if (globalThis.CSS?.highlights) {
+      for (const name of customHighlightNames) CSS.highlights.delete(name);
+    }
     for (const mark of document.querySelectorAll(
       "mark.vim-shortcuts-highlight"
     )) {
       mark.replaceWith(document.createTextNode(mark.textContent || ""));
     }
+  };
+
+  const textNodesFor = (element) => {
+    const nodes = [];
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) nodes.push(node);
+    return nodes;
+  };
+
+  const domSegments = (element, offset, length) => {
+    const segments = [];
+    const endOffset = offset + length;
+    let currentOffset = 0;
+    for (const node of textNodesFor(element)) {
+      const nodeLength = node.textContent?.length || 0;
+      const start = Math.max(0, offset - currentOffset);
+      const end = Math.min(nodeLength, endOffset - currentOffset);
+      if (start < end) segments.push({ node, start, end });
+      currentOffset += nodeLength;
+      if (currentOffset >= endOffset) break;
+    }
+    return segments;
+  };
+
+  const fallbackHighlightRanges = (ranges) => {
+    const segments = ranges.flatMap((item) => {
+      const element = document.getElementById(`block-content-${item.uuid}`);
+      if (
+        !element ||
+        element.isContentEditable ||
+        element.querySelector('[contenteditable="true"]') ||
+        element.closest(".ls-page-title")
+      ) return [];
+      return domSegments(
+        element,
+        item.renderedOffset,
+        item.renderedLength
+      ).map((segment) => ({ ...segment, role: item.role }));
+    });
+    for (const segment of segments.reverse()) {
+      const range = document.createRange();
+      range.setStart(segment.node, segment.start);
+      range.setEnd(segment.node, segment.end);
+      const mark = document.createElement("mark");
+      mark.className =
+        `vim-shortcuts-highlight vimblocks-${segment.role}`;
+      range.surroundContents(mark);
+    }
+  };
+
+  const highlightRanges = (ranges) => {
+    clearAllHighlights();
+    const valid = Array.isArray(ranges)
+      ? ranges.filter(
+          (item) =>
+            item &&
+            typeof item.uuid === "string" &&
+            Number.isFinite(item.renderedOffset) &&
+            Number.isFinite(item.renderedLength) &&
+            item.renderedLength > 0 &&
+            (item.role === "cursor" || item.role === "visual")
+        )
+      : [];
+    if (
+      !globalThis.CSS?.highlights ||
+      typeof globalThis.Highlight !== "function" ||
+      typeof document.createRange !== "function"
+    ) {
+      fallbackHighlightRanges(valid);
+      return;
+    }
+
+    const highlights = {
+      cursor: new Highlight(),
+      visual: new Highlight(),
+    };
+    for (const item of valid) {
+      const element = document.getElementById(`block-content-${item.uuid}`);
+      if (
+        !element ||
+        element.isContentEditable ||
+        element.querySelector('[contenteditable="true"]') ||
+        element.closest(".ls-page-title")
+      ) continue;
+      const rect = element.getBoundingClientRect();
+      if (item.role === "cursor" && (rect.bottom <= 0 || rect.top >= window.innerHeight)) {
+        element.scrollIntoView({ block: "center", inline: "nearest" });
+      }
+      for (const segment of domSegments(
+        element,
+        item.renderedOffset,
+        item.renderedLength
+      )) {
+        const range = document.createRange();
+        range.setStart(segment.node, segment.start);
+        range.setEnd(segment.node, segment.end);
+        highlights[item.role].add(range);
+      }
+    }
+    CSS.highlights.set("vimblocks-cursor", highlights.cursor);
+    CSS.highlights.set("vimblocks-visual", highlights.visual);
   };
 
   const highlight = ({ uuid, offset, length, text }) => {
@@ -208,6 +317,8 @@
       else clearAllHighlights();
     } else if (data.type === "highlight") {
       highlight(data);
+    } else if (data.type === "highlight-ranges") {
+      highlightRanges(data.ranges);
     } else if (data.type === "dispose") {
       window[bridgeKey]?.dispose();
     }
