@@ -1,14 +1,28 @@
 {
   "name": "vimblocks",
-  "version": "0.5.0-capture.1",
+  "version": "1.0.0",
   "schemaVersion": "1.0.0",
+  "description": "Vim-style modal editing for Logseq DB graphs.",
+  "author": "Taylor Finklea",
   "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TaylorFinklea/vimblocks.git"
+  },
+  "homepage": "https://github.com/TaylorFinklea/vimblocks#readme",
+  "keywords": [
+    "logseq",
+    "logseq-plugin",
+    "vim",
+    "modal-editing",
+    "keyboard"
+  ],
   "effect": true,
   "packageManager": "pnpm@11.13.1",
   "main": "index.html",
   "logseq": {
     "icon": "./icon.png",
-    "id": "logseq-plugin-vim-shortcuts",
+    "id": "vimblocks",
     "title": "Vimblocks"
   },
   "scripts": {

@@ -7,7 +7,6 @@ import {
   PageEntity,
 } from "@logseq/libs/dist/LSPlugin";
 import { TempCache } from "./type";
-import { schemaVersion } from "../../package.json";
 import hotkeys from "hotkeys-js";
 import { useCommandStore } from "@/stores/command";
 import { useColorStore } from "@/stores/color";
@@ -90,17 +89,6 @@ export function setHotkeys(_logseq: ILSPluginUser): () => void {
   };
 }
 
-export async function getGraphKey(key: string): Promise<string> {
-  const graph = await logseq.App.getCurrentGraph();
-  return (
-    "logseq-plugin-vim-shortcuts:" +
-    key +
-    ":" +
-    schemaVersion +
-    ":" +
-    (graph?.path ?? "nograph")
-  );
-}
 
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
