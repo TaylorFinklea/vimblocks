@@ -28,6 +28,13 @@ export default (logseq: ILSPluginUser) => {
       {
         key: "vim-shortcut-search-cleanup-" + index,
         label: "Search Cleanup",
+        // `s` is not a host-captured token, so this is the only route to
+        // `s q`. The parity wave stripped keybindings from this module for
+        // `/`, which the modal engine took over, and took this one with it.
+        keybinding: {
+          mode: "non-editing",
+          binding,
+        },
       },
       async () => {
         // Check before action hook
