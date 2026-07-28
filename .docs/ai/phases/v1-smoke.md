@@ -266,3 +266,92 @@ sidebar shows any other graph. Never open `taylor` or the Tesela project.
 
 Record the rerun immediately below this checklist and end it with exactly
 `SMOKE: pass` or `SMOKE: fail (<classes>)`.
+
+### Run 3 — 2026-07-28, rebuilt candidate in live Logseq 2.0.1
+
+Environment:
+- Installed `release/vimblocks/` after moving the failed candidate to
+  `~/.logseq/plugin-backups/vimblocks-failed-smoke-20260728`; `diff -rq`
+  confirmed the install was byte-identical to the rebuilt artifact.
+- Graph visibly confirmed `tesela-keyboard-audit-2026-07-23` before input.
+  No other graph or project opened.
+- Scratch pages: the Run 2 page plus
+  `Vimblocks 1.0.0 Smoke Fix Rerun 2026-07-28`. Rapid Computer Use fixture
+  creation mangled several new fixture strings; those blocks were excluded.
+
+Classes:
+- **R1 PASS** — verified replacement fixture before:
+  `R1H alpha` / `R1H beta` / `R1H gamma` (3 blocks). Focused `R1H beta`,
+  navigated away, pressed `dd`, returned. After: the same 3 blocks, same text
+  and order; no off-screen deletion.
+- **R1b BLOCKED** — existing source hierarchy remained parent → child →
+  grandchild plus sibling, with one prior copied hierarchy. `V`, `y`, move,
+  `p` did not produce a new copy through Computer Use, so hierarchy replay
+  could not be judged. Run 2 passed this class; no pass is inferred here.
+- **R2 PASS (human result retained)** — physical input
+  `jkiv ciw daw C D ^ :/~` stored `jkiv ciw daw C D ^ :/~~`; the second `~`
+  is Logseq's independently reproduced paired-delimiter behavior.
+- **R3 FAIL** — starting from the `R3 target` editor, the first Esc → `i`
+  left focus on the host HTML document rather than an editor. The next two
+  cycles focused the previously remembered `R1b2 parent`, not `R3 target`;
+  Esc still returned to the host and no restart was needed. Run 2 had returned
+  all three cycles to `R3 target`, so this is a regression from that run.
+  The repaired settings-close paths themselves passed: title Close, Cancel,
+  and unsaved-changes Confirm each removed the plugin frame and immediately
+  accepted exact scratch text `focus recovered title-close`,
+  `cancel recovered`, and `confirm recovered`.
+- **R4 PASS** — dashboard cycles were `1 → 0 → 1` twice; exactly one card
+  remained. After the cycles, `cde` + `x` became `de`, and `dd` removed only
+  `R8 sibling one`; no doubled execution.
+- **R5 PASS** — exactly one enabled `Vimblocks 1.0.0` card, `ID: vimblocks`,
+  no Ready Error.
+- **R6 FAIL** — global search accepted exact `Add task status`; the property
+  editor accepted exact `smokeprop2`; the task-status picker accepted exact
+  `Doing`. From an active normal-mode cursor after reload, the command palette
+  transformed typed `Open Vimblocks settings` into
+  `Open. Vimblockssettings` and created/navigated to that garbled scratch
+  page instead of invoking the command. Expected the exact query and command
+  dispatch. Run 2's command-palette probe passed, so this is a regression from
+  that run. The calendar opened, but typing `tomorrow` exposed no editable
+  value in accessibility state; that subprobe is inconclusive.
+- **R7 TEST-COVERED** — not live-reachable; retained coverage in
+  `tests/public-host-bridge.test.ts`.
+- **R8 PASS** — `cde` + `x` became `de` exactly; both known siblings remained.
+  Then `dd` removed `R8 sibling one` only; `R8 sibling two` and `de` remained.
+
+Additional checks:
+- **S1 PASS** — `Ctrl+Alt+Shift+V` followed by typed `ddx` produced literal
+  editor text `ddx`; no Vim delete/character operation. Plugin reload restored
+  capture.
+- **S2 PASS** — `Vimblocks: Disable key capture` followed by typed `ddx`
+  changed scratch text `ddx` to literal `ddxddx`; plugin reload restored
+  capture.
+- **S3 PASS** — DB capture remained `ctrl+shift+t`; boundary profile began and
+  ended at `logseq-first`. Cursor colour was not re-read in Run 3; Run 2
+  verified `#18cae6`.
+- **S4 PASS** — changed `logseq-first` → `vim-first`, reloaded the plugin,
+  reopened Logseq's plugin settings, and observed persisted `vim-first`.
+  Restored `logseq-first`, reloaded, and left Vimblocks enabled.
+- **S5 PASS** — `s q` preserved exact scratch text
+  `ddxddx cancel recovered confirm recovered` and returned focus to host HTML.
+- **S6 FAIL (PDF half)**:
+  - DB task capture passed. `test task tom at 8 p1` previewed title
+    `test task`, Status `Todo`, Priority `Urgent`, Scheduled
+    `Wed, Jul 29, 8:00 AM`; creation produced a `#Task` block scheduled
+    `Tomorrow 08:00` and notification `DB task captured.`
+  - With the actual PDF block editor focused, `Open selected PDF inline`
+    no longer emitted the old Missing PDF error, but no viewer opened. Logseq
+    reported `Error: UnexpectedResponseException` and
+    `Unexpected server response (0) while retrieving PDF
+    "assets://users/tfinklea/logseq/graphs/tesela-keyboard-audit-2026-07-23/assets/6a68d727-4816-42d9-9873-71b9b57eef35.pdf".
+    Please confirm with pdf file resource.` The generated filename is the
+    selected block UUID, not the linked asset filename.
+
+Renderer console:
+- 708 messages total; DevTools badge showed 2 errors and 1 warning.
+- Filtering to the PDF exception exposed one concrete error entry:
+  `[PDF loader] UnexpectedResponseException` at `utils.js:19`.
+- No `Uncaught`, `TypeError`, or `ReferenceError` text was exposed. The two
+  Issues entries were DevTools breaking-change notices.
+
+SMOKE: fail (R1b blocked, R3, R6, S6)
