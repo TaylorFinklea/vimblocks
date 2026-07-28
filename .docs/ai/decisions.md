@@ -122,3 +122,42 @@ Vim undo per command without pretending Logseq offers transactions. The live
 probe plus progress guard keeps that bounded loop from wandering into unrelated
 user history; batch put and removal of the obsolete file-graph branch keep
 Logseq DB hierarchy and rendered offsets explicit.
+
+## 2026-07-27 Publish under the `vimblocks` plugin ID
+
+**Supersedes**: the 2026-07-23 decision to "retain
+`logseq-plugin-vim-shortcuts` as the sole plugin ID", and the `roadmap.md`
+constraint "Preserve the `logseq-plugin-vim-shortcuts` plugin ID".
+
+**Context**: The ID lock was made while Vimblocks was a private fork, where
+inheriting upstream's ID cost nothing and preserved local settings.
+Publication inverts that calculus. `logseq-plugin-vim-shortcuts` is the ID of
+a live Logseq Marketplace listing owned by `vipzhicheng`, so shipping v1 under
+it would collide for any user with both installed and make a Marketplace
+submission an identity dispute rather than a new listing. Verification also
+removed the migration cost: `~/.logseq/settings/vimblocks.json` was the live
+settings blob while `logseq.id` was still `logseq-plugin-vim-shortcuts`, which
+proves Logseq keys plugin settings by the installed **directory name**, not by
+the manifest ID.
+
+**Decision**: Take `logseq.id = "vimblocks"` for the public 1.0.0 release, and
+stage the release archive with a stable `vimblocks/` root instead of
+`vimblocks-<version>` — since identity comes from the directory name, a
+versioned folder made every upgrade read as a different plugin and silently
+reset the user's configuration. Do not write a settings-migration path: it
+cannot fire, and a settings-mutating branch that never runs is a hazard rather
+than insurance. Delete the unused `getGraphKey` helper, which hardcoded the old
+ID as a storage-key prefix and invited a rename that would orphan stored data.
+
+**Alternatives considered**: Keep the upstream ID and publish GitHub-only,
+deferring the collision indefinitely; keep the upstream ID and negotiate a
+consented takeover of the existing listing; keep the upstream ID plus a
+distinct Marketplace directory name.
+
+**Rationale**: A distinct ID dissolves the Marketplace ownership problem
+entirely rather than deferring it — a separate listing needs no consent from,
+and causes no confusion with, the upstream project. It is also cheapest now
+and most expensive later: switching today costs one manifest field, while
+switching after v1 breaks every installed user. The stable archive root is the
+same decision applied to the artifact: identity must not change when only the
+version does.

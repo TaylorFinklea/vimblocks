@@ -6,15 +6,25 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
 
 ## Now
 
-- [ ] Deliver Vimblocks 0.5.0 daily Vim parity with counts, composable
-  operators, repeat/history, insert transitions, rendered-view search,
-  character navigation, `v`/`V`, and persistent Vim-first/Logseq-first
-  profiles. `tesela-8c9v.4.16`; spec:
-  `.docs/ai/phases/vim-daily-parity-spec.md`; plan:
-  `.docs/ai/phases/vim-daily-parity-plan.md`. Run isolated phases without human
-  re-planning, then one comparative disposable-graph product test.
-  Verify: `pnpm check && pnpm test && pnpm package` plus the spec's complete
-  Logseq 2.0.1 live matrix.
+- [ ] Publish Vimblocks **1.0.0** to GitHub, then submit a Logseq Marketplace
+  listing. Plan: `~/.claude/plans/here-is-a-handoff-soft-truffle.md`.
+  Remaining: public README (drop `README_CN.md`), CHANGELOG, upstream
+  attribution, an original icon, CI on push/PR plus a draft-release gate, the
+  disposal/guard audits, and one written live smoke of the release bug bar
+  (R1–R8) against the packaged artifact followed by a bounded soak.
+  Verify: `pnpm check && pnpm test && pnpm package`, then the live smoke.
+  Caveat: Marketplace approval is not ours to control — Logseq reviews
+  `effect: true` plugins more strictly with no guarantee — so the GitHub
+  release must stand alone.
+- [x] Deliver daily Vim parity with counts, composable operators,
+  repeat/history, insert transitions, rendered-view search, character
+  navigation, `v`/`V`, and persistent Vim-first/Logseq-first profiles.
+  `tesela-8c9v.4.16`; merged to `main` as the 1.0.0 candidate. Shipped as
+  1.0.0 rather than 0.5.0; the separate freeze-then-rebuild step was dropped.
+- [x] Fix the defects found by independent architecture review before v1: two
+  data-loss classes (stale-cursor off-screen mutation, un-rolled-back linewise
+  inserts), the host-bridge trust boundary, orphaned key capture, throw-fragile
+  teardown, DOM-mutating highlights, and an always-on capture set.
 - [x] Consolidate Vimblocks and its PDF companion into one loadable package.
 - [x] Repair deterministic normal-mode activation, owned-cursor motion, and
   rendered journal-stream navigation. `tesela-8c9v.4.10`; Logseq 2.0.1 live
@@ -39,13 +49,30 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
 
 ## Next
 
-- [ ] Submit Vimblocks to the official Logseq Marketplace.
+- [ ] Post-v1: non-QWERTY keyboard layouts. `public/key-token.js` tokenizes by
+  physical `event.code`, so an AZERTY user pressing "A" emits token `q` —
+  wrong commands fire and wrong keys get swallowed. Shipping v1 with this as a
+  documented README limitation; a real fix is a feature, not a patch.
+- [ ] Post-v1: `operators.ts` performs sequential removals and records native
+  history only after success, so a mid-sequence failure leaves partial mutation
+  ungrouped for undo. Not silent — the deletions are visible and Logseq's
+  per-step undo still covers them — so it did not block v1.
+- [ ] Post-v1: replace the host-bridge postMessage plane with a direct object
+  reference. `effect: true` already makes both frames same-origin, so this also
+  deletes the `optimisticNormalMode`/`optimisticCaptureAll` mirroring that
+  exists only to paper over async messaging.
 
 ## Later
 
-- [ ] Complete the five-day Logseq keyboard pilot.
+- [ ] Measure the per-keypress full-DOM scan in `host-bridge.js` on a 1000+
+  block page; optimize only if it shows.
+- [ ] Give the body MutationObserver a timeout so an unfired one does not watch
+  for the whole session.
 
 ## Constraints
 
-- Preserve the `logseq-plugin-vim-shortcuts` plugin ID.
+- Ship under the `vimblocks` plugin ID; keep the installed directory named
+  exactly `vimblocks`, because Logseq derives plugin and settings identity from
+  the directory name. See `decisions.md` 2026-07-27, which supersedes the
+  earlier constraint to preserve `logseq-plugin-vim-shortcuts`.
 - Keep unpacked installations in permanent directories.
