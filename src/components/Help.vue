@@ -15,9 +15,9 @@ const handleSettingsClick = () => {
   <el-dialog v-model="help.visible" width="30%" top="25vh" center draggable>
     <div class="flex flex-col gap-4">
       <div class="text-gray-500 text-center font-bold flex items-center justify-center gap-2">
-        <span>Logseq VIM shortcuts v{{ version }}</span>
+        <span>Vimblocks v{{ version }}</span>
         <a
-          href="https://github.com/vipzhicheng/logseq-plugin-vim-shortcuts"
+          href="https://github.com/TaylorFinklea/vimblocks"
           target="_blank"
           class="inline-flex items-center"
           title="View on GitHub"
@@ -46,27 +46,30 @@ const handleSettingsClick = () => {
         </button>
       </div>
       <p>
-        Logseq VIM shortcuts is a Logseq plugin to provide some shortcuts which
-        give Logseq a feeling of VIM-like.
+        Vimblocks brings Vim-style modal editing to Logseq DB graphs: motions,
+        counts, composable operators, registers, repeat, and visual mode over
+        blocks rather than lines.
       </p>
       <p>
-        With evolving, it is becoming a little bit complicated and need some
-        time to learn, please click the repo icon to read plugin usage on repo
-        <a
-          href="https://github.com/vipzhicheng/logseq-plugin-vim-shortcuts"
-          target="_blank"
-          >readme</a
-        >.
+        Click the repo icon for the full keybinding reference, the boundary
+        profiles, and the escape hatches if key capture ever gets stuck.
       </p>
       <p class="text-gray-400 text-sm">
-        If you like this plugin and would like to support me to keep working on
-        this plugin, you can
+        Vimblocks is a fork of
+        <a
+          class="font-bold text-gray-600"
+          href="https://github.com/vipzhicheng/logseq-plugin-vim-shortcuts"
+          target="_blank"
+          >logseq-plugin-vim-shortcuts</a
+        >
+        by vipzhicheng. If you find this useful, consider supporting the
+        upstream author with a
         <a
           class="font-bold text-gray-600"
           href="https://www.buymeacoffee.com/vipzhicheng"
           target="_blank"
-          >buy me a coffee</a
-        >, that would be very kind and appreciated!
+          >coffee</a
+        >.
       </p>
     </div>
   </el-dialog>

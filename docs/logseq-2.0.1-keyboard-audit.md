@@ -2,9 +2,23 @@
 
 Date: 2026-07-23
 
-Status: initial implementation and disposable-graph smoke passed. The
-file-backed PDF correction is automated-green but its physical Logseq rerun is
-still required, along with the five-day human pilot.
+> **Historical snapshot — do not read as current state.** This records what was
+> true on 2026-07-23, when Vimblocks was two plugins at version 0.3.0 and the
+> modal engine did not yet exist. It is kept because the 20-action reachability
+> matrix, the public-API ceilings, and the `logseq.Commands`-is-undefined
+> finding still explain *why* the plugin is built the way it is.
+>
+> Superseded since:
+> - Test counts here ("41 passed", "44 tests") predate the modal engine; see
+>   `pnpm test` for the current suite.
+> - The two-plugin layout is gone — the PDF companion was folded in.
+> - The five-day pilot described at the end was not the gate that shipped 1.0.0.
+>   See `.docs/ai/decisions.md` and the release plan.
+> - Plugin id is now `vimblocks`, not `logseq-plugin-vim-shortcuts`.
+
+Status at the time of writing: initial implementation and disposable-graph
+smoke passed. The file-backed PDF correction is automated-green but its
+physical Logseq rerun is still required, along with the five-day human pilot.
 
 ## Baseline
 

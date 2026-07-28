@@ -1,4 +1,68 @@
-# CHANGELOG
+# Changelog
+
+## 1.0.0
+
+First public release. Vimblocks is a fork of
+[vipzhicheng/logseq-plugin-vim-shortcuts](https://github.com/vipzhicheng/logseq-plugin-vim-shortcuts)
+at `d79d266`, rewritten for Logseq DB graphs. Versions 0.3.x through 0.5.x were
+never released publicly; their work is folded into this entry.
+
+### Modal editing
+
+- Replace Logseq shortcut registration with a modal engine driven by a host
+  bridge, so multi-key Vim chords dispatch reliably.
+- Motions `h j k l w b e 0 ^ $ gg G`, `Ctrl-U`/`Ctrl-D`, sibling jumps, and
+  character find `f F t T ; ,`.
+- Composable operators `c d y` over `iw aw w e $`, linewise `cc`, `dd`, `dj`,
+  `dk`, and the `C` `D` `S` aliases.
+- Counts on motions, operators, and linewise actions, multiplying as in Vim.
+- Repeat with `.`, undo/redo via Logseq's own history.
+- Characterwise `v` and linewise `V` visual modes.
+- Rendered-view search `/ n N`.
+- An unnamed register whose linewise yank, delete, and put carry a block's
+  whole subtree without flattening or reordering it.
+- Two persistent boundary profiles, Logseq-first and Vim-first, deciding
+  whether motions and operators may cross block boundaries.
+
+### Logseq DB features
+
+- `Vimblocks: Capture DB task`: natural-language capture writing real DB
+  properties for status, priority, scheduled date, and deadline.
+- `Open selected PDF inline`: opens a block's PDF in Logseq's viewer, including
+  `file://` links that are otherwise unreachable from the keyboard.
+
+### Safety
+
+- The host bridge addresses only the plugin frame. It previously accepted
+  control messages from any window and broadcast captured keystrokes to every
+  iframe in the document.
+- Key capture stops when the plugin frame goes away, and `Ctrl+Alt+Shift+V`
+  plus a palette command release the keyboard if it ever sticks.
+- Linewise operators no longer act on a cursor left behind on another page,
+  which could delete an off-screen block that undo could not restore.
+- Partial linewise inserts roll back instead of leaving a half-built subtree.
+- Highlights are painted through the CSS Custom Highlight API only; the old
+  fallback mutated Logseq's rendered DOM and leaked markup into block content.
+- Teardown runs every disposer even when one throws.
+
+### Packaging
+
+- Plugin id is now `vimblocks` rather than upstream's
+  `logseq-plugin-vim-shortcuts`.
+- The release archive extracts to a stable `vimblocks/` folder. Versioned
+  folders made every upgrade look like a new plugin to Logseq and silently
+  reset user settings.
+- The published manifest carries runtime fields only.
+- Relicensed AGPL-3.0-only, matching Logseq. The upstream MIT notice is
+  preserved in `UPSTREAM-LICENSE-MIT`.
+
+---
+
+# Upstream changelog
+
+Everything below is the history of `logseq-plugin-vim-shortcuts`, retained for
+provenance. Vimblocks forked at `d79d266` (upstream v0.2.0); the `v0.3.1` entry
+is the only fork-authored line in this section.
 
 ## v0.3.1
 
