@@ -132,7 +132,7 @@ test("opens the current block through the public PDF API", async () => {
   assert.deepEqual(api.messages, []);
 });
 
-test("opens a file-backed PDF using its URL instead of the block UUID", async () => {
+test("opens a file-backed PDF through its containing block UUID", async () => {
   const api = createApi({
     Editor: {
       async getCurrentBlock() {
@@ -150,9 +150,7 @@ test("opens a file-backed PDF using its URL instead of the block UUID", async ()
 
   await openSelectedPdf(api);
 
-  assert.deepEqual(api.openedBlocks, [
-    "file:///tmp/Understanding%20EXPLAIN.pdf",
-  ]);
+  assert.deepEqual(api.openedBlocks, ["pdf-block"]);
   assert.deepEqual(api.messages, []);
 });
 

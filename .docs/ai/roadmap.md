@@ -8,10 +8,8 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
 
 - [ ] Publish Vimblocks **1.0.0** to GitHub, then submit a Logseq Marketplace
   listing. Plan: `~/.claude/plans/here-is-a-handoff-soft-truffle.md`.
-  Remaining: public README (drop `README_CN.md`), CHANGELOG, upstream
-  attribution, an original icon, CI on push/PR plus a draft-release gate, the
-  disposal/guard audits, and one written live smoke of the release bug bar
-  (R1–R8) against the packaged artifact followed by a bounded soak.
+  Remaining: an original icon, a full human rerun of the live smoke against
+  the post-fix artifact, the bounded soak, and Marketplace submission.
   Verify: `pnpm check && pnpm test && pnpm package`, then the live smoke.
   Caveat: Marketplace approval is not ours to control — Logseq reviews
   `effect: true` plugins more strictly with no guarantee — so the GitHub
@@ -42,10 +40,11 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
   `do this thing tom at 8 p1`, preview the result, and create a Logseq DB
   Todo/Urgent task scheduled tomorrow at 08:00 without Markdown task syntax.
   Verify: `pnpm check && pnpm test && pnpm package` plus disposable-graph UI.
-- [?] Verify the file-backed PDF correction in physical Logseq 2.0.1 on
-  `tesela-keyboard-audit-2026-07-23`; Computer Use `get_app_state` timed out
-  twice on 2026-07-24. Verify: select the encoded `file://` PDF block, run
-  `Open selected PDF inline`, confirm page 1 renders with no console error.
+- [?] Verify the corrected block-UUID PDF call in physical Logseq 2.0.1 on
+  `tesela-keyboard-audit-2026-07-23`. The 2026-07-28 smoke proved that passing
+  the extracted `file://` URL fails even when the asset exists. Verify: select
+  the existing `S6 PDF` block, run `Open selected PDF inline`, confirm page 1
+  renders with no console error.
 
 ## Next
 

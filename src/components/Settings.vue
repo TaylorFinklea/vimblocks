@@ -4,6 +4,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { useSettingsStore } from '@/stores/settings';
 import { getSettings, validateKeyBinding, findDuplicateKeyBindings } from '@/common/funcs';
 import { keyBindingsMeta, categoryLabels, type KeyBindingCategory } from '@/common/type';
+import { closeSettingsDialog } from '@/runtime/settings-dialog';
 
 const settingsStore = useSettingsStore();
 
@@ -260,13 +261,13 @@ const cancelChanges = () => {
     })
       .then(() => {
         loadSettings();
-        settingsStore.hide();
+        closeSettingsDialog(settingsStore, logseq);
       })
       .catch(() => {
         // Do nothing
       });
   } else {
-    settingsStore.hide();
+    closeSettingsDialog(settingsStore, logseq);
   }
 };
 

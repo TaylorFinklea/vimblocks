@@ -209,3 +209,61 @@ Additional checks:
     had not previously completed its physical Logseq gate.
 
 SMOKE: fail (R3, R6, S6; R2 blocked by Computer Use tilde synthesis)
+
+### Post-run fixes — 2026-07-28
+
+- **R3 fixed in source** — settings close only hid the Pinia dialog, leaving
+  Logseq's plugin iframe focused but invisible. The close path now hides the
+  main plugin UI with cursor restoration. Regression:
+  `tests/settings-dialog.test.ts`.
+- **R6 fixed in source** — the host bridge classified only `event.target`.
+  Logseq global search can focus its text field while a keydown is still
+  retargeted at the previously active block. Capture now also yields when
+  `document.activeElement` is a host text-entry surface. Regression:
+  `tests/public-host-bridge.test.ts`.
+- **S6 fixed in source** — `Editor.openPDFViewer` takes the selected block UUID;
+  extracting and passing its `file://` URL reproduced Logseq's Missing PDF
+  error. File-backed blocks now use their UUID. Regression:
+  `tests/open-pdf-command.test.ts`.
+- Red/green evidence: the three new expectations failed against `50afebe`,
+  then passed after the fixes.
+- Automated gates: `pnpm check` clean; `pnpm test` 150/150; `pnpm package`
+  rebuilt `release/vimblocks-1.0.0.zip`.
+- The rebuilt artifact was **not** copied into the running Logseq install.
+  Live status remains failed until the checklist below is completed.
+
+### Human verification required
+
+Only use graph `tesela-keyboard-audit-2026-07-23`. Stop immediately if the
+sidebar shows any other graph. Never open `taylor` or the Tesela project.
+
+1. Quit Logseq, replace `~/.logseq/plugins/vimblocks` with the newly rebuilt
+   `release/vimblocks/`, relaunch, and visibly verify the disposable graph
+   name before typing. Keep the existing
+   `vimblocks-pre-1.0.0-20260728-074523` backup.
+2. Because R6 changes `public/host-bridge.js`, rerun the complete R1–R8 and
+   S1–S6 table above, not only the three failed cases. Record exact before and
+   after text, block counts, cursor position, and renderer-console errors.
+3. **R2 requires a physical keyboard.** In a fresh scratch block, type exactly
+   `jkiv ciw daw C D ^ :/~`, then Esc. Expected stored text has exactly one
+   trailing `~`. Computer Use synthesized two tildes with Vimblocks both on
+   and off, so it cannot certify this oracle.
+4. Probe **R3** beyond the three Esc → `i` → Esc cycles: open
+   `Open Vimblocks settings`, close it with the title-bar close button, and
+   immediately click a fresh scratch block and type `focus recovered`.
+   Repeat through the Cancel button and through the unsaved-changes Confirm
+   path. Expected: all three return focus without a renderer reload.
+5. Probe **R6** from an active Vim cursor: select `S6 task target`, press Esc,
+   open global search with Cmd+K, and type exactly `Add task status`. Expected
+   query: `Add task status`, not `dd. taskstatus`. Repeat exact letter input in
+   the command palette, task-status picker, date picker, and property editor.
+6. Probe **S6 PDF**: select the existing `S6 PDF` link block and run
+   `Open selected PDF inline`. Expected: page 1 renders inline and the
+   renderer console contains no Missing PDF error.
+7. For **S1/S2**, use a focused scratch editor when checking ordinary text:
+   after the panic chord and after `Vimblocks: Disable key capture`, type
+   `ddx`. Expected: literal `ddx`; no delete or character operation. Reload
+   the plugin between checks.
+
+Record the rerun immediately below this checklist and end it with exactly
+`SMOKE: pass` or `SMOKE: fail (<classes>)`.

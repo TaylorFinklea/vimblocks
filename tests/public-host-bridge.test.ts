@@ -42,6 +42,7 @@ test("keeps normal mode active across an immediate character-find target", () =>
     },
   };
   const document = {
+    activeElement: null as FakeElement | null,
     addEventListener() {},
     removeEventListener() {},
     querySelectorAll() {
@@ -160,6 +161,7 @@ const setupBridge = () => {
     },
   };
   const document = {
+    activeElement: null as FakeElement | null,
     addEventListener() {},
     removeEventListener() {},
     querySelectorAll(selector: string) {
@@ -243,6 +245,9 @@ const setupBridge = () => {
 
   const editableTarget = new FakeElement();
   editableTarget.isContentEditable = true;
+  const focusTextEntry = (): void => {
+    document.activeElement = editableTarget;
+  };
   const pressEscapeInEditor = (): void => {
     listeners.get("keydown")?.({
       target: editableTarget,
@@ -263,6 +268,7 @@ const setupBridge = () => {
     send,
     press,
     pressEscapeInEditor,
+    focusTextEntry,
     detachPeerFrame,
     // The context's `Element` is this class, so targets built from its
     // prototype satisfy the bridge's `instanceof Element` check.
@@ -480,6 +486,31 @@ test("captures an operator typed before the plugin confirms normal mode", () => 
   bridge.pressEscapeInEditor();
 
   assert.equal(bridge.press("KeyD", "d"), true);
+});
+
+test("does not capture normal-mode keys while a host text field owns focus", () => {
+  const bridge = setupBridge();
+  bridge.send(
+    {
+      type: "configure",
+      tokens: ["d"],
+      normalModeTokens: ["j"],
+      captureAll: false,
+      normalModeActive: true,
+    },
+    bridge.pluginWindow
+  );
+
+  // Logseq can retarget a newly opened global-search keydown at the old block
+  // even after the search input becomes document.activeElement. The focused
+  // host field owns the keystroke.
+  bridge.focusTextEntry();
+
+  assert.equal(bridge.press("KeyD", "d"), false);
+  assert.equal(
+    bridge.peerMessages.filter((message) => message.type === "keydown").length,
+    0
+  );
 });
 
 test("host and plugin text-entry guards classify targets identically", () => {

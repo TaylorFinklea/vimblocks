@@ -365,7 +365,8 @@
     const token = tokenApi.eventToken(event);
     const pendingCaptureAll = optimisticCaptureAll;
     const effectiveCaptureAll = captureAll || pendingCaptureAll;
-    const textEntryActive = isTextEntry(event.target);
+    const textEntryActive =
+      isTextEntry(event.target) || isTextEntry(document.activeElement);
     const contentEditable =
       event.target instanceof Element && event.target.isContentEditable;
     const blockEditorActive =
