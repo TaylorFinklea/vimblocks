@@ -115,3 +115,97 @@ Record per class: pass/fail, what was observed, and any console output. A
 finding does not reset the gate — fix it, add a regression test, and re-run
 only the classes the fix could affect. Full re-run only if the fix touches the
 host bridge or the disposal path.
+
+### Run 2 — 2026-07-28, live Logseq 2.0.1
+
+Environment:
+- Graph visibly confirmed `tesela-keyboard-audit-2026-07-23` before input.
+  No other graph or project opened.
+- Scratch page: `Vimblocks 1.0.0 Smoke 2026-07-28 1102`.
+- Dashboard: exactly one installed plugin/card; `Vimblocks 1.0.0`,
+  `ID: vimblocks`, enabled; no Ready Error.
+- Final renderer-console snapshot: 299 messages, zero exposed
+  `Uncaught`/`TypeError`/`ReferenceError`/`RangeError`/`SyntaxError`/
+  `Ready Error`/explicit error entries. Earlier snapshot exposed two generic
+  DevTools warning/breaking-change notices, not renderer exceptions.
+
+Classes:
+- **R1 PASS** — before: `R1 alpha`, `R1 beta`, `R1 gamma` (3 blocks).
+  Focused `R1 beta`, Esc to normal, opened Journals, pressed `dd`, returned to
+  the fixture page. After: all three blocks still present, same text and order;
+  no off-screen deletion.
+- **R1b PASS** — source hierarchy was root `R1b2 parent` → child
+  `R1b2 child` → grandchild `R1b2 grandchild`, followed by root sibling
+  `R1b2 sibling`. Physical `Shift+V`, `y`, move to sibling, `p` produced one
+  additional root parent with one child and one grandchild after the sibling.
+  No flattening or duplicated descendants. A first `press_key("V")` attempt
+  was an automation-token mismatch and pasted the prior register; the physical
+  shifted-key retry exercised the intended command.
+- **R2 BLOCKED (Computer Use symbol synthesis)** — with Vimblocks enabled,
+  typed `jkiv ciw daw C D ^ :/~`; observed
+  `jkiv ciw daw C D ^ :/~~`. Repeated with Vimblocks fully disabled and got
+  the identical extra trailing tilde; every other character was exact.
+  Therefore no Vimblocks-dependent corruption was found, but Computer Use
+  cannot prove the single-tilde oracle.
+- **R3 FAIL** — the specified three Esc → `i` → Esc cycles passed: each Esc
+  focused the host document and each `i` returned to the same `R3 target`
+  editor; an extra unfocused Esc also recovered with `i`. Later, opening
+  `Open Vimblocks settings` and clicking its Close button left focus trapped
+  in the hidden plugin iframe
+  (`lsp://logseq.com/plugins/vimblocks/index.html?__v__=1.0.0`). Page links
+  still navigated, but block clicks, command-palette shortcuts, the panic
+  chord, and `ctrl+shift+t` could not regain host focus. A renderer reload was
+  required. Prior-build regression status: unknown; backup comparison not run.
+- **R4 PASS** — dashboard toggle cycles:
+  `1 → 0 → 1`, then `1 → 0 → 1`. One card remained. After both cycles,
+  selected `bcde`, pressed `x`, observed `cde` (one character only). No
+  explicit renderer-console errors.
+- **R5 PASS** — one `Vimblocks 1.0.0` card, enabled, `ID: vimblocks`, no Ready
+  Error. Renderer console had no explicit error entries.
+- **R6 FAIL** — command palette accepted exact `Vimblocks`; initial global
+  search accepted exact `Vimblocks 1.0.0 Smoke 2026-07-28 1102`; task-status
+  picker accepted exact `Doing`; date picker accepted exact `tomorrow`; block
+  property editor accepted exact `smokeprop`. Failure reproduction:
+  1. Focus `S6 task target`, Esc to Vim normal mode.
+  2. Open Logseq global search with `Cmd+K`.
+  3. Type exactly `Add task status`.
+  4. Observed search value `dd. taskstatus`; expected `Add task status`.
+  The same search surface had accepted exact input before a normal-mode cursor
+  was active. This is consistent with normal-mode capture leaking into a host
+  surface. Prior-build regression status: unknown; backup comparison not run.
+- **R7 TEST-COVERED** — not live-reachable; retained coverage in
+  `tests/public-host-bridge.test.ts`.
+- **R8 PASS** — `abcde` at column 0 + `x` became `bcde`, with both known
+  siblings still present. `dd` on `R8 sibling one` removed that block only;
+  `R8 sibling two` remained.
+
+Additional checks:
+- **S1 PASS (capture release)** — `Ctrl+Alt+Shift+V` prevented selected-block
+  `ddx` from executing as Vim operations; the selected `panic` block remained.
+  At document-body focus Logseq ignored the ordinary letters rather than
+  inserting them. Off/on reload restored capture.
+- **S2 PASS (capture release)** — palette command
+  `Vimblocks: Disable key capture` likewise prevented `ddx` from executing
+  Vim operations on the selected block. Off/on reload restored capture.
+- **S3 PASS** — live settings UI showed `cursorColor: #18cae6`,
+  `dbTaskCaptureShortcut: ctrl+shift+t`, and boundary profile
+  `logseq-first`.
+- **S4 PASS** — changed boundary profile to `vim-first`, toggled plugin
+  off/on, reopened settings, and observed persisted `vim-first`. Restored
+  `logseq-first`, toggled off/on again, and left Vimblocks enabled.
+- **S5 PASS** — with `S5 search cleanup` selected, `s q` returned focus to the
+  host document, preserved the block, and produced no explicit console error.
+- **S6 FAIL (PDF half)**:
+  - DB task capture passed. `test task tom at 8 p1` previewed title
+    `test task`, Status `Todo`, Priority `Urgent`, Scheduled
+    `Wed, Jul 29, 8:00 AM`; creation produced a `#Task` block scheduled
+    `Tomorrow 08:00` and notification `DB task captured.`
+  - PDF failed. The selected scratch block was
+    `[S6 PDF](file:///Users/tfinklea/logseq/graphs/tesela-keyboard-audit-2026-07-23/assets/6a6207bb-ffd9-4f72-a4e2-fdbb85550197.pdf)`.
+    The file exists on disk, and the link matches the command's accepted
+    `file://...pdf` shape. `Open selected PDF inline` reported:
+    `Error: Missing PDF "file:///Users/tfinklea/logseq/graphs/tesela-keyboard-audit-2026-07-23/assets/6a6207bb-ffd9-4f72-a4e2-fdbb85550197.pdf". Is this the correct path?`
+    No viewer opened. Prior-build regression status: unknown; this correction
+    had not previously completed its physical Logseq gate.
+
+SMOKE: fail (R3, R6, S6; R2 blocked by Computer Use tilde synthesis)
