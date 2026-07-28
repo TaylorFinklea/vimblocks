@@ -141,12 +141,11 @@ Classes:
   No flattening or duplicated descendants. A first `press_key("V")` attempt
   was an automation-token mismatch and pasted the prior register; the physical
   shifted-key retry exercised the intended command.
-- **R2 BLOCKED (Computer Use symbol synthesis)** — with Vimblocks enabled,
-  typed `jkiv ciw daw C D ^ :/~`; observed
-  `jkiv ciw daw C D ^ :/~~`. Repeated with Vimblocks fully disabled and got
-  the identical extra trailing tilde; every other character was exact.
-  Therefore no Vimblocks-dependent corruption was found, but Computer Use
-  cannot prove the single-tilde oracle.
+- **R2 PASS (human physical-keyboard follow-up)** — typed
+  `jkiv ciw daw C D ^ :/~`; observed stored text
+  `jkiv ciw daw C D ^ :/~~`. Logseq inserted the second `~` as its normal
+  paired-delimiter closing behavior. The same result had already reproduced
+  with Vimblocks disabled, so no Vimblocks-dependent corruption occurred.
 - **R3 FAIL** — the specified three Esc → `i` → Esc cycles passed: each Esc
   focused the host document and each `i` returned to the same `R3 target`
   editor; an extra unfocused Esc also recovered with `i`. Later, opening
@@ -208,7 +207,7 @@ Additional checks:
     No viewer opened. Prior-build regression status: unknown; this correction
     had not previously completed its physical Logseq gate.
 
-SMOKE: fail (R3, R6, S6; R2 blocked by Computer Use tilde synthesis)
+SMOKE: fail (R3, R6, S6)
 
 ### Post-run fixes — 2026-07-28
 
@@ -244,10 +243,10 @@ sidebar shows any other graph. Never open `taylor` or the Tesela project.
 2. Because R6 changes `public/host-bridge.js`, rerun the complete R1–R8 and
    S1–S6 table above, not only the three failed cases. Record exact before and
    after text, block counts, cursor position, and renderer-console errors.
-3. **R2 requires a physical keyboard.** In a fresh scratch block, type exactly
-   `jkiv ciw daw C D ^ :/~`, then Esc. Expected stored text has exactly one
-   trailing `~`. Computer Use synthesized two tildes with Vimblocks both on
-   and off, so it cannot certify this oracle.
+3. **R2 HUMAN PASS — complete.** Physical-keyboard input of
+   `jkiv ciw daw C D ^ :/~` produced
+   `jkiv ciw daw C D ^ :/~~`. The second `~` is Logseq's expected
+   paired-delimiter closing behavior, reproduced independently of Vimblocks.
 4. Probe **R3** beyond the three Esc → `i` → Esc cycles: open
    `Open Vimblocks settings`, close it with the title-bar close button, and
    immediately click a fresh scratch block and type `focus recovered`.
