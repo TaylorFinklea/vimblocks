@@ -72,9 +72,21 @@ Environment prepared successfully; interactive portion blocked on Computer Use.
   under any other key; `logseq-plugin-vim-shortcuts.json` is untouched since
   Jul 23. **Settings are keyed by install directory, so the id change is
   invisible to users** — and skipping the A5 migration was correct.
-- **R5 partial** — the plugin loaded and is enabled under id `vimblocks`
-  (it wrote its settings file). Card count and console cleanliness still need
-  the UI.
+- **R5 partial ✅** — the plugin loaded. Logseq started at 07:45:59 and
+  `vimblocks.json` was written at 07:46:00, i.e. the plugin initialising one
+  second later, from files already diffed byte-identical to the 1.0.0
+  artifact. Card count and renderer-console cleanliness still need the UI.
+- **Logseq's own log proves the identity model.** `~/Library/Logs/Logseq/main.log`
+  records the plugin as `:id "vimblocks"` with `:url ".../plugins/vimblocks"`
+  on 2026-07-25 at `:version "0.4.1"` and on 2026-07-28 at
+  `:version "0.5.0-capture.1"` — both builds whose manifest declared
+  `logseq.id: "logseq-plugin-vim-shortcuts"`. **Logseq derives plugin identity
+  from the installed directory name and ignored the manifest id entirely for
+  unpacked installs.** So the id switch is a no-op locally, which is why no
+  settings moved; it matters only for a Marketplace install, where the
+  directory comes from the package name. This is direct evidence, not
+  inference, and it retires the "verify for Marketplace installs" open item
+  for the unpacked case.
 
 **Blocked**
 - Every interactive class (R1, R1b, R2, R3, R4, R6, R8, S1, S2, S4, S5, S6).
@@ -83,8 +95,12 @@ Environment prepared successfully; interactive portion blocked on Computer Use.
   failure)` after switching monitors. Points at macOS Screen Recording
   permission for the Computer Use helper, not a transient glitch. Consistent
   with the `get_app_state` timeouts recorded on 2026-07-24.
-- Retried across: display reset to auto, an 8s wait, re-opening Logseq, and
-  switching to the second monitor. Stopped rather than looping.
+- Retried across six distinct strategies: plain retry, display reset to auto,
+  an 8s wait, re-opening Logseq, switching to the second monitor, and
+  re-requesting access to rebind the native screenshot filter to the
+  relaunched process. The access grant stayed live throughout (tier `full`),
+  so this is the capture layer, not the allowlist. Stopped rather than
+  looping.
 
 **State left behind:** 1.0.0 is installed and Logseq is running it. Rollback:
 
