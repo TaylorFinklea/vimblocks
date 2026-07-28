@@ -355,3 +355,76 @@ Renderer console:
   Issues entries were DevTools breaking-change notices.
 
 SMOKE: fail (R1b blocked, R3, R6, S6)
+
+### Post-run 3 follow-up fixes — 2026-07-28
+
+- **R3 follow-up fixed in source** — the settings close path asked
+  `hideMainUI({ restoreEditingCursor: true })` to restore Logseq's cursor and
+  then called `Editor.restoreEditingCursor()` a second time. The duplicate
+  restoration could select an older remembered block. The close path now asks
+  Logseq to restore exactly once. Regression:
+  `tests/settings-dialog.test.ts`.
+- **R6 not reproduced in follow-up diagnostics** — with the Run 3 command
+  palette still open, DevTools confirmed both `event.target` and
+  `document.activeElement` were the palette's `INPUT`. Typing
+  `Open Vimblocks settings` then produced that exact query and the command was
+  the sole result. No speculative host-bridge change was made; physical input
+  from a fresh active normal-mode cursor remains a manual gate, as does the
+  date picker.
+- **S6 fixed in source** — for a DB-backed `assets/<uuid>.pdf` link, the
+  viewer target is the asset filename UUID, not the UUID of the note block
+  containing the link. Vimblocks now extracts only a UUID-shaped DB asset
+  filename and retains the containing-block fallback for other PDF names.
+  Regression: `tests/open-pdf-command.test.ts`.
+- Red/green evidence: the exact-once focus expectation and DB asset-UUID
+  expectation failed before the production changes, then passed.
+- Automated gates: `pnpm check` clean; `pnpm test` 151/151;
+  `pnpm package` rebuilt `release/vimblocks-1.0.0.zip`.
+- The rebuilt follow-up artifact was **not** copied into the running Logseq
+  install. Live status remains failed until the focused manual rerun below.
+
+### Focused manual rerun required
+
+Only use graph `tesela-keyboard-audit-2026-07-23`. Stop immediately if the
+sidebar shows any other graph. Never open `taylor` or the Tesela project.
+
+The Run 3 passes remain valid because this follow-up did not change the host
+bridge or modal operators. Rerun only the blocked/failed surface below:
+R1b, R3, R6 command palette plus date picker, and S6 PDF.
+
+1. Install the newly rebuilt `release/vimblocks/`, reload Logseq, visibly
+   verify the disposable graph name, then confirm one enabled Vimblocks 1.0.0
+   card.
+2. **R1b:** on a new scratch page create four blocks in this shape:
+   `manual parent` → child `manual child` → grandchild `manual grandchild`,
+   followed by root sibling `manual sibling`. Put the Vim cursor on the
+   parent, press `V`, `y`, move down three rendered blocks to the sibling, and
+   press `p`. Expected roots and hierarchy:
+   `manual parent` (child → grandchild), `manual sibling`,
+   `manual parent` (child → grandchild). Exactly 2 parents, 2 children,
+   2 grandchildren, and 1 sibling; nothing flattened or duplicated.
+3. **R3:** create fresh blocks `R3 fresh target` and `R3 sentinel`. Click into
+   `R3 fresh target`; run Esc → `i` → type one visible character → Esc three
+   times. Every `i` must focus an editor on `R3 fresh target`, never an older
+   block or `R3 sentinel`; typing must remain usable without reload. Then open
+   Vimblocks settings and close it once each via title Close, Cancel, and the
+   unsaved-changes Confirm path. After each close, click a new scratch block
+   and type exactly `focus recovered`; it must land in that block immediately.
+4. **R6 command palette:** from an active Vim cursor on `R3 fresh target`,
+   open Logseq's command palette and type exactly
+   `Open Vimblocks settings`. Before executing, verify the query is byte-exact
+   and the Vimblocks command is the result. No spaces, letters, or punctuation
+   may be swallowed or reordered.
+5. **R6 date picker:** open a scratch task's Scheduled/date picker, focus its
+   text/search field, and physically type `tomorrow`. Expected: the field
+   visibly contains exactly `tomorrow` and the picker remains usable. Record
+   the exact displayed value; if the picker exposes no text field, mark only
+   this subprobe blocked rather than inferring a pass.
+6. **S6 PDF:** select the existing `S6 PDF` link block and run
+   `Open selected PDF inline`. Expected: page 1 renders inline. In the renderer
+   console, filter for `PDF loader`, `UnexpectedResponseException`, and
+   `Missing PDF`; all three filters must show no new error from this attempt.
+
+Record exact before/after text, counts, cursor block, and new renderer-console
+output below this checklist. End with exactly `SMOKE: pass` or
+`SMOKE: fail (<classes>)`.

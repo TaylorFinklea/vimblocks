@@ -132,7 +132,31 @@ test("opens the current block through the public PDF API", async () => {
   assert.deepEqual(api.messages, []);
 });
 
-test("opens a file-backed PDF through its containing block UUID", async () => {
+test("opens a DB file-backed PDF through its asset UUID", async () => {
+  const api = createApi({
+    Editor: {
+      async getCurrentBlock() {
+        return {
+          uuid: "containing-block",
+          content:
+            "[S6 PDF](file:///Users/test/graph/assets/6a6207bb-ffd9-4f72-a4e2-fdbb85550197.pdf)",
+        };
+      },
+      async openPDFViewer(blockId) {
+        api.openedBlocks.push(blockId);
+      },
+    },
+  });
+
+  await openSelectedPdf(api);
+
+  assert.deepEqual(api.openedBlocks, [
+    "6a6207bb-ffd9-4f72-a4e2-fdbb85550197",
+  ]);
+  assert.deepEqual(api.messages, []);
+});
+
+test("does not mistake an arbitrary PDF filename for a DB asset UUID", async () => {
   const api = createApi({
     Editor: {
       async getCurrentBlock() {

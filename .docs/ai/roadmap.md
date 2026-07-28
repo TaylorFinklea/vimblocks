@@ -40,11 +40,11 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
   `do this thing tom at 8 p1`, preview the result, and create a Logseq DB
   Todo/Urgent task scheduled tomorrow at 08:00 without Markdown task syntax.
   Verify: `pnpm check && pnpm test && pnpm package` plus disposable-graph UI.
-- [?] Verify the corrected block-UUID PDF call in physical Logseq 2.0.1 on
-  `tesela-keyboard-audit-2026-07-23`. The 2026-07-28 smoke proved that passing
-  the extracted `file://` URL fails even when the asset exists. Verify: select
-  the existing `S6 PDF` block, run `Open selected PDF inline`, confirm page 1
-  renders with no console error.
+- [?] Verify the corrected DB asset-UUID PDF call in physical Logseq 2.0.1 on
+  `tesela-keyboard-audit-2026-07-23`. The 2026-07-28 smoke proved that both the
+  extracted `file://` URL and the containing note-block UUID fail. Verify:
+  install the follow-up artifact, select the existing `S6 PDF` block, run
+  `Open selected PDF inline`, confirm page 1 renders with no console error.
 
 ## Next
 

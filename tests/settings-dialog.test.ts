@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { closeSettingsDialog } from "../src/runtime/settings-dialog.ts";
 
-test("closing Vimblocks settings hides the plugin frame and restores Logseq focus", () => {
+test("closing Vimblocks settings asks Logseq to restore focus exactly once", () => {
   const calls: string[] = [];
   const settingsStore = {
     hide() {
@@ -26,6 +26,5 @@ test("closing Vimblocks settings hides the plugin frame and restores Logseq focu
   assert.deepEqual(calls, [
     "store.hide",
     "hideMainUI:true",
-    "restoreEditingCursor",
   ]);
 });

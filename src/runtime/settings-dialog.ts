@@ -4,9 +4,6 @@ export interface SettingsDialogStore {
 
 export interface SettingsDialogApi {
   hideMainUI(options: { restoreEditingCursor: true }): void;
-  Editor: {
-    restoreEditingCursor(): unknown;
-  };
 }
 
 export const closeSettingsDialog = (
@@ -15,5 +12,4 @@ export const closeSettingsDialog = (
 ): void => {
   settingsStore.hide();
   api.hideMainUI({ restoreEditingCursor: true });
-  api.Editor.restoreEditingCursor();
 };

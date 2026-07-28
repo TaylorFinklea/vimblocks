@@ -5,6 +5,7 @@ type CommandUnregister = () => void;
 
 export type CurrentBlock = {
   uuid: string;
+  content?: string;
 };
 
 export type OpenPdfApi = {
@@ -50,6 +51,12 @@ export function resolveOpenPdfShortcut(value: unknown): string | null {
   return shortcut.length > 0 ? shortcut : null;
 }
 
+const DB_ASSET_PDF_UUID =
+  /\/assets\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.pdf(?:[?#][^)\s]*)?(?=[)\s]|$)/i;
+
+const resolvePdfViewerTarget = (block: CurrentBlock): string =>
+  block.content?.match(DB_ASSET_PDF_UUID)?.[1] ?? block.uuid;
+
 export async function openSelectedPdf(api: OpenPdfApi): Promise<void> {
   const block = await api.Editor.getCurrentBlock();
   if (!block?.uuid) {
@@ -58,7 +65,7 @@ export async function openSelectedPdf(api: OpenPdfApi): Promise<void> {
   }
 
   try {
-    await api.Editor.openPDFViewer(block.uuid);
+    await api.Editor.openPDFViewer(resolvePdfViewerTarget(block));
   } catch {
     api.UI.showMsg("The selected block could not be opened as a PDF.", "error");
   }
