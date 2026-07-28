@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
 import test from "node:test";
 
+import { isTextEntryTarget } from "../src/runtime/context-guard.ts";
+
 test("keeps normal mode active across an immediate character-find target", () => {
   const messages: Record<string, unknown>[] = [];
   const listeners = new Map<string, (event: Record<string, unknown>) => void>();
@@ -262,6 +264,9 @@ const setupBridge = () => {
     press,
     pressEscapeInEditor,
     detachPeerFrame,
+    // The context's `Element` is this class, so targets built from its
+    // prototype satisfy the bridge's `instanceof Element` check.
+    elementPrototype: FakeElement.prototype,
     hostWindow: window,
     pluginWindow,
     attackerWindow,
@@ -475,4 +480,53 @@ test("captures an operator typed before the plugin confirms normal mode", () => 
   bridge.pressEscapeInEditor();
 
   assert.equal(bridge.press("KeyD", "d"), true);
+});
+
+test("host and plugin text-entry guards classify targets identically", () => {
+  const bridge = setupBridge();
+  const hostGuard = (
+    bridge.hostWindow as unknown as {
+      __vimblocksHostBridge: { isTextEntry(target: unknown): boolean };
+    }
+  ).__vimblocksHostBridge.isTextEntry;
+
+  const target = (overrides: Record<string, unknown>) =>
+    Object.assign(Object.create(bridge.elementPrototype), {
+      tagName: "DIV",
+      isContentEditable: false,
+      role: null,
+      getAttribute(name: string) {
+        return name === "role" ? (this as { role: string | null }).role : null;
+      },
+      ...overrides,
+    });
+
+  const cases: [string, Record<string, unknown>, boolean][] = [
+    ["plain div", {}, false],
+    ["contenteditable", { isContentEditable: true }, true],
+    ["input", { tagName: "INPUT" }, true],
+    ["textarea", { tagName: "TEXTAREA" }, true],
+    ["select", { tagName: "SELECT" }, true],
+    ["lowercase input tag", { tagName: "input" }, true],
+    ["combobox role", { role: "combobox" }, true],
+    ["searchbox role", { role: "searchbox" }, true],
+    ["textbox role", { role: "textbox" }, true],
+    ["uppercase role", { role: "TEXTBOX" }, true],
+    // A dialog is a container, not an input. Suppressing keys while a modal is
+    // open is a separate concern from "focus is in a text field", and
+    // tests/context-guard.test.ts pins this deliberately.
+    ["dialog role", { role: "dialog" }, false],
+    ["listbox role", { role: "listbox" }, false],
+    ["button role", { role: "button" }, false],
+  ];
+
+  for (const [label, overrides, expected] of cases) {
+    const element = target(overrides);
+    assert.equal(hostGuard(element), expected, `host guard: ${label}`);
+    assert.equal(
+      isTextEntryTarget(element),
+      expected,
+      `plugin guard: ${label}`
+    );
+  }
 });

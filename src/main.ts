@@ -30,7 +30,6 @@ import { useMarkStore } from "./stores/mark";
 import { SettingSchemaDesc } from "@logseq/libs/dist/LSPlugin.user";
 import { marks } from "./commands/mark";
 import { registerOwnedCommands } from "./command-registry";
-import { isTextEntryTarget } from "./runtime/context-guard";
 import { DisposableRegistry } from "./runtime/disposable-registry";
 import { disposeOperatorSequences } from "./keybindings/operators";
 import {
@@ -325,7 +324,10 @@ async function main() {
     const searchStore = useSearchStore();
 
     if (searchStore.waitingForChar) {
-      if (isTextEntryTarget(e.target as HTMLElement)) {
+      // The host computes this; a relayed event carries no usable target, so
+      // re-deriving it here silently evaluated to false and this branch never
+      // ran. Escape is forwarded even from a text field, so it matters.
+      if (e.textEntryActive) {
         searchStore.cancelCharSearch();
         return;
       }

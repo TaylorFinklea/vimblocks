@@ -38,9 +38,6 @@ import type {
 import { useSearchStore } from "@/stores/search";
 import { putVimRegister } from "@/keybindings/pasteNext";
 import { cutAtNormalCursor } from "@/keybindings/cut";
-import {
-  isTextEntryEvent,
-} from "@/runtime/context-guard";
 import { persistNormalModeContent } from "@/runtime/normal-mode-mutation";
 import {
   addHostKeydownListener,
@@ -1358,7 +1355,6 @@ export default (logseq: ILSPluginUser) => {
       pendingTokens.length === 0 &&
       !event.isComposing &&
       !event.repeat &&
-      !isTextEntryEvent(event) &&
       !event.textEntryActive
     ) {
       const motionResult = advanceOperatorSequence(
@@ -1404,7 +1400,7 @@ export default (logseq: ILSPluginUser) => {
       composing: event.isComposing,
       repeat: event.repeat,
       visualMode: searchStore.visualMode,
-      textEntryActive: isTextEntryEvent(event) || event.textEntryActive,
+      textEntryActive: event.textEntryActive,
     })) {
       clearPending();
       return;

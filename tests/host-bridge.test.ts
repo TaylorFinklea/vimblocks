@@ -167,3 +167,106 @@ test("loads the host script and relays validated key events", async () => {
     globalThis.window = originalWindow;
   }
 });
+
+test("reinstalling after dispose leaves exactly one host listener", async () => {
+  // A Map-keyed fake cannot see double registration, so track every call.
+  const added: string[] = [];
+  const removed: string[] = [];
+  const messageListeners: ((event: unknown) => void)[] = [];
+  const parent = { postMessage() {} };
+  const originalWindow = globalThis.window;
+  globalThis.window = {
+    parent,
+    addEventListener(type: string, listener: (event: unknown) => void) {
+      added.push(type);
+      if (type === "message") messageListeners.push(listener);
+    },
+    removeEventListener(type: string, listener: (event: unknown) => void) {
+      removed.push(type);
+      const index = messageListeners.indexOf(listener);
+      if (index >= 0) messageListeners.splice(index, 1);
+    },
+  } as unknown as Window & typeof globalThis;
+
+  const api = {
+    Experiments: {
+      async loadScripts() {},
+    },
+  };
+
+  try {
+    const disposeFirst = await installHostBridge(api);
+    assert.equal(messageListeners.length, 1);
+    disposeFirst();
+    assert.equal(messageListeners.length, 0);
+
+    const disposeSecond = await installHostBridge(api);
+    assert.equal(messageListeners.length, 1);
+
+    let deliveries = 0;
+    const removeKeydown = addHostKeydownListener(() => {
+      deliveries += 1;
+    });
+    for (const listener of [...messageListeners]) {
+      listener({
+        source: parent,
+        data: {
+          channel: "vimblocks-host-bridge-v1",
+          type: "keydown",
+          key: "x",
+          code: "KeyX",
+          visibleBlockUUIDs: [],
+          viewportBlockUUIDs: [],
+        },
+      });
+    }
+    assert.equal(deliveries, 1);
+
+    removeKeydown();
+    disposeSecond();
+    assert.equal(messageListeners.length, 0);
+  } finally {
+    globalThis.window = originalWindow;
+  }
+});
+
+test("a disposed bridge delivers nothing", async () => {
+  const messageListeners: ((event: unknown) => void)[] = [];
+  const parent = { postMessage() {} };
+  const originalWindow = globalThis.window;
+  globalThis.window = {
+    parent,
+    addEventListener(type: string, listener: (event: unknown) => void) {
+      if (type === "message") messageListeners.push(listener);
+    },
+    removeEventListener() {},
+  } as unknown as Window & typeof globalThis;
+
+  try {
+    const dispose = await installHostBridge({
+      Experiments: { async loadScripts() {} },
+    });
+    let deliveries = 0;
+    addHostKeydownListener(() => {
+      deliveries += 1;
+    });
+    dispose();
+
+    // Even if the host somehow still posts, the plugin must be inert: dispose
+    // clears the listener set, so a stale message cannot drive the modal engine.
+    messageListeners[0]?.({
+      source: parent,
+      data: {
+        channel: "vimblocks-host-bridge-v1",
+        type: "keydown",
+        key: "x",
+        code: "KeyX",
+        visibleBlockUUIDs: [],
+        viewportBlockUUIDs: [],
+      },
+    });
+    assert.equal(deliveries, 0);
+  } finally {
+    globalThis.window = originalWindow;
+  }
+});

@@ -18,11 +18,20 @@
     "vimblocks-visual",
   ];
 
+  // Authoritative guard for host key events. The plugin frame never receives a
+  // usable event target, so it cannot re-derive this; it consumes the
+  // textEntryActive flag computed here. Kept in lockstep with the same lists in
+  // src/runtime/context-guard.ts, and tests assert the two agree.
+  const textEntryTags = ["INPUT", "TEXTAREA", "SELECT"];
+  const textEntryRoles = ["combobox", "searchbox", "textbox"];
+
   const isTextEntry = (target) => {
     if (!(target instanceof Element)) return false;
     if (target.isContentEditable) return true;
-    if (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return true;
-    return ["combobox", "searchbox", "textbox"].includes(
+    if (textEntryTags.includes((target.tagName || "").toUpperCase())) {
+      return true;
+    }
+    return textEntryRoles.includes(
       (target.getAttribute("role") || "").toLowerCase()
     );
   };
@@ -450,6 +459,9 @@
     get captureTokens() {
       return [...captureTokens];
     },
+    // Exposed so the guard can be checked for parity against
+    // src/runtime/context-guard.ts, which must classify targets identically.
+    isTextEntry,
     dispose() {
       for (const observer of pendingObservers) observer.disconnect();
       pendingObservers.clear();

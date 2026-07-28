@@ -16,6 +16,9 @@ export interface TextEntryEvent {
   composedPath?: () => unknown[];
 }
 
+// Kept in lockstep with the same lists in `public/host-bridge.js`, which is the
+// authoritative guard for host key events. `tests/public-host-bridge.test.ts`
+// asserts the two agree; changing one without the other will fail that test.
 const TEXT_ENTRY_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT"]);
 const TEXT_ENTRY_ROLES = new Set([
   "combobox",
