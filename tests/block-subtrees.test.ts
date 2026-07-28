@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import type { BlockEntity } from "@logseq/libs/dist/LSPlugin";
+
 import {
   canonicalizeSubtreeRoots,
   collectSubtreeUUIDs,
@@ -10,6 +12,10 @@ import {
   type BlockNode,
 } from "../src/runtime/block-subtrees.ts";
 import { planLinewisePut } from "../src/runtime/vim-register.ts";
+import {
+  insertLinewiseBatch,
+  type LinewisePutEditor,
+} from "../src/runtime/linewise-put.ts";
 
 const nodes: BlockNode[] = [
   {
@@ -162,4 +168,77 @@ test("linewise targets ignore duplicate rendered instances", () => {
     resolveLinewiseTargets(["a", "b", "a", "c"], "b", undefined, 2),
     ["b", "c"]
   );
+});
+
+test("round-trips a yanked subtree through put without flattening", async () => {
+  // The pieces are unit-tested separately; this proves they compose. The
+  // per-node fallback rebuilds the hierarchy one insert at a time, which is
+  // where a subtree can flatten, duplicate, or reparent.
+  const blocks = serializeSubtrees(["parent", "sibling"], nodes);
+  const plan = planLinewisePut({ kind: "linewise", blocks }, "anchor", true);
+
+  let nextId = 0;
+  const contentOf = new Map<string, string>();
+  const parentOf = new Map<string, string>();
+  const childrenOf = new Map<string, string[]>([["parent", []]]);
+  const attach = (uuid: string, parent: string) => {
+    parentOf.set(uuid, parent);
+    if (!childrenOf.has(parent)) childrenOf.set(parent, []);
+    childrenOf.get(parent)!.push(uuid);
+  };
+
+  const editor: LinewisePutEditor = {
+    insertBatchBlock: async () => {
+      throw {
+        message: "Expected number or lookup ref for entity id, got nil",
+      };
+    },
+    getBlock: async () => ({ uuid: "parent" }),
+    getPage: async () => null,
+    insertBlock: async (anchorUUID, content, options) => {
+      const uuid = `new-${++nextId}`;
+      contentOf.set(uuid, content);
+      attach(
+        uuid,
+        options.sibling ? (parentOf.get(anchorUUID) ?? "parent") : anchorUUID
+      );
+      return { uuid, content, children: [] } as unknown as BlockEntity;
+    },
+    prependBlockInPage: async () => {
+      throw new Error("unexpected page insertion");
+    },
+    removeBlock: async () => {
+      throw new Error("unexpected removal");
+    },
+  };
+
+  await insertLinewiseBatch(
+    editor,
+    { uuid: "first", parent: { id: 42 } },
+    plan.batch,
+    plan.before
+  );
+
+  const shapeOf = (uuid: string): unknown => ({
+    content: contentOf.get(uuid),
+    children: (childrenOf.get(uuid) ?? []).map(shapeOf),
+  });
+
+  assert.deepEqual(
+    (childrenOf.get("parent") ?? []).map(shapeOf),
+    [
+      {
+        content: "parent",
+        children: [
+          {
+            content: "child",
+            children: [{ content: "grandchild", children: [] }],
+          },
+        ],
+      },
+      { content: "sibling", children: [] },
+    ]
+  );
+  // Every block created exactly once.
+  assert.equal(contentOf.size, 4);
 });
