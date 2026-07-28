@@ -10,14 +10,16 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Pinned rather than floating: the release build should not change because
+    # a runner image or toolchain moved underneath it.
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
+          node-version: "22.22.0"
       - name: Enable pnpm
         run: corepack enable
       - name: Install
@@ -28,10 +30,21 @@ jobs:
         run: pnpm test
       - name: Package
         run: pnpm package
-      - name: Create GitHub release
+      - name: Record artifact digest
+        run: |
+          shasum -a 256 release/vimblocks-*.zip | tee release/SHA256SUMS.txt
+          unzip -l release/vimblocks-*.zip
+      - name: Create draft release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
         run: |
-          gh release create "$GITHUB_REF_NAME" release/vimblocks-*.zip \
-            --title "Vimblocks $GITHUB_REF_NAME" \
-            --generate-notes
+          # Draft, not published. Download the asset, verify it against the
+          # digest above, install that exact extraction, and smoke it before
+          # publishing the draft by hand. A published release cannot be
+          # unpublished from users who already fetched it.
+          gh release create "$TAG" \
+            release/vimblocks-*.zip release/SHA256SUMS.txt \
+            --title "Vimblocks $TAG" \
+            --generate-notes \
+            --draft
