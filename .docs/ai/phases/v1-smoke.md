@@ -428,3 +428,36 @@ R1b, R3, R6 command palette plus date picker, and S6 PDF.
 Record exact before/after text, counts, cursor block, and new renderer-console
 output below this checklist. End with exactly `SMOKE: pass` or
 `SMOKE: fail (<classes>)`.
+
+### Run 4 — 2026-07-28, focused human rerun
+
+Environment:
+- Human rerun against the rebuilt follow-up 1.0.0 artifact on the disposable
+  `tesela-keyboard-audit-2026-07-23` graph.
+- Scope was limited to the Run 3 blocked/failed surfaces because the follow-up
+  changed only settings focus restoration and PDF target resolution.
+
+Classes:
+- **R1b PASS** — screenshot showed root order `manual parent`,
+  `manual sibling`, copied `manual parent`. Both parents retained one nested
+  `manual child`, and both children retained one nested
+  `manual grandchild`. Exact counts: 2 parents, 2 children,
+  2 grandchildren, 1 sibling. The Vim cursor ended on the copied parent's
+  first character; no flattening or extra duplicate was visible.
+- **R3 PASS** — human confirmed that all three
+  Esc → `i` → character → Esc cycles reopened the same fresh target block,
+  accepted typing, and required no reload.
+- **R6 PASS** — command palette accepted the instructed exact
+  `Open Vimblocks settings` input from an active Vim cursor. The date picker
+  accepted the instructed `tomorrow` input and remained usable.
+- **S6 PASS** — `Open selected PDF inline` opened the selected PDF
+  successfully. Human confirmed the attempt added no renderer-console
+  `PDF loader`, `UnexpectedResponseException`, or `Missing PDF` error.
+
+Result:
+- Run 3 passes retained: R1, R2, R4, R5, R8, S1–S5, and the DB task-capture
+  half of S6.
+- R7 remains test-covered and not live-reachable.
+- No failed or blocked release-smoke class remains.
+
+SMOKE: pass
