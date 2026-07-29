@@ -3,10 +3,12 @@
 ## Artifact
 
 - Tag: `v1.0.0-rc.1`
-- Release URL: pending
-- CI ZIP SHA-256: pending
-- Runtime asset: pending CI verification
-- Period: 2026-07-28 through 2026-07-30
+- Release URL:
+  `https://github.com/TaylorFinklea/vimblocks/releases/tag/v1.0.0-rc.1`
+- CI ZIP SHA-256:
+  `0f9822320c692b91d8255a345f50275e527a8dac2439ffdc0979067e347499d5`
+- Runtime asset: `assets/index-DE3hHyAe.js`
+- Period: 2026-07-29 through 2026-07-31
 - Scope: three devices; scratch/disposable graphs only
 
 ## Safety

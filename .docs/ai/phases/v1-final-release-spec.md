@@ -105,9 +105,11 @@ Acceptance: TypeScript clean, all tests pass, package succeeds.
 Result: TypeScript clean; 151/151 tests; package created
 `release/vimblocks-1.0.0-rc.1.zip`.
 
-- [ ] **Step 5: Commit the candidate**
+- [x] **Step 5: Commit the candidate**
 
 Commit only the icon, title, tests if needed, and handoff updates.
+
+Result: committed as `10c04ff` (`release: prepare v1.0.0-rc.1`).
 
 ---
 
@@ -255,6 +257,20 @@ days. Push `main`, require green CI, push only
 `refs/tags/v1.0.0-rc.1`, verify the CI ZIP and digest against the local
 candidate, then publish the draft with GitHub's prerelease flag. This does not
 authorize final `v1.0.0` or a Marketplace submission.
+
+**RC publication result — 2026-07-29:**
+
+- Origin CI `30420083458`: passed on `10c04ff`.
+- Exact annotated tag `v1.0.0-rc.1` points to `10c04ff`; no other local tags
+  were pushed.
+- Publish workflow `30450598420`: passed.
+- CI ZIP SHA-256:
+  `0f9822320c692b91d8255a345f50275e527a8dac2439ffdc0979067e347499d5`.
+- Downloaded checksum matched; extracted CI package was byte-for-byte
+  identical to local `release/vimblocks/`.
+- Published as GitHub prerelease, not latest:
+  `https://github.com/TaylorFinklea/vimblocks/releases/tag/v1.0.0-rc.1`.
+- Exact live UI verification remains manual because Computer Use timed out.
 
 - [ ] **Step 1: Obtain Taylor's push approval**
 
