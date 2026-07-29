@@ -15,6 +15,5 @@ Publishing v1.0.0-rc.1 for two-day device soak; final plan:
 - [ ] Action image/GIF + Marketplace manifest draft
 - [ ] Final v1.0.0 draft → exact asset verify → publish → Marketplace PR
 Verify: `CI=true pnpm check`, `CI=true pnpm test`, `CI=true pnpm package`.
-## Blockers
-- Computer Use timed out; RC live checks must be performed manually.
+## Blockers: none
 ## Open questions: none
