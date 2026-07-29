@@ -1,19 +1,20 @@
 # Current State
 
 ## Branch
-`main`; `origin/main` @ `71d29be` passed CI; local plan may be ahead; v1
-untagged/unreleased. Rollback refs: `codex/vim-daily-parity`,
+`main`; `origin/main` @ `6954b6e`; v1 untagged/unreleased. Rollback refs:
+`codex/vim-daily-parity`,
 `codex/db-natural-capture`.
 ## Plan
-Publishing v1.0.0; plan: `phases/v1-final-release-spec.md`.
+Publishing v1.0.0-rc.1 for two-day device soak; final plan:
+`phases/v1-final-release-spec.md`.
 - [x] Implementation, automated gates, remote CI, and Run 1–4 evidence
-- [ ] Final candidate: aqua icon + `Vimblocks` HTML title
-- [ ] Install exact package; `diff -rq`; Run 5 R5/R3/S6
-- [ ] Bounded soak: 3 sessions, 2 days, 90 minutes, 6 reloads
+- [x] RC candidate: aqua icon + `Vimblocks` title + 151 tests/package
+- [ ] Push main; green CI; exact RC tag; verify and publish prerelease
+- [ ] Manual multi-device soak: 3 devices, 2 days; `phases/v1-soak.md`
+- [ ] Final artifact install/diff; Run 5 R5/R3/S6
 - [ ] Action image/GIF + Marketplace manifest draft
-- [ ] Draft release → CI asset verify → publish → Marketplace PR
-Verify: `pnpm check && pnpm test && pnpm package` (151 tests, tsc clean).
+- [ ] Final v1.0.0 draft → exact asset verify → publish → Marketplace PR
+Verify: `CI=true pnpm check`, `CI=true pnpm test`, `CI=true pnpm package`.
 ## Blockers
-- Installed `index-DBbYuxDA.js` differs from package `index-DFkx69Z8.js`.
-- Selected aqua icon remains in `ai-scratch`; Taylor must place `icon.png`.
+- Computer Use timed out; RC live checks must be performed manually.
 ## Open questions: none

@@ -8,9 +8,10 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
 
 - [ ] Publish Vimblocks **1.0.0** to GitHub, then submit a Logseq Marketplace
   listing. Plan: `.docs/ai/phases/v1-final-release-spec.md`.
-  Remaining: place the selected original aqua icon, correct the shipped HTML
-  title, install and diff the exact package, focused R5/R3/S6 Run 5, bounded
-  soak, action image/GIF, draft release verification, and Marketplace PR.
+  Current: publish explicit `v1.0.0-rc.1` prerelease for a two-day,
+  three-device soak. Remaining before final: exact final package install/diff,
+  focused R5/R3/S6 Run 5, passed soak, action image/GIF, final draft release
+  verification, and Marketplace PR.
   Verify: `pnpm check && pnpm test && pnpm package`, then the live smoke.
   Caveat: Marketplace approval is not ours to control — Logseq reviews
   `effect: true` plugins more strictly with no guarantee — so the GitHub

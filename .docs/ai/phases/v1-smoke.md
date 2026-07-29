@@ -461,3 +461,30 @@ Result:
 - No failed or blocked release-smoke class remains.
 
 SMOKE: pass
+
+### Run 5 — 2026-07-28, RC exact-artifact check
+
+Environment:
+- Candidate: `1.0.0-rc.1`; packaged runtime
+  `assets/index-DE3hHyAe.js`; aqua icon SHA-256
+  `210d08d52e2096fbef5b16be53241b47941cea35da6999d667f9238fcaf2e3f9`.
+- Automated gate: TypeScript clean; 151/151 tests; package succeeded.
+- Computer Use failed on the first read-only Logseq state request:
+  `Sky Computer Use request timed out`.
+- Per the known capture-layer hazard, no retry, graph input, application quit,
+  or installed-plugin replacement was attempted.
+
+Classes:
+- **R1–R8 BLOCKED for this exact RC artifact** — no live UI access.
+- **S1–S6 BLOCKED for this exact RC artifact** — no live UI access.
+- Run 4 remains the latest human live pass for the unchanged runtime fixes,
+  but is not represented as proof of the exact RC ZIP.
+
+Renderer console:
+- **BLOCKED** — console was not opened.
+
+Next evidence:
+- Install the published `v1.0.0-rc.1` asset on the three test devices and
+  record the manual soak in `v1-soak.md`.
+
+SMOKE: fail (R1–R8 blocked, S1–S6 blocked)

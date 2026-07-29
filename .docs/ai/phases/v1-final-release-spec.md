@@ -4,9 +4,9 @@
 > `superpowers:executing-plans` to execute this plan task-by-task. Steps use
 > checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Publish the exact live-verified Vimblocks 1.0.0 artifact as a draft
-GitHub release, verify the CI-built asset, publish it, then submit the Logseq
-Marketplace listing.
+**Goal:** Publish Vimblocks 1.0.0-rc.1 as an explicitly prerelease GitHub
+release for a two-day, three-device soak, then promote a separately verified
+1.0.0 artifact and submit the Logseq Marketplace listing.
 
 **Architecture:** Freeze one runtime artifact before the soak. Keep inert
 release work parallel, but never let documentation or Marketplace work obscure
@@ -72,11 +72,11 @@ GitHub Actions, Logseq Marketplace manifest.
 - Modify: `index.html`
 - Test: `tests/package-release.test.ts` only if packaging expectations change
 
-- [ ] **Step 1: Taylor places the selected aqua candidate at `icon.png`**
+- [x] **Step 1: Taylor places the selected aqua candidate at `icon.png`**
 
 Agent boundary: do not copy or move it out of `ai-scratch/`.
 
-- [ ] **Step 2: Verify the selected icon**
+- [x] **Step 2: Verify the selected icon**
 
 Run:
 
@@ -88,11 +88,11 @@ sips -g pixelWidth -g pixelHeight -g hasAlpha icon.png
 Acceptance: square PNG, at least 256×256, legible at 32 and 48 px on both
 light and dark fields, visibly distinct from the upstream Vim mark.
 
-- [ ] **Step 3: Correct the shipped HTML title**
+- [x] **Step 3: Correct the shipped HTML title**
 
 Change `index.html` from `Vim shortcuts` to `Vimblocks`.
 
-- [ ] **Step 4: Run the full automated gate**
+- [x] **Step 4: Run the full automated gate**
 
 ```bash
 pnpm check
@@ -101,6 +101,9 @@ pnpm package
 ```
 
 Acceptance: TypeScript clean, all tests pass, package succeeds.
+
+Result: TypeScript clean; 151/151 tests; package created
+`release/vimblocks-1.0.0-rc.1.zip`.
 
 - [ ] **Step 5: Commit the candidate**
 
@@ -147,6 +150,11 @@ Sidebar must visibly show `tesela-keyboard-audit-2026-07-23`.
 Append Run 5 with installed `assets/index-<hash>.js`, `diff -rq` result,
 observations, console result, and final `SMOKE: pass` or failure.
 
+2026-07-28 RC note: Computer Use timed out on the first Logseq state request.
+Per the capture-layer hazard, no retry or UI mutation was attempted. The exact
+RC live check is therefore deferred to the manual multi-device soak; this is
+acceptable for an explicitly marked prerelease only, not for final 1.0.0.
+
 ---
 
 ### Task 3: Run the bounded soak
@@ -154,7 +162,9 @@ observations, console result, and final `SMOKE: pass` or failure.
 **Files:**
 - Create: `.docs/ai/phases/v1-soak.md`
 
-**Entry gate:** Task 2 passes against the exact installed artifact.
+**Entry gate:** for final 1.0.0, Task 2 passes against the exact downloaded
+artifact. For 1.0.0-rc.1 only, the published prerelease itself is the soak
+artifact and the manual device installs supply the missing live evidence.
 
 **Budget:** all required:
 
@@ -237,7 +247,14 @@ Never batch-push them.
 
 ### Task 5: Create and verify the draft release
 
-**Prerequisite:** `SOAK: pass`.
+**Final 1.0.0 prerequisite:** `SOAK: pass`.
+
+**RC exception authorized 2026-07-28:** Taylor requested public
+`v1.0.0-rc.1` now for testing on two additional devices over the next two
+days. Push `main`, require green CI, push only
+`refs/tags/v1.0.0-rc.1`, verify the CI ZIP and digest against the local
+candidate, then publish the draft with GitHub's prerelease flag. This does not
+authorize final `v1.0.0` or a Marketplace submission.
 
 - [ ] **Step 1: Obtain Taylor's push approval**
 
