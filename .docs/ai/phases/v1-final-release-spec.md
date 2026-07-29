@@ -287,14 +287,20 @@ authorize final `v1.0.0` or a Marketplace submission.
 **RC.2 capture UI adjustment — 2026-07-29:**
 
 - User screenshot exposed black inherited text on a dark Logseq plugin frame.
-- Capture now owns an explicit navy/slate/white palette with aqua focus and
-  action states; it no longer depends on Tailwind's absent host `dark` class.
+- Capture first gained an explicit navy/slate/white fallback so it no longer
+  depended on Tailwind's absent host `dark` class. Live review then rejected
+  that palette as visibly foreign to Logseq.
+- The host bridge now sends only allowlisted semantic surface, text, border,
+  font, radius, and selected `--lx-accent-*` values to its authenticated plugin
+  frame. The capture consumes those values with safe fallbacks and refreshes
+  on theme changes and every open.
 - The editable input has a synchronized, pointer-inert presentation layer.
   Only date, deadline, time, and priority shorthand actually consumed by the
   parser is highlighted; raw input, selection, and caret stay native.
 - Regression tests cover `due tom at 8 p1` segmentation and ensure an
   unconsumed bare `at 8` remains plain. Automated gate: TypeScript clean,
-  153/153 tests, package `release/vimblocks-1.0.0-rc.2.zip`.
+  155/155 tests, package `release/vimblocks-1.0.0-rc.2.zip`; local ZIP SHA-256
+  `41abcea959ef0d3ae1300aeae6bc38943a7736e24d8f4a12a58ee3dbcd35f9fa`.
 - This is a runtime change and restarts the soak. Before rc.2 publication or
   Marketplace submission, human verification must confirm readable colors,
   visible `tom`/`p1` highlighting, ordinary editing/selection, Enter create,

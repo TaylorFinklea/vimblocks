@@ -43,6 +43,8 @@ test("keeps normal mode active across an immediate character-find target", () =>
   };
   const document = {
     activeElement: null as FakeElement | null,
+    documentElement: new FakeElement(),
+    body: new FakeElement(),
     addEventListener() {},
     removeEventListener() {},
     querySelectorAll() {
@@ -58,6 +60,32 @@ test("keeps normal mode active across an immediate character-find target", () =>
     document,
     Element: FakeElement,
     MutationObserver: FakeMutationObserver,
+    getComputedStyle() {
+      const values: Record<string, string> = {
+        "--background": "30 7% 11%",
+        "--foreground": "40 8% 90%",
+        "--popover": "30 7% 13%",
+        "--popover-foreground": "40 8% 90%",
+        "--muted": "30 6% 18%",
+        "--muted-foreground": "35 6% 63%",
+        "--accent": "187 95% 39%",
+        "--accent-foreground": "30 7% 11%",
+        "--border": "30 6% 25%",
+        "--input": "30 6% 25%",
+        "--ring": "187 95% 39%",
+        "--radius": "0.5rem",
+        "--lx-accent-04-alpha": "rgba(5, 162, 194, 0.16)",
+        "--lx-accent-09": "#05a2c2",
+        "--lx-accent-10": "#0894b3",
+      };
+      return {
+        colorScheme: "dark",
+        fontFamily: '"JetBrains Mono", monospace',
+        getPropertyValue(name: string) {
+          return values[name] ?? "";
+        },
+      };
+    },
     window,
   });
   runInContext(
@@ -162,6 +190,8 @@ const setupBridge = () => {
   };
   const document = {
     activeElement: null as FakeElement | null,
+    documentElement: new FakeElement(),
+    body: new FakeElement(),
     addEventListener() {},
     removeEventListener() {},
     querySelectorAll(selector: string) {
@@ -193,6 +223,32 @@ const setupBridge = () => {
     document,
     Element: FakeElement,
     MutationObserver: FakeMutationObserver,
+    getComputedStyle() {
+      const values: Record<string, string> = {
+        "--background": "30 7% 11%",
+        "--foreground": "40 8% 90%",
+        "--popover": "30 7% 13%",
+        "--popover-foreground": "40 8% 90%",
+        "--muted": "30 6% 18%",
+        "--muted-foreground": "35 6% 63%",
+        "--accent": "187 95% 39%",
+        "--accent-foreground": "30 7% 11%",
+        "--border": "30 6% 25%",
+        "--input": "30 6% 25%",
+        "--ring": "187 95% 39%",
+        "--radius": "0.5rem",
+        "--lx-accent-04-alpha": "rgba(5, 162, 194, 0.16)",
+        "--lx-accent-09": "#05a2c2",
+        "--lx-accent-10": "#0894b3",
+      };
+      return {
+        colorScheme: "dark",
+        fontFamily: '"JetBrains Mono", monospace',
+        getPropertyValue(name: string) {
+          return values[name] ?? "";
+        },
+      };
+    },
     window,
   });
   runInContext(
@@ -369,6 +425,45 @@ test("delivers captured keystrokes only to the bound peer", () => {
   // Logseq notes can embed third-party iframes. The ready handshake has to be
   // broadcast to find the plugin frame, but it carries no input; nothing after
   // it may reach a frame that is not the bound peer.
+  assert.deepEqual(
+    bridge.foreignFrameMessages.map((message) => message.type),
+    ["ready"]
+  );
+});
+
+test("delivers the host theme only to the bound peer", () => {
+  const bridge = setupBridge();
+
+  configurePeer(bridge);
+
+  const themeMessages = JSON.parse(JSON.stringify(
+    bridge.peerMessages.filter((message) => message.type === "theme")
+  ));
+  assert.deepEqual(themeMessages, [
+    {
+      channel: "vimblocks-host-bridge-v1",
+      type: "theme",
+      tokens: {
+        background: "30 7% 11%",
+        foreground: "40 8% 90%",
+        popover: "30 7% 13%",
+        "popover-foreground": "40 8% 90%",
+        muted: "30 6% 18%",
+        "muted-foreground": "35 6% 63%",
+        accent: "187 95% 39%",
+        "accent-foreground": "30 7% 11%",
+        border: "30 6% 25%",
+        input: "30 6% 25%",
+        ring: "187 95% 39%",
+        "accent-soft-color": "rgba(5, 162, 194, 0.16)",
+        "accent-color": "#05a2c2",
+        "accent-hover-color": "#0894b3",
+      },
+      colorScheme: "dark",
+      fontFamily: '"JetBrains Mono", monospace',
+      radius: "0.5rem",
+    },
+  ]);
   assert.deepEqual(
     bridge.foreignFrameMessages.map((message) => message.type),
     ["ready"]

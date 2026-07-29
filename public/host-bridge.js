@@ -9,6 +9,22 @@
   const captureTokens = new Set();
   const normalModeTokens = new Set();
   const pendingObservers = new Set();
+  const themeTokenSources = {
+    background: "--background",
+    foreground: "--foreground",
+    popover: "--popover",
+    "popover-foreground": "--popover-foreground",
+    muted: "--muted",
+    "muted-foreground": "--muted-foreground",
+    accent: "--accent",
+    "accent-foreground": "--accent-foreground",
+    border: "--border",
+    input: "--input",
+    ring: "--ring",
+    "accent-soft-color": "--lx-accent-04-alpha",
+    "accent-color": "--lx-accent-09",
+    "accent-hover-color": "--lx-accent-10",
+  };
   let captureAll = false;
   let optimisticCaptureAll = false;
   let normalModeActive = false;
@@ -56,6 +72,32 @@
       return;
     }
     window.postMessage({ channel, ...message }, "*");
+  };
+
+  let lastThemeSignature = "";
+  const readHostTheme = () => {
+    const styles = getComputedStyle(document.body || document.documentElement);
+    const tokens = {};
+    for (const [name, source] of Object.entries(themeTokenSources)) {
+      const value = styles.getPropertyValue(source).trim();
+      if (value) tokens[name] = value;
+    }
+    return {
+      type: "theme",
+      tokens,
+      colorScheme: styles.colorScheme || "",
+      fontFamily: styles.fontFamily || "",
+      radius: styles.getPropertyValue("--radius").trim(),
+    };
+  };
+
+  const postHostTheme = () => {
+    if (!peer) return;
+    const theme = readHostTheme();
+    const signature = JSON.stringify(theme);
+    if (signature === lastThemeSignature) return;
+    lastThemeSignature = signature;
+    postToPluginFrames(theme);
   };
 
   const blockUUIDForTarget = (target) => {
@@ -305,6 +347,10 @@
       }
       captureAll = Boolean(data.captureAll);
       normalModeActive = Boolean(data.normalModeActive);
+      postHostTheme();
+    } else if (data.type === "theme-request") {
+      lastThemeSignature = "";
+      postHostTheme();
     } else if (data.type === "capture-all") {
       captureAll = Boolean(data.value);
       optimisticCaptureAll = false;
@@ -452,6 +498,17 @@
   };
   window.addEventListener("blur", releaseCapture);
   document.addEventListener("visibilitychange", releaseCapture);
+  const themeObserver = new MutationObserver(postHostTheme);
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class", "style", "data-theme"],
+  });
+  if (document.body) {
+    themeObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class", "style", "data-theme"],
+    });
+  }
 
   window[bridgeKey] = {
     get captureAll() {
@@ -466,6 +523,7 @@
     dispose() {
       for (const observer of pendingObservers) observer.disconnect();
       pendingObservers.clear();
+      themeObserver.disconnect();
       window.removeEventListener("message", onMessage);
       window.removeEventListener("keydown", onKeydown, true);
       window.removeEventListener("blur", releaseCapture);
@@ -477,6 +535,7 @@
       captureTokens.clear();
       clearAllHighlights();
       peer = null;
+      lastThemeSignature = "";
     },
   };
 

@@ -2,14 +2,86 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  addHostThemeListener,
   addHostKeydownListener,
   clearHostHighlights,
   configureHostCapture,
   configureHostNormalModeCapture,
   installHostBridge,
   highlightHostRanges,
+  requestHostTheme,
   setHostNormalModeActive,
 } from "../src/runtime/host-bridge.ts";
+
+test("relays validated host theme values and ignores foreign frames", async () => {
+  const messages: unknown[] = [];
+  const eventListeners = new Map<string, (event: unknown) => void>();
+  const parent = {
+    postMessage(message: unknown) {
+      messages.push(message);
+    },
+  };
+  const foreign = {};
+  const originalWindow = globalThis.window;
+  globalThis.window = {
+    parent,
+    addEventListener(type: string, listener: (event: unknown) => void) {
+      eventListeners.set(type, listener);
+    },
+    removeEventListener(type: string) {
+      eventListeners.delete(type);
+    },
+  } as unknown as Window & typeof globalThis;
+
+  try {
+    const dispose = await installHostBridge({
+      Experiments: { async loadScripts() {} },
+    });
+    const received: unknown[] = [];
+    const removeTheme = addHostThemeListener((theme) => {
+      received.push(theme);
+    });
+    const data = {
+      channel: "vimblocks-host-bridge-v1",
+      type: "theme",
+      tokens: {
+        popover: "30 7% 13%",
+        accent: "187 95% 39%",
+        "accent-color": "#05a2c2",
+        injected: "url(https://example.invalid)",
+      },
+      colorScheme: "dark",
+      fontFamily: '"JetBrains Mono", monospace',
+      radius: "0.5rem",
+    };
+
+    eventListeners.get("message")?.({ source: foreign, data });
+    eventListeners.get("message")?.({ source: parent, data });
+    requestHostTheme();
+
+    assert.deepEqual(received, [
+      {
+        tokens: {
+          popover: "30 7% 13%",
+          accent: "187 95% 39%",
+          "accent-color": "#05a2c2",
+        },
+        colorScheme: "dark",
+        fontFamily: '"JetBrains Mono", monospace',
+        radius: "0.5rem",
+      },
+    ]);
+    assert.deepEqual(messages.at(-1), {
+      channel: "vimblocks-host-bridge-v1",
+      type: "theme-request",
+    });
+
+    removeTheme();
+    dispose();
+  } finally {
+    globalThis.window = originalWindow;
+  }
+});
 
 test("loads the host script and relays validated key events", async () => {
   const messages: unknown[] = [];

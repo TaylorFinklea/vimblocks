@@ -36,10 +36,38 @@ export interface HostHighlightRange {
 }
 
 type HostKeydownListener = (event: HostKeydownEvent) => void | Promise<void>;
+const hostThemeTokenNames = [
+  "background",
+  "foreground",
+  "popover",
+  "popover-foreground",
+  "muted",
+  "muted-foreground",
+  "accent",
+  "accent-foreground",
+  "border",
+  "input",
+  "ring",
+  "accent-soft-color",
+  "accent-color",
+  "accent-hover-color",
+] as const;
+type HostThemeTokenName = (typeof hostThemeTokenNames)[number];
+
+export interface HostTheme {
+  tokens: Partial<Record<HostThemeTokenName, string>>;
+  colorScheme?: string;
+  fontFamily?: string;
+  radius?: string;
+}
+
+type HostThemeListener = (theme: HostTheme) => void;
 
 const listeners = new Set<HostKeydownListener>();
+const themeListeners = new Set<HostThemeListener>();
 let installed = false;
 let textEntryActive = false;
+let currentTheme: HostTheme | undefined;
 let configuredTokens: string[] = [];
 let normalModeTokens: string[] = [];
 let captureAll = false;
@@ -47,6 +75,46 @@ let normalModeActive = false;
 
 const postHostMessage = (message: Record<string, unknown>): void => {
   window.parent.postMessage({ channel: CHANNEL, ...message }, "*");
+};
+
+const safeThemeValue = (
+  value: unknown,
+  maximumLength = 128
+): string | undefined => {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (
+    !trimmed ||
+    trimmed.length > maximumLength ||
+    /[;{}]|url\s*\(/i.test(trimmed)
+  ) {
+    return undefined;
+  }
+  return trimmed;
+};
+
+const parseHostTheme = (data: Record<string, unknown>): HostTheme => {
+  const source =
+    data.tokens && typeof data.tokens === "object"
+      ? data.tokens as Record<string, unknown>
+      : {};
+  const tokens: HostTheme["tokens"] = {};
+  for (const name of hostThemeTokenNames) {
+    const value = safeThemeValue(source[name]);
+    if (value) tokens[name] = value;
+  }
+  return {
+    tokens,
+    ...(safeThemeValue(data.colorScheme)
+      ? { colorScheme: safeThemeValue(data.colorScheme) }
+      : {}),
+    ...(safeThemeValue(data.fontFamily, 512)
+      ? { fontFamily: safeThemeValue(data.fontFamily, 512) }
+      : {}),
+    ...(safeThemeValue(data.radius)
+      ? { radius: safeThemeValue(data.radius) }
+      : {}),
+  };
 };
 
 const onMessage = (event: MessageEvent): void => {
@@ -61,6 +129,11 @@ const onMessage = (event: MessageEvent): void => {
       captureAll,
       normalModeActive,
     });
+    return;
+  }
+  if (data.type === "theme") {
+    currentTheme = parseHostTheme(data);
+    for (const listener of themeListeners) listener(currentTheme);
     return;
   }
   if (data.type !== "keydown") return;
@@ -114,6 +187,8 @@ export const installHostBridge = async (
     setHostNormalModeActive(false);
     postHostMessage({ type: "dispose" });
     listeners.clear();
+    themeListeners.clear();
+    currentTheme = undefined;
     if (installed) {
       window.removeEventListener("message", onMessage);
       installed = false;
@@ -126,6 +201,18 @@ export const addHostKeydownListener = (
 ): (() => void) => {
   listeners.add(listener);
   return () => listeners.delete(listener);
+};
+
+export const addHostThemeListener = (
+  listener: HostThemeListener
+): (() => void) => {
+  themeListeners.add(listener);
+  if (currentTheme) listener(currentTheme);
+  return () => themeListeners.delete(listener);
+};
+
+export const requestHostTheme = (): void => {
+  postHostMessage({ type: "theme-request" });
 };
 
 export const configureHostCapture = (tokens: readonly string[]): void => {

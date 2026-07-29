@@ -5,7 +5,7 @@
 - Tag: `v1.0.0-rc.2` (pending human capture-UI gate)
 - Release URL: pending
 - CI ZIP SHA-256: pending
-- Runtime asset: local `assets/index-BY9h_PL7.js`; pending CI verification
+- Runtime asset: local `assets/index-ChAV4uxS.js`; pending CI verification
 - Period: starts after rc.2 publication
 - Scope: three devices; scratch/disposable graphs only
 

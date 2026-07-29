@@ -195,34 +195,48 @@ const createTask = async () => {
 
 <style>
 .db-task-capture {
-  color-scheme: dark;
-  --el-border-color: #475569;
-  --el-border-color-hover: #64748b;
-  --el-color-primary: #2dd4bf;
-  --el-color-primary-light-3: #5eead4;
-  --el-color-primary-dark-2: #14b8a6;
-  --el-fill-color-blank: #172033;
-  --el-text-color-regular: #e2e8f0;
+  color-scheme: var(--vb-color-scheme, dark);
+  --el-border-color: hsl(var(--vb-border, 215 20% 35%));
+  --el-border-color-hover: var(
+    --vb-accent-color,
+    hsl(var(--vb-ring, 173 80% 40%))
+  );
+  --el-color-primary: var(
+    --vb-accent-color,
+    hsl(var(--vb-accent, 173 80% 40%))
+  );
+  --el-color-primary-light-3: var(
+    --vb-accent-hover-color,
+    hsl(var(--vb-accent, 173 80% 45%))
+  );
+  --el-color-primary-dark-2: var(
+    --vb-accent-hover-color,
+    hsl(var(--vb-accent, 173 80% 32%))
+  );
+  --el-fill-color-blank: hsl(var(--vb-popover, 222 47% 11%));
+  --el-text-color-regular: hsl(var(--vb-popover-foreground, 210 40% 96%));
 }
 
 .db-task-capture__panel {
-  border: 1px solid #334155;
-  border-radius: 0.75rem;
-  background: #0f172a;
+  border: 1px solid hsl(var(--vb-border, 215 20% 35%));
+  border-radius: calc(var(--vb-radius, 0.5rem) + 0.25rem);
+  background: hsl(var(--vb-popover, 222 47% 11%));
   box-shadow: 0 24px 64px rgb(0 0 0 / 45%);
-  color: #f8fafc;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", monospace;
+  color: hsl(var(--vb-popover-foreground, 210 40% 96%));
+  font-family: var(
+    --vb-font-family,
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace
+  );
   padding: 1rem;
 }
 
 .db-task-capture__title {
-  color: #f8fafc;
+  color: hsl(var(--vb-popover-foreground, 210 40% 96%));
   font-weight: 700;
 }
 
 .db-task-capture__subtitle {
-  color: #94a3b8;
+  color: hsl(var(--vb-muted-foreground, 215 16% 65%));
   font-size: 0.75rem;
   line-height: 1.25rem;
 }
@@ -231,17 +245,23 @@ const createTask = async () => {
   position: relative;
   height: 3rem;
   overflow: hidden;
-  border: 1px solid #475569;
-  border-radius: 0.5rem;
-  background: #080f1d;
+  border: 1px solid hsl(var(--vb-input, 215 20% 35%));
+  border-radius: var(--vb-radius, 0.5rem);
+  background: hsl(var(--vb-background, 222 47% 7%));
   transition:
     border-color 120ms ease,
     box-shadow 120ms ease;
 }
 
 .db-task-capture__input-shell:focus-within {
-  border-color: #2dd4bf;
-  box-shadow: 0 0 0 3px rgb(45 212 191 / 16%);
+  border-color: var(
+    --vb-accent-color,
+    hsl(var(--vb-ring, 173 80% 40%))
+  );
+  box-shadow: 0 0 0 3px var(
+    --vb-accent-soft-color,
+    hsl(var(--vb-ring, 173 80% 40%) / 0.18)
+  );
 }
 
 .db-task-capture__input-highlight,
@@ -263,7 +283,7 @@ const createTask = async () => {
   align-items: center;
   width: max-content;
   min-width: 100%;
-  color: #e2e8f0;
+  color: hsl(var(--vb-foreground, 210 40% 96%));
   pointer-events: none;
 }
 
@@ -276,9 +296,18 @@ const createTask = async () => {
 .db-task-capture__input-segment--time,
 .db-task-capture__input-segment--priority {
   border-radius: 0.25rem;
-  background: rgb(45 212 191 / 16%);
-  box-shadow: inset 0 -1px 0 rgb(94 234 212 / 65%);
-  color: #5eead4;
+  background: var(
+    --vb-accent-soft-color,
+    hsl(var(--vb-accent, 173 80% 40%) / 0.16)
+  );
+  box-shadow: inset 0 -1px 0 var(
+    --vb-accent-color,
+    hsl(var(--vb-accent, 173 80% 40%) / 0.7)
+  );
+  color: var(
+    --vb-accent-color,
+    hsl(var(--vb-accent, 173 80% 40%))
+  );
 }
 
 .db-task-capture__input {
@@ -288,16 +317,19 @@ const createTask = async () => {
   outline: 0;
   background: transparent;
   color: transparent;
-  caret-color: #f8fafc;
+  caret-color: hsl(var(--vb-foreground, 210 40% 96%));
 }
 
 .db-task-capture__input::placeholder {
-  color: #64748b;
+  color: hsl(var(--vb-muted-foreground, 215 16% 47%));
   opacity: 1;
 }
 
 .db-task-capture__input::selection {
-  background: rgb(45 212 191 / 32%);
+  background: var(
+    --vb-accent-soft-color,
+    hsl(var(--vb-accent, 173 80% 40%) / 0.32)
+  );
 }
 
 .db-task-capture__preview {
@@ -310,11 +342,11 @@ const createTask = async () => {
 }
 
 .db-task-capture__label {
-  color: #94a3b8;
+  color: hsl(var(--vb-muted-foreground, 215 16% 65%));
 }
 
 .db-task-capture__value {
-  color: #e2e8f0;
+  color: hsl(var(--vb-foreground, 210 40% 96%));
 }
 
 .db-task-capture__warning {
@@ -330,21 +362,39 @@ const createTask = async () => {
 }
 
 .db-task-capture .el-button {
-  --el-button-bg-color: #172033;
-  --el-button-border-color: #475569;
-  --el-button-hover-bg-color: #1e293b;
-  --el-button-hover-border-color: #64748b;
-  --el-button-hover-text-color: #f8fafc;
-  --el-button-text-color: #e2e8f0;
+  --el-button-bg-color: hsl(var(--vb-muted, 215 28% 17%));
+  --el-button-border-color: hsl(var(--vb-border, 215 20% 35%));
+  --el-button-hover-bg-color: var(
+    --vb-accent-soft-color,
+    hsl(var(--vb-accent, 173 80% 40%) / 0.12)
+  );
+  --el-button-hover-border-color: var(
+    --vb-accent-color,
+    hsl(var(--vb-ring, 173 80% 40%))
+  );
+  --el-button-hover-text-color: hsl(var(--vb-popover-foreground, 210 40% 96%));
+  --el-button-text-color: hsl(var(--vb-popover-foreground, 210 40% 96%));
 }
 
 .db-task-capture .el-button--primary {
-  --el-button-bg-color: #2dd4bf;
-  --el-button-border-color: #2dd4bf;
-  --el-button-hover-bg-color: #5eead4;
-  --el-button-hover-border-color: #5eead4;
-  --el-button-hover-text-color: #042f2e;
-  --el-button-text-color: #042f2e;
+  --el-button-bg-color: var(
+    --vb-accent-color,
+    hsl(var(--vb-accent, 173 80% 40%))
+  );
+  --el-button-border-color: var(
+    --vb-accent-color,
+    hsl(var(--vb-accent, 173 80% 40%))
+  );
+  --el-button-hover-bg-color: var(
+    --vb-accent-hover-color,
+    hsl(var(--vb-accent, 173 80% 45%))
+  );
+  --el-button-hover-border-color: var(
+    --vb-accent-hover-color,
+    hsl(var(--vb-accent, 173 80% 45%))
+  );
+  --el-button-hover-text-color: hsl(var(--vb-accent-foreground, 173 80% 10%));
+  --el-button-text-color: hsl(var(--vb-accent-foreground, 173 80% 10%));
   font-weight: 700;
 }
 </style>

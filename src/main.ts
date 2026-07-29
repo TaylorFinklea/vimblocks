@@ -38,7 +38,10 @@ import {
 } from "./open-pdf-command";
 import {
   addHostKeydownListener,
+  addHostThemeListener,
   installHostBridge,
+  requestHostTheme,
+  type HostTheme,
   type HostKeydownEvent,
 } from "./runtime/host-bridge";
 import {
@@ -98,6 +101,23 @@ logseq.useSettingsSchema(defineSettings);
 async function main() {
   const lifecycle = new DisposableRegistry();
   lifecycle.add(await installHostBridge());
+  const applyHostTheme = (theme: HostTheme) => {
+    const root = document.documentElement;
+    for (const [name, value] of Object.entries(theme.tokens)) {
+      if (value) root.style.setProperty(`--vb-${name}`, value);
+    }
+    if (theme.colorScheme) {
+      root.style.setProperty("--vb-color-scheme", theme.colorScheme);
+    }
+    if (theme.fontFamily) {
+      root.style.setProperty("--vb-font-family", theme.fontFamily);
+    }
+    if (theme.radius) {
+      root.style.setProperty("--vb-radius", theme.radius);
+    }
+  };
+  lifecycle.add(addHostThemeListener(applyHostTheme));
+  requestHostTheme();
 
   // settings
   initSettings();
@@ -164,6 +184,7 @@ async function main() {
         };
       },
       openCapture: async (anchorUUID) => {
+        requestHostTheme();
         captureStore.show(anchorUUID);
         await logseq.showMainUI({ autoFocus: true });
         captureStore.requestFocus();
