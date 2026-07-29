@@ -272,6 +272,18 @@ authorize final `v1.0.0` or a Marketplace submission.
   `https://github.com/TaylorFinklea/vimblocks/releases/tag/v1.0.0-rc.1`.
 - Exact live UI verification remains manual because Computer Use timed out.
 
+**Post-RC icon adjustment — 2026-07-29:**
+
+- Enlarged the aqua mark with the local `ffmpeg` CLI from a `480×296` visual
+  bound to `800×493`, centered on the unchanged 1024×1024 charcoal canvas.
+- New icon SHA-256:
+  `8239d407d01b926c3c2e7a14484d0b3f0b06e2b3db894ddf39eb597822fbe104`.
+- 48 px preview remains legible; TypeScript, 151/151 tests, and packaging pass.
+- The published RC remains immutable with its original icon. This new icon is
+  for final 1.0.0 and the Marketplace submission.
+- Icon-only change does not restart the runtime soak, but final R5 must verify
+  the new card icon from the downloaded final artifact.
+
 - [ ] **Step 1: Obtain Taylor's push approval**
 
 - [ ] **Step 2: Push `main` and require CI green**
