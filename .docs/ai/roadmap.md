@@ -7,9 +7,10 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
 ## Now
 
 - [ ] Publish Vimblocks **1.0.0** to GitHub, then submit a Logseq Marketplace
-  listing. Plan: `~/.claude/plans/here-is-a-handoff-soft-truffle.md`.
-  Remaining: an original icon, a full human rerun of the live smoke against
-  the post-fix artifact, the bounded soak, and Marketplace submission.
+  listing. Plan: `.docs/ai/phases/v1-final-release-spec.md`.
+  Remaining: place the selected original aqua icon, correct the shipped HTML
+  title, install and diff the exact package, focused R5/R3/S6 Run 5, bounded
+  soak, action image/GIF, draft release verification, and Marketplace PR.
   Verify: `pnpm check && pnpm test && pnpm package`, then the live smoke.
   Caveat: Marketplace approval is not ours to control — Logseq reviews
   `effect: true` plugins more strictly with no guarantee — so the GitHub
@@ -40,11 +41,10 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
   `do this thing tom at 8 p1`, preview the result, and create a Logseq DB
   Todo/Urgent task scheduled tomorrow at 08:00 without Markdown task syntax.
   Verify: `pnpm check && pnpm test && pnpm package` plus disposable-graph UI.
-- [?] Verify the corrected DB asset-UUID PDF call in physical Logseq 2.0.1 on
-  `tesela-keyboard-audit-2026-07-23`. The 2026-07-28 smoke proved that both the
-  extracted `file://` URL and the containing note-block UUID fail. Verify:
-  install the follow-up artifact, select the existing `S6 PDF` block, run
-  `Open selected PDF inline`, confirm page 1 renders with no console error.
+- [?] Verify the corrected DB asset-UUID PDF call from the exact packaged
+  artifact in physical Logseq 2.0.1. Run 4 used an older installed bundle;
+  install `release/vimblocks/`, require `diff -rq` clean, then run the existing
+  `S6 PDF` probe with no renderer-console error.
 
 ## Next
 

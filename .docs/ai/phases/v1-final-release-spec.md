@@ -1,0 +1,287 @@
+# Vimblocks 1.0.0 Final Release Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use
+> `superpowers:executing-plans` to execute this plan task-by-task. Steps use
+> checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Publish the exact live-verified Vimblocks 1.0.0 artifact as a draft
+GitHub release, verify the CI-built asset, publish it, then submit the Logseq
+Marketplace listing.
+
+**Architecture:** Freeze one runtime artifact before the soak. Keep inert
+release work parallel, but never let documentation or Marketplace work obscure
+which bundle was installed and tested. Release through the existing draft
+workflow, using exact-ref tag pushes and a final smoke of the downloaded asset.
+
+**Tech stack:** Logseq DB 2.0.1 desktop, TypeScript/Vue/Vite, pnpm 11.13.1,
+GitHub Actions, Logseq Marketplace manifest.
+
+## Global Constraints
+
+- Live testing only on graph `tesela-keyboard-audit-2026-07-23`.
+- Never open, inspect, or edit `taylor`; never touch the Tesela project.
+- No push, tag, release publication, release mutation, or Marketplace PR
+  without Taylor's explicit go for that action.
+- Runtime restart set: `src/**`, `public/**`, `index.html`, runtime
+  dependencies, or build configuration. Docs, icon, workflow, release
+  metadata, and Marketplace files do not restart the soak, but any packaged
+  artifact change requires rebuilding and an R5 load check.
+- Use exact tag pushes. Never `git push --tags` or `--follow-tags`.
+
+## Reviewed Ground Truth — 2026-07-28
+
+- `main` and `origin/main` both point to `71d29be`; remote CI run
+  `30418118423` passed on Node 22.22.0.
+- Automated gate: TypeScript clean, 151/151 tests, package green.
+- The running install is **not** the current release artifact:
+  installed `assets/index-DBbYuxDA.js`; current package
+  `assets/index-DFkx69Z8.js`; `diff -rq` is not clean.
+- Therefore Run 4 did not prove the final R3 settings-close or S6 PDF fixes.
+  The final `SMOKE: pass` is provisional until the focused Run 5 below.
+- Tracked `icon.png` is the upstream icon and ships inside the GitHub ZIP.
+- Selected replacement: `vimblocks-aqua.png`, 1024×1024 aqua stepped-block
+  mark on charcoal. It is visually distinct and strongest at small dark-UI
+  sizes. Because it is currently under `ai-scratch/`, an agent must not copy
+  it into a tracked path; Taylor must place the selected file at `icon.png`.
+- `index.html` still ships `<title>Vim shortcuts</title>`.
+- Logseq Marketplace requires at least one image or GIF showing the plugin in
+  action; the removed upstream screencast cannot satisfy that requirement.
+- Local clone has 36 tags, while origin has only v0.3.0 and v0.3.1. The
+  inherited local tags must never be batch-pushed.
+- Existing public v0.3.0/v0.3.1 releases make v0.3.1 the current GitHub
+  `latest`; release-state cleanup needs an explicit Taylor decision before
+  1.0.0 publication.
+
+## Reviewer Adjudication
+
+- Opus 5, Kimi K3, and GLM 5.2: `ship-with-changes`.
+- Accepted consensus: final-artifact mismatch, icon before tag, stale HTML
+  title, explicit soak contract, stale handoff state, Marketplace action
+  image, exact-ref tag push, and draft-asset verification.
+- Rejected GLM R6 objection: Run 4 explicitly records the exact palette query
+  from an active Vim cursor.
+- Rejected Kimi production-graph soak: violates the hard graph boundary.
+- No review evidenced a new release-blocking runtime defect.
+
+---
+
+### Task 1: Freeze the actual release candidate
+
+**Files:**
+- User replaces: `icon.png`
+- Modify: `index.html`
+- Test: `tests/package-release.test.ts` only if packaging expectations change
+
+- [ ] **Step 1: Taylor places the selected aqua candidate at `icon.png`**
+
+Agent boundary: do not copy or move it out of `ai-scratch/`.
+
+- [ ] **Step 2: Verify the selected icon**
+
+Run:
+
+```bash
+file icon.png
+sips -g pixelWidth -g pixelHeight -g hasAlpha icon.png
+```
+
+Acceptance: square PNG, at least 256×256, legible at 32 and 48 px on both
+light and dark fields, visibly distinct from the upstream Vim mark.
+
+- [ ] **Step 3: Correct the shipped HTML title**
+
+Change `index.html` from `Vim shortcuts` to `Vimblocks`.
+
+- [ ] **Step 4: Run the full automated gate**
+
+```bash
+pnpm check
+pnpm test
+pnpm package
+```
+
+Acceptance: TypeScript clean, all tests pass, package succeeds.
+
+- [ ] **Step 5: Commit the candidate**
+
+Commit only the icon, title, tests if needed, and handoff updates.
+
+---
+
+### Task 2: Install and prove the final artifact
+
+**Files:**
+- Install source: `release/vimblocks/`
+- Install destination: `~/.logseq/plugins/vimblocks`
+- Record: `.docs/ai/phases/v1-smoke.md`
+
+- [ ] **Step 1: Back up the current installed candidate**
+
+Use a new timestamped directory under `~/.logseq/plugin-backups/`; do not
+overwrite an existing backup.
+
+- [ ] **Step 2: Install and compare**
+
+Acceptance:
+
+```bash
+diff -rq release/vimblocks ~/.logseq/plugins/vimblocks
+```
+
+prints nothing.
+
+- [ ] **Step 3: Verify the safety boundary before input**
+
+Sidebar must visibly show `tesela-keyboard-audit-2026-07-23`.
+
+- [ ] **Step 4: Run focused Run 5**
+
+- R5: one enabled Vimblocks 1.0.0 card, new icon visible, no load error.
+- R3: title Close, Cancel, and unsaved-change Confirm each return focus; a
+  fresh block immediately accepts exact `focus recovered`.
+- S6: existing DB asset PDF opens inline; no new `PDF loader`,
+  `UnexpectedResponseException`, or `Missing PDF` console error.
+
+- [ ] **Step 5: Pin the evidence**
+
+Append Run 5 with installed `assets/index-<hash>.js`, `diff -rq` result,
+observations, console result, and final `SMOKE: pass` or failure.
+
+---
+
+### Task 3: Run the bounded soak
+
+**Files:**
+- Create: `.docs/ai/phases/v1-soak.md`
+
+**Entry gate:** Task 2 passes against the exact installed artifact.
+
+**Budget:** all required:
+
+- At least 3 sessions across at least 2 calendar days.
+- At least 90 cumulative active editing minutes.
+- At least 6 plugin unload/reload or Logseq restart cycles.
+
+**Activities across the budget:**
+
+- Daily modal use: motions, counts, text objects, `c`/`d`/`y`, `.`, `/ n N`,
+  `v`/`V`, subtree yank/put, undo/redo.
+- At least 10 Esc → insert → Esc transitions from varied states.
+- At least 5 plugin off/on cycles; after each, `x` and `dd` execute once.
+- Command palette, global search, date picker, and property editor exact-input
+  checks from an active Vim cursor.
+- Two boundary-profile switches with reload.
+- Three DB task captures and one inline PDF open.
+- One session at least 30 minutes without reload, followed by normal-mode use.
+- One off-screen stale-cursor R1 probe at the end.
+
+**Stop bar:** any R1–R8 occurrence stops the soak and blocks the tag.
+
+**Restart rule:** only a runtime restart-set change restarts the budget.
+Documentation, action-shot, icon, workflow, and Marketplace changes do not;
+rebuild and rerun R5 for any packaged-file change.
+
+**Evidence:** artifact identifier, dates, minutes, reload counts, activities,
+findings, console errors, restart ledger, and exactly
+`SOAK: pass (<sessions>, <minutes>, <reloads>)` or
+`SOAK: fail (<classes>)`.
+
+---
+
+### Task 4: Finish inert release preparation during the soak
+
+**Files:**
+- Create: Marketplace `packages/vimblocks/manifest.json` in the Marketplace
+  contribution checkout, not this repository
+- Modify: `README.md`
+- Modify: `.github/workflows/ci.yml`
+- Modify: `.github/workflows/publish.yml`
+- Modify: `.docs/ai/current-state.md`
+- Modify: `.docs/ai/roadmap.md`
+
+- [ ] **Step 1: Capture one original action image or GIF**
+
+Use the real DB build on the disposable graph. Show Vimblocks visibly in
+action without private content. Add it to README for Marketplace eligibility.
+
+- [ ] **Step 2: Draft the Marketplace manifest**
+
+Required values include:
+
+```text
+repo: TaylorFinklea/vimblocks
+effect: true
+supportsDBOnly: true
+web: false
+```
+
+Do not submit before the GitHub release is public.
+
+- [ ] **Step 3: Decide workflow SHA pinning**
+
+Runner and Node are pinned; `actions/checkout@v4` and
+`actions/setup-node@v4` still float. Either pin immutable SHAs or record the
+explicit risk acceptance before tagging.
+
+- [ ] **Step 4: Reconcile handoff state**
+
+Record Run 5 and soak truth. Remove the stale pending PDF/smoke blockers.
+
+- [ ] **Step 5: Audit release refs**
+
+Record the 36 local tags and the two origin tags. With explicit approval,
+remove inherited local tags or preserve them while enforcing exact-ref pushes.
+Never batch-push them.
+
+---
+
+### Task 5: Create and verify the draft release
+
+**Prerequisite:** `SOAK: pass`.
+
+- [ ] **Step 1: Obtain Taylor's push approval**
+
+- [ ] **Step 2: Push `main` and require CI green**
+
+- [ ] **Step 3: Resolve v0.3.0/v0.3.1 release-state policy**
+
+Before publishing 1.0.0, decide whether the old releases become prereleases so
+GitHub `latest` can never fall back to the pre-v1 build.
+
+- [ ] **Step 4: Obtain Taylor's tag approval**
+
+- [ ] **Step 5: Push only the exact v1 tag**
+
+```bash
+git push origin refs/tags/v1.0.0
+```
+
+- [ ] **Step 6: Verify the draft asset**
+
+Download ZIP and `SHA256SUMS.txt`; verify digest; extract; compare the relative
+path set and per-file hashes against the locally approved tree. A differing
+runtime asset hash is a stop.
+
+- [ ] **Step 7: Install the downloaded asset and micro-smoke**
+
+Verify load, Esc, one motion, one mutation plus undo, and unload/reload with a
+clean console.
+
+- [ ] **Step 8: Obtain Taylor's publish approval and publish the draft**
+
+---
+
+### Task 6: Submit Marketplace listing and close the release
+
+- [ ] **Step 1: Submit the Marketplace PR**
+
+Include manifest, identical chosen icon, and README action image/GIF.
+
+- [ ] **Step 2: Update release handoff**
+
+Record GitHub release URL, digest, Marketplace PR, and outstanding external
+review status.
+
+- [ ] **Step 3: Retire rollback worktrees/branches after publication**
+
+Only after confirming `main` contains their commits.

@@ -1,20 +1,19 @@
 # Current State
 
 ## Branch
-`main`; ahead of `origin/main`; nothing pushed. Rollback refs:
-`codex/vim-daily-parity`, `codex/db-natural-capture`.
+`main`; `origin/main` @ `71d29be` passed CI; local plan may be ahead; v1
+untagged/unreleased. Rollback refs: `codex/vim-daily-parity`,
+`codex/db-natural-capture`.
 ## Plan
-Publishing v1.0.0; plan: `~/.claude/plans/here-is-a-handoff-soft-truffle.md`.
-- [x] A1–A6, B1–B7, C0.1–C0.7, C1–C4 complete
-- [ ] B8 original icon — Taylor; blocks Marketplace PR
-- [x] C5 run 2: R3/R6/S6 failed; R2 human-verified pass
-- [x] R3/R6/S6 regression tests + fixes; candidate rebuilt
-- [x] C5 Run 3: R1b blocked; R3/R6/S6 failed
-- [x] R3 exact-once focus + S6 DB asset UUID follow-up fixes; rebuilt
-- [?] C5 focused human rerun: R1b, R3, R6 palette/date, S6 PDF
-- [ ] D1–D3 Marketplace manifest + submission after GitHub release
+Publishing v1.0.0; plan: `phases/v1-final-release-spec.md`.
+- [x] Implementation, automated gates, remote CI, and Run 1–4 evidence
+- [ ] Final candidate: aqua icon + `Vimblocks` HTML title
+- [ ] Install exact package; `diff -rq`; Run 5 R5/R3/S6
+- [ ] Bounded soak: 3 sessions, 2 days, 90 minutes, 6 reloads
+- [ ] Action image/GIF + Marketplace manifest draft
+- [ ] Draft release → CI asset verify → publish → Marketplace PR
 Verify: `pnpm check && pnpm test && pnpm package` (151 tests, tsc clean).
 ## Blockers
-- C5 focused live rerun required; installed copy predates follow-up fixes.
-- Original icon pending; blocks Marketplace PR, not GitHub release.
+- Installed `index-DBbYuxDA.js` differs from package `index-DFkx69Z8.js`.
+- Selected aqua icon remains in `ai-scratch`; Taylor must place `icon.png`.
 ## Open questions: none
