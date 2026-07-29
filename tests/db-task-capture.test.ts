@@ -4,6 +4,38 @@ import test from "node:test";
 const loadCaptureModule = async () =>
   import("../src/runtime/db-task-capture.ts").catch(() => null);
 
+test("segments exactly the shorthand tokens consumed by capture", async () => {
+  const capture = await loadCaptureModule();
+  assert.ok(capture, "DB task capture module should exist");
+  if (!capture) return;
+
+  assert.deepEqual(
+    capture.segmentDbTaskCaptureInput(
+      "do this thing due tom at 8 p1"
+    ),
+    [
+      { text: "do this thing ", kind: "plain" },
+      { text: "due", kind: "deadline" },
+      { text: " ", kind: "plain" },
+      { text: "tom", kind: "date" },
+      { text: " ", kind: "plain" },
+      { text: "at 8", kind: "time" },
+      { text: " ", kind: "plain" },
+      { text: "p1", kind: "priority" },
+    ]
+  );
+});
+
+test("leaves time shorthand plain when capture would not consume it", async () => {
+  const capture = await loadCaptureModule();
+  assert.ok(capture, "DB task capture module should exist");
+  if (!capture) return;
+
+  assert.deepEqual(capture.segmentDbTaskCaptureInput("call Sam at 8"), [
+    { text: "call Sam at 8", kind: "plain" },
+  ]);
+});
+
 test("parses the prototype phrase into DB-native task values", async () => {
   const capture = await loadCaptureModule();
   assert.ok(capture, "DB task capture module should exist");

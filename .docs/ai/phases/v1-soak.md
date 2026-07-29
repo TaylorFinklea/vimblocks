@@ -1,15 +1,17 @@
-# Vimblocks 1.0.0-rc.1 Multi-Device Soak
+# Vimblocks 1.0.0-rc.2 Multi-Device Soak
 
 ## Artifact
 
-- Tag: `v1.0.0-rc.1`
-- Release URL:
-  `https://github.com/TaylorFinklea/vimblocks/releases/tag/v1.0.0-rc.1`
-- CI ZIP SHA-256:
-  `0f9822320c692b91d8255a345f50275e527a8dac2439ffdc0979067e347499d5`
-- Runtime asset: `assets/index-DE3hHyAe.js`
-- Period: 2026-07-29 through 2026-07-31
+- Tag: `v1.0.0-rc.2` (pending human capture-UI gate)
+- Release URL: pending
+- CI ZIP SHA-256: pending
+- Runtime asset: local `assets/index-BY9h_PL7.js`; pending CI verification
+- Period: starts after rc.2 publication
 - Scope: three devices; scratch/disposable graphs only
+
+Restart ledger:
+- `v1.0.0-rc.1` soak cannot certify final 1.0.0 after the rc.2 capture
+  component and parser-segmentation runtime change.
 
 ## Safety
 

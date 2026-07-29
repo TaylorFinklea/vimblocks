@@ -284,6 +284,22 @@ authorize final `v1.0.0` or a Marketplace submission.
 - Icon-only change does not restart the runtime soak, but final R5 must verify
   the new card icon from the downloaded final artifact.
 
+**RC.2 capture UI adjustment — 2026-07-29:**
+
+- User screenshot exposed black inherited text on a dark Logseq plugin frame.
+- Capture now owns an explicit navy/slate/white palette with aqua focus and
+  action states; it no longer depends on Tailwind's absent host `dark` class.
+- The editable input has a synchronized, pointer-inert presentation layer.
+  Only date, deadline, time, and priority shorthand actually consumed by the
+  parser is highlighted; raw input, selection, and caret stay native.
+- Regression tests cover `due tom at 8 p1` segmentation and ensure an
+  unconsumed bare `at 8` remains plain. Automated gate: TypeScript clean,
+  153/153 tests, package `release/vimblocks-1.0.0-rc.2.zip`.
+- This is a runtime change and restarts the soak. Before rc.2 publication or
+  Marketplace submission, human verification must confirm readable colors,
+  visible `tom`/`p1` highlighting, ordinary editing/selection, Enter create,
+  and Esc close in live Logseq.
+
 - [ ] **Step 1: Obtain Taylor's push approval**
 
 - [ ] **Step 2: Push `main` and require CI green**
