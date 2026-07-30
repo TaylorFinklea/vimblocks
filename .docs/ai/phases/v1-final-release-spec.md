@@ -294,17 +294,20 @@ authorize final `v1.0.0` or a Marketplace submission.
   font, radius, and selected `--lx-accent-*` values to its authenticated plugin
   frame. The capture consumes those values with safe fallbacks and refreshes
   on theme changes and every open.
+- A 10 px host-native mode indicator appears only while Vimblocks owns input:
+  `NORMAL`, `INSERT`, `VISUAL`, or `V-LINE`. It is removed when capture is
+  disabled, including by the panic chord, and does not intercept pointer input.
 - The editable input has a synchronized, pointer-inert presentation layer.
   Only date, deadline, time, and priority shorthand actually consumed by the
   parser is highlighted; raw input, selection, and caret stay native.
 - Regression tests cover `due tom at 8 p1` segmentation and ensure an
   unconsumed bare `at 8` remains plain. Automated gate: TypeScript clean,
-  155/155 tests, package `release/vimblocks-1.0.0-rc.2.zip`; local ZIP SHA-256
-  `41abcea959ef0d3ae1300aeae6bc38943a7736e24d8f4a12a58ee3dbcd35f9fa`.
+  158/158 tests, package `release/vimblocks-1.0.0-rc.2.zip`; local ZIP SHA-256
+  `da465b322996ce7b96b8279da108b789ea40d67a08b67d59f3eeea03a87ae84f`.
 - This is a runtime change and restarts the soak. Before rc.2 publication or
   Marketplace submission, human verification must confirm readable colors,
   visible `tom`/`p1` highlighting, ordinary editing/selection, Enter create,
-  and Esc close in live Logseq.
+  Esc close, and accurate minimal mode transitions in live Logseq.
 
 - [ ] **Step 1: Obtain Taylor's push approval**
 

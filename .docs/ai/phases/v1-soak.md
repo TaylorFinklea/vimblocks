@@ -5,7 +5,7 @@
 - Tag: `v1.0.0-rc.2` (pending human capture-UI gate)
 - Release URL: pending
 - CI ZIP SHA-256: pending
-- Runtime asset: local `assets/index-ChAV4uxS.js`; pending CI verification
+- Runtime asset: local `assets/index-D921PFYj.js`; pending CI verification
 - Period: starts after rc.2 publication
 - Scope: three devices; scratch/disposable graphs only
 
@@ -37,7 +37,8 @@ Restart ledger:
    times. All three edits must remain on that block. Open Vimblocks settings;
    close once with title Close, once with Cancel, and once with unsaved-change
    Confirm. After each, a fresh block must immediately accept exact
-   `focus recovered`.
+   `focus recovered`. The mode indicator must read `NORMAL` after Esc, `INSERT`
+   after `i`, and return to `NORMAL` after the next Esc without lag or overlap.
 3. R6 key ownership: from an active Vim cursor, type exact
    `Open Vimblocks settings` in the command palette and exact `tomorrow` in a
    Scheduled/date-picker input. Also type a unique value in the property

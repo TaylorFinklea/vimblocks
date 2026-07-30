@@ -36,6 +36,7 @@ export interface HostHighlightRange {
 }
 
 type HostKeydownListener = (event: HostKeydownEvent) => void | Promise<void>;
+type HostNormalModeListener = (active: boolean) => void;
 const hostThemeTokenNames = [
   "background",
   "foreground",
@@ -64,6 +65,7 @@ export interface HostTheme {
 type HostThemeListener = (theme: HostTheme) => void;
 
 const listeners = new Set<HostKeydownListener>();
+const normalModeListeners = new Set<HostNormalModeListener>();
 const themeListeners = new Set<HostThemeListener>();
 let installed = false;
 let textEntryActive = false;
@@ -117,6 +119,11 @@ const parseHostTheme = (data: Record<string, unknown>): HostTheme => {
   };
 };
 
+const updateHostNormalModeState = (value: boolean): void => {
+  normalModeActive = value;
+  for (const listener of normalModeListeners) listener(normalModeActive);
+};
+
 const onMessage = (event: MessageEvent): void => {
   if (event.source !== window.parent) return;
   const data = event.data;
@@ -134,6 +141,10 @@ const onMessage = (event: MessageEvent): void => {
   if (data.type === "theme") {
     currentTheme = parseHostTheme(data);
     for (const listener of themeListeners) listener(currentTheme);
+    return;
+  }
+  if (data.type === "capture-released") {
+    updateHostNormalModeState(false);
     return;
   }
   if (data.type !== "keydown") return;
@@ -187,6 +198,7 @@ export const installHostBridge = async (
     setHostNormalModeActive(false);
     postHostMessage({ type: "dispose" });
     listeners.clear();
+    normalModeListeners.clear();
     themeListeners.clear();
     currentTheme = undefined;
     if (installed) {
@@ -201,6 +213,14 @@ export const addHostKeydownListener = (
 ): (() => void) => {
   listeners.add(listener);
   return () => listeners.delete(listener);
+};
+
+export const addHostNormalModeListener = (
+  listener: HostNormalModeListener
+): (() => void) => {
+  normalModeListeners.add(listener);
+  listener(normalModeActive);
+  return () => normalModeListeners.delete(listener);
 };
 
 export const addHostThemeListener = (
@@ -245,7 +265,7 @@ export const setHostCaptureAll = (value: boolean): void => {
 };
 
 export const setHostNormalModeActive = (value: boolean): void => {
-  normalModeActive = value;
+  updateHostNormalModeState(value);
   postHostMessage({ type: "normal-mode", value: normalModeActive });
 };
 

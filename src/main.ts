@@ -38,12 +38,17 @@ import {
 } from "./open-pdf-command";
 import {
   addHostKeydownListener,
+  addHostNormalModeListener,
   addHostThemeListener,
   installHostBridge,
   requestHostTheme,
   type HostTheme,
   type HostKeydownEvent,
 } from "./runtime/host-bridge";
+import {
+  createModeIndicator,
+  resolveModeIndicator,
+} from "./runtime/mode-indicator";
 import {
   cursorHighlightStyle,
   highlightPseudoStyle,
@@ -158,6 +163,23 @@ async function main() {
   app.use(createPinia());
   app.mount("#app");
   const modalStore = useModalStore();
+  const searchStore = useSearchStore();
+  const modeIndicator = createModeIndicator(logseq);
+  lifecycle.add(modeIndicator.dispose);
+  let hostNormalModeActive = false;
+  const syncModeIndicator = () => {
+    modeIndicator.setMode(resolveModeIndicator({
+      normalModeActive: hostNormalModeActive,
+      insertSessionActive: Boolean(searchStore.insertSession),
+      visualMode: searchStore.visualMode,
+      visualKind: searchStore.visualKind,
+    }));
+  };
+  lifecycle.add(searchStore.$subscribe(syncModeIndicator));
+  lifecycle.add(addHostNormalModeListener((active) => {
+    hostNormalModeActive = active;
+    syncModeIndicator();
+  }));
   modalStore.setProfile(getSettings().vimBoundaryProfile);
   lifecycle.add(
     logseq.onSettingsChanged(() => {
@@ -177,7 +199,6 @@ async function main() {
   lifecycle.add(
     registerDbTaskCaptureCommand(logseq, {
       getCursorState: () => {
-        const searchStore = useSearchStore();
         return {
           cursorMode: searchStore.cursorMode,
           cursorBlockUUID: searchStore.cursorBlockUUID,

@@ -10,8 +10,8 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
   listing. Plan: `.docs/ai/phases/v1-final-release-spec.md`.
   Current: `v1.0.0-rc.1` is published. A local `rc.2` candidate enlarges the
   Marketplace icon, highlights shorthand tokens using the parser's recognition
-  rules, and mirrors Logseq's live surface, font, and selected accent tokens.
-  Runtime change resets the soak.
+  rules, mirrors Logseq's live surface/font/accent tokens, and adds a minimal
+  host-native Vim mode indicator. Runtime change resets the soak.
   Remaining before final: human capture UI/input check, rc.2 multi-device
   soak, exact final package install/diff, focused R5/R3/S6 Run 5, action
   image/GIF, final draft release verification, and Marketplace PR.

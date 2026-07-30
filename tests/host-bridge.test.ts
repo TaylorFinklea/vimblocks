@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   addHostThemeListener,
   addHostKeydownListener,
+  addHostNormalModeListener,
   clearHostHighlights,
   configureHostCapture,
   configureHostNormalModeCapture,
@@ -12,6 +13,55 @@ import {
   requestHostTheme,
   setHostNormalModeActive,
 } from "../src/runtime/host-bridge.ts";
+
+test("reports when the host panic chord releases normal-mode capture", async () => {
+  const eventListeners = new Map<string, (event: unknown) => void>();
+  const parent = { postMessage() {} };
+  const foreign = {};
+  const originalWindow = globalThis.window;
+  globalThis.window = {
+    parent,
+    addEventListener(type: string, listener: (event: unknown) => void) {
+      eventListeners.set(type, listener);
+    },
+    removeEventListener(type: string) {
+      eventListeners.delete(type);
+    },
+  } as unknown as Window & typeof globalThis;
+
+  try {
+    const dispose = await installHostBridge({
+      Experiments: { async loadScripts() {} },
+    });
+    setHostNormalModeActive(true);
+    const states: boolean[] = [];
+    const removeListener = addHostNormalModeListener((active) => {
+      states.push(active);
+    });
+
+    eventListeners.get("message")?.({
+      source: foreign,
+      data: {
+        channel: "vimblocks-host-bridge-v1",
+        type: "capture-released",
+      },
+    });
+    eventListeners.get("message")?.({
+      source: parent,
+      data: {
+        channel: "vimblocks-host-bridge-v1",
+        type: "capture-released",
+      },
+    });
+
+    assert.deepEqual(states, [true, false]);
+
+    removeListener();
+    dispose();
+  } finally {
+    globalThis.window = originalWindow;
+  }
+});
 
 test("relays validated host theme values and ignores foreign frames", async () => {
   const messages: unknown[] = [];

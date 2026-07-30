@@ -521,6 +521,7 @@
     // src/runtime/context-guard.ts, which must classify targets identically.
     isTextEntry,
     dispose() {
+      postToPluginFrames({ type: "capture-released" });
       for (const observer of pendingObservers) observer.disconnect();
       pendingObservers.clear();
       themeObserver.disconnect();

@@ -509,6 +509,12 @@ test("panic chord releases the keyboard", () => {
   );
 
   assert.equal(bridge.press("KeyJ", "j"), false);
+  assert.equal(
+    bridge.peerMessages.filter(
+      (message) => message.type === "capture-released"
+    ).length,
+    1
+  );
 });
 
 test("blanket capture also stops once the plugin frame is gone", () => {
