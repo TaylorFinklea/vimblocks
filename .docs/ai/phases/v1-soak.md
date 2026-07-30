@@ -2,11 +2,13 @@
 
 ## Artifact
 
-- Tag: `v1.0.0-rc.2` (pending human capture-UI gate)
-- Release URL: pending
-- CI ZIP SHA-256: pending
-- Runtime asset: local `assets/index-D921PFYj.js`; pending CI verification
-- Period: starts after rc.2 publication
+- Tag: `v1.0.0-rc.2`
+- Release URL:
+  https://github.com/TaylorFinklea/vimblocks/releases/tag/v1.0.0-rc.2
+- CI ZIP SHA-256:
+  `5176361e93e373b3927b9c92a9b0f76be48074ee5b72367b35a7891b5ecc8b79`
+- Runtime asset: `assets/index-D921PFYj.js`; CI extraction matches local
+- Period: starts 2026-07-29
 - Scope: three devices; scratch/disposable graphs only
 
 Restart ledger:

@@ -304,10 +304,16 @@ authorize final `v1.0.0` or a Marketplace submission.
   unconsumed bare `at 8` remains plain. Automated gate: TypeScript clean,
   158/158 tests, package `release/vimblocks-1.0.0-rc.2.zip`; local ZIP SHA-256
   `da465b322996ce7b96b8279da108b789ea40d67a08b67d59f3eeea03a87ae84f`.
-- This is a runtime change and restarts the soak. Before rc.2 publication or
+- This is a runtime change and restarts the soak. Before final publication or
   Marketplace submission, human verification must confirm readable colors,
   visible `tom`/`p1` highlighting, ordinary editing/selection, Enter create,
   Esc close, and accurate minimal mode transitions in live Logseq.
+- Published `v1.0.0-rc.2` prerelease:
+  https://github.com/TaylorFinklea/vimblocks/releases/tag/v1.0.0-rc.2
+- CI run `30508541767` passed; downloaded ZIP SHA-256
+  `5176361e93e373b3927b9c92a9b0f76be48074ee5b72367b35a7891b5ecc8b79`
+  matched its checksum and extracted byte-for-byte against the approved local
+  `release/vimblocks/` tree.
 
 - [ ] **Step 1: Obtain Taylor's push approval**
 
