@@ -229,11 +229,15 @@ web: false
 
 Do not submit before the GitHub release is public.
 
-- [ ] **Step 3: Decide workflow SHA pinning**
+- [x] **Step 3: Decide workflow SHA pinning**
 
 Runner and Node are pinned; `actions/checkout@v4` and
 `actions/setup-node@v4` still float. Either pin immutable SHAs or record the
 explicit risk acceptance before tagging.
+
+Result: pinned checkout to `11d5960a326750d5838078e36cf38b85af677262`
+and setup-node to `49933ea5288caeca8642d1e84afbd3f7d6820020`, the commits
+advertised by their respective `v4` refs on 2026-07-31.
 
 - [ ] **Step 4: Reconcile handoff state**
 
@@ -250,6 +254,17 @@ Never batch-push them.
 ### Task 5: Create and verify the draft release
 
 **Final 1.0.0 prerequisite:** `SOAK: pass`.
+
+**Local final candidate — 2026-07-31:**
+
+- Manifest version advanced from `1.0.0-rc.2` to `1.0.0`.
+- Automated gate: TypeScript clean, 158/158 tests, package succeeds.
+- Local package: `release/vimblocks-1.0.0.zip`; SHA-256
+  `fc9b1b8868db688fa9a9ff17d3111dc773cc132191e4c1dea2f25c4a97c77dfd`.
+- Runtime asset: `assets/index-BQoQWnii.js`.
+- This candidate is not approved for tagging or publication until numeric soak
+  evidence, exact-artifact install/diff, focused Run 5, and the action image
+  gate pass.
 
 **RC exception authorized 2026-07-28:** Taylor requested public
 `v1.0.0-rc.1` now for testing on two additional devices over the next two

@@ -8,12 +8,12 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
 
 - [ ] Publish Vimblocks **1.0.0** to GitHub, then submit a Logseq Marketplace
   listing. Plan: `.docs/ai/phases/v1-final-release-spec.md`.
-  Current: `v1.0.0-rc.2` is published with the enlarged Marketplace icon,
-  highlighted task shorthand, Logseq-native capture theming, and a minimal
-  host-native Vim mode indicator. Runtime changes reset the soak.
-  Remaining before final: human capture UI/input check, rc.2 multi-device
-  soak, exact final package install/diff, focused R5/R3/S6 Run 5, action
-  image/GIF, final draft release verification, and Marketplace PR.
+  Current: `v1.0.0-rc.2` is published; human capture/mode UI verification
+  passed. Local final metadata and immutable workflow action pins are prepared.
+  No R1-R8 failures were reported, but soak totals are still blank.
+  Remaining before final: numeric rc.2 soak evidence, exact final package
+  install/diff, focused R5/R3/S6 Run 5, action image/GIF, final draft release
+  verification, and Marketplace PR.
   Verify: `pnpm check && pnpm test && pnpm package`, then the live smoke.
   Caveat: Marketplace approval is not ours to control — Logseq reviews
   `effect: true` plugins more strictly with no guarantee — so the GitHub

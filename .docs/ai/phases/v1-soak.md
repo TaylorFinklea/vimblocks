@@ -33,7 +33,7 @@ Restart ledger:
 
 ## Required Checks on Each Device
 
-1. R5 load: exactly one enabled Vimblocks `1.0.0-rc.1` card, aqua icon, no
+1. R5 load: exactly one enabled Vimblocks `1.0.0-rc.2` card, aqua icon, no
    Ready Error. Record any new renderer-console error.
 2. R3 focus: in `R3 fresh target`, run Esc → `i` → type `a` → Esc three
    times. All three edits must remain on that block. Open Vimblocks settings;
@@ -79,4 +79,6 @@ output, and whether reload recovered usability.
 
 ## Result
 
-Pending.
+2026-07-31: Taylor confirmed no R1-R8 failures. Session, minute, reload, and
+device totals were left blank, so the required bounded-soak evidence remains
+pending; do not record `SOAK: pass` or publish final 1.0.0 until supplied.
