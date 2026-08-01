@@ -488,3 +488,21 @@ Next evidence:
   record the manual soak in `v1-soak.md`.
 
 SMOKE: fail (R1–R8 blocked, S1–S6 blocked)
+
+### Final 1.0.0 exact-artifact preparation — 2026-07-31
+
+Environment:
+- User-authorized isolated DB graph: `vimblocks-marketplace-2026-07-31`.
+- Final staged runtime: `assets/index-BQoQWnii.js`.
+- No prior `~/.logseq/plugins/vimblocks` installation existed.
+- Copied `release/vimblocks/` to `~/.logseq/plugins/vimblocks`;
+  `diff -rq` exited 0 with no output.
+- OS-level screenshot independently confirmed the isolated graph was active
+  and empty; it was not retained as Marketplace evidence because no Vimblocks
+  action was visible.
+
+Blocked live evidence:
+- Computer Use repeatedly hung on both Logseq state reads and a single Escape
+  action, including after helper recovery and Logseq/ChatGPT restarts.
+- The exact final artifact's R5/R3/S6 checks, console result, and action image
+  remain pending. No `SMOKE: pass` is recorded for final 1.0.0.

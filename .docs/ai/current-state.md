@@ -13,9 +13,8 @@ Running v1.0.0-rc.2 device soak; final plan:
 - [x] Human verify: native capture theme/input + NORMAL/INSERT/VISUAL indicator
 - [ ] Restart multi-device soak on rc.2; `phases/v1-soak.md`
 - [x] Final metadata + action pins; 158 tests/package; ZIP `fc9b1b88…77dfd`
-- [ ] Final artifact install/diff; Run 5 R5/R3/S6
-- [ ] Action image/GIF + Marketplace manifest draft
+- [ ] Final artifact installed/diff clean; Run 5 R5/R3/S6 pending
+- [ ] Marketplace manifest drafted/validated; action image/GIF pending
 - [ ] Final v1.0.0 draft → exact asset verify → publish → Marketplace PR
 Verify: check + 158 tests + package; then live capture/mode transitions.
-## Blockers: none
-## Open questions: none
+## Blockers: Computer Use hangs on every Logseq state/action request

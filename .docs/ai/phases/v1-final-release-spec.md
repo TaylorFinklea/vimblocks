@@ -120,12 +120,15 @@ Result: committed as `10c04ff` (`release: prepare v1.0.0-rc.1`).
 - Install destination: `~/.logseq/plugins/vimblocks`
 - Record: `.docs/ai/phases/v1-smoke.md`
 
-- [ ] **Step 1: Back up the current installed candidate**
+- [x] **Step 1: Back up the current installed candidate**
 
 Use a new timestamped directory under `~/.logseq/plugin-backups/`; do not
 overwrite an existing backup.
 
-- [ ] **Step 2: Install and compare**
+Result: no existing `~/.logseq/plugins/vimblocks` installation or backup
+directory existed, so there was nothing to back up.
+
+- [x] **Step 2: Install and compare**
 
 Acceptance:
 
@@ -135,9 +138,15 @@ diff -rq release/vimblocks ~/.logseq/plugins/vimblocks
 
 prints nothing.
 
-- [ ] **Step 3: Verify the safety boundary before input**
+Result: copied the final staged tree to `~/.logseq/plugins/vimblocks`;
+`diff -rq` exited 0 with no output.
+
+- [x] **Step 3: Verify the safety boundary before input**
 
 Sidebar must visibly show `tesela-keyboard-audit-2026-07-23`.
+
+Result: Taylor authorized a new isolated replacement graph. Created and
+visibly verified `vimblocks-marketplace-2026-07-31` before any test input.
 
 - [ ] **Step 4: Run focused Run 5**
 
@@ -216,7 +225,7 @@ findings, console errors, restart ledger, and exactly
 Use the real DB build on the disposable graph. Show Vimblocks visibly in
 action without private content. Add it to README for Marketplace eligibility.
 
-- [ ] **Step 2: Draft the Marketplace manifest**
+- [x] **Step 2: Draft the Marketplace manifest**
 
 Required values include:
 
@@ -228,6 +237,10 @@ web: false
 ```
 
 Do not submit before the GitHub release is public.
+
+Result: drafted `packages/vimblocks/{manifest.json,icon.png}` in temporary
+checkout `/private/tmp/logseq-marketplace-vimblocks`; JSON and routing fields
+validated, and the 1024×1024 icon is byte-identical to this repository's icon.
 
 - [x] **Step 3: Decide workflow SHA pinning**
 
