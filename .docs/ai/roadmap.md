@@ -10,14 +10,21 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
   listing. Plan: `.docs/ai/phases/v1-final-release-spec.md`.
   Current: `v1.0.0-rc.2` is published; human capture/mode UI verification
   passed. Local final metadata and immutable workflow action pins are prepared.
-  No R1-R8 failures were reported, but soak totals are still blank.
-  Remaining before final: numeric rc.2 soak evidence, exact final package
-  install/diff, focused R5/R3/S6 Run 5, action image/GIF, final draft release
-  verification, and Marketplace PR.
+  Exact final package install/diff and focused R5/R3/S6 Run 5 passed. The soak
+  passed across 4 business days and 3 devices at the confirmed conservative
+  floor of 3 sessions, 90 active minutes, and 6 reloads.
+  Remaining before final: Capture autofocus fix plus targeted exact-artifact
+  recheck, action image/GIF, final draft release verification, and Marketplace
+  PR.
   Verify: `pnpm check && pnpm test && pnpm package`, then the live smoke.
   Caveat: Marketplace approval is not ours to control — Logseq reviews
   `effect: true` plugins more strictly with no guarantee — so the GitHub
   release must stand alone.
+- [ ] Fix DB task Capture autofocus before Marketplace submission: opening
+  Capture currently requires a mouse click in the input box before typing.
+  Rebuild/reinstall the exact artifact; verify the shortcut opens with the
+  input focused and accepts typing without mouse interaction, then rerun the
+  affected load/focus smoke checks.
 - [x] Deliver daily Vim parity with counts, composable operators,
   repeat/history, insert transitions, rendered-view search, character
   navigation, `v`/`V`, and persistent Vim-first/Logseq-first profiles.
@@ -44,7 +51,7 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
   `do this thing tom at 8 p1`, preview the result, and create a Logseq DB
   Todo/Urgent task scheduled tomorrow at 08:00 without Markdown task syntax.
   Verify: `pnpm check && pnpm test && pnpm package` plus disposable-graph UI.
-- [?] Verify the corrected DB asset-UUID PDF call from the exact packaged
+- [x] Verify the corrected DB asset-UUID PDF call from the exact packaged
   artifact in physical Logseq 2.0.1. Run 4 used an older installed bundle;
   install `release/vimblocks/`, require `diff -rq` clean, then run the existing
   `S6 PDF` probe with no renderer-console error.

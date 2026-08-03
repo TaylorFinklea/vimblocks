@@ -506,3 +506,36 @@ Blocked live evidence:
   action, including after helper recovery and Logseq/ChatGPT restarts.
 - The exact final artifact's R5/R3/S6 checks, console result, and action image
   remain pending. No `SMOKE: pass` is recorded for final 1.0.0.
+
+### Final Run 5 completion — 2026-08-03, exact 1.0.0 artifact
+
+Environment:
+- Isolated DB graph: `vimblocks-marketplace-2026-07-31`.
+- Installed `release/vimblocks/` runtime: `assets/index-BQoQWnii.js`;
+  `diff -rq release/vimblocks ~/.logseq/plugins/vimblocks` exited 0 with no
+  output.
+- After a full Logseq restart, the dashboard showed exactly one enabled
+  `Vimblocks 1.0.0` card with the aqua icon and no Ready Error.
+
+Classes:
+- **R5 PASS** — exact installed candidate loaded after restart. A cleared
+  renderer-console baseline plus one plugin off/on cycle produced no matching
+  error line.
+- **R3 PASS** — title Close, Cancel, and unsaved-change Confirm each removed
+  the settings iframe and returned focus to the host editor. Fresh-block input
+  accepted `focus recovered title-close`, `focus recovered cancel`, and
+  `focus recovered confirm` respectively. The unsaved test setting was
+  discarded, not saved.
+- **S6 PASS** — a five-page disposable PDF imported through Logseq's native
+  DB asset flow opened inline and rendered pages 1–5. A manually authored
+  `file:` link was first rejected as an unregistered asset and was discarded
+  as invalid fixture evidence. On the proper imported asset, a clean post-
+  reload renderer-console scan found no `PDF loader`,
+  `UnexpectedResponseException`, `Missing PDF`, load, or runtime error.
+
+Evidence boundary:
+- The safe graph retains the disposable PDF and scratch blocks for the later
+  Marketplace screenshot session.
+- No Marketplace screenshot, release, tag, push, or submission was performed.
+
+SMOKE: pass

@@ -82,3 +82,13 @@ output, and whether reload recovered usability.
 2026-07-31: Taylor confirmed no R1-R8 failures. Session, minute, reload, and
 device totals were left blank, so the required bounded-soak evidence remains
 pending; do not record `SOAK: pass` or publish final 1.0.0 until supplied.
+
+2026-08-03 user attestation:
+- Successful use across 4 business days and 3 devices, with several reloads.
+- No soak-blocking failure reported.
+- Known follow-up: DB task Capture opens without keyboard focus and requires a
+  mouse click in the input box; accepted for Marketplace-release follow-up.
+- User confirmed the conservative release-gate floor: 3 sessions, 90
+  cumulative active minutes, and 6 plugin reload/restart cycles.
+
+SOAK: pass (3 sessions, 90 minutes, 6 reloads)
