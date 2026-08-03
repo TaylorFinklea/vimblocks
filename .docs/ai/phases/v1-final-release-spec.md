@@ -261,11 +261,16 @@ advertised by their respective `v4` refs on 2026-07-31.
 
 Record Run 5 and soak truth. Remove the stale pending PDF/smoke blockers.
 
-- [ ] **Step 5: Audit release refs**
+- [x] **Step 5: Audit release refs**
 
 Record the 36 local tags and the two origin tags. With explicit approval,
 remove inherited local tags or preserve them while enforcing exact-ref pushes.
 Never batch-push them.
+
+Result (2026-08-03): the earlier 36-tag local state is no longer present.
+Exactly four tags exist locally and on origin: `v0.3.0`, `v0.3.1`,
+`v1.0.0-rc.1`, and `v1.0.0-rc.2`. Every local target commit matches the
+corresponding peeled origin tag. No tag was created, removed, or pushed.
 
 ---
 

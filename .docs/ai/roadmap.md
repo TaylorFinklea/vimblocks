@@ -13,9 +13,9 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
   Exact final package install/diff and focused R5/R3/S6 Run 5 passed. The soak
   passed across 4 business days and 3 devices at the confirmed conservative
   floor of 3 sessions, 90 active minutes, and 6 reloads.
-  Original action image is in README. Remaining before final: Capture
-  autofocus fix plus targeted exact-artifact recheck, final draft release
-  verification, and Marketplace PR.
+  Original action image is in README; four local/origin release tags are
+  aligned. Remaining before final: Capture autofocus policy, final draft
+  release verification, and Marketplace PR.
   Verify: `pnpm check && pnpm test && pnpm package`, then the live smoke.
   Caveat: Marketplace approval is not ours to control — Logseq reviews
   `effect: true` plugins more strictly with no guarantee — so the GitHub
