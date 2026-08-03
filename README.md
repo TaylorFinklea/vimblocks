@@ -6,6 +6,8 @@ Vimblocks gives Logseq a normal mode: motions, counts, composable operators,
 text objects, registers, repeat, visual mode, and rendered-view search — over
 blocks rather than lines.
 
+![Vimblocks capturing a Logseq DB task from natural language](docs/images/vimblocks-db-task-capture.png)
+
 ---
 
 ## Scope — read this first

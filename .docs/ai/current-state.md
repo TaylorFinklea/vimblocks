@@ -12,8 +12,8 @@ Final plan: `phases/v1-final-release-spec.md`.
 - [x] Final metadata + action pins; 158 tests/package; ZIP `fc9b1b88…77dfd`
 - [x] Final artifact installed/diff clean; exact-artifact Run 5 smoke passed
 - [ ] Fix Capture autofocus; rebuild and rerun targeted exact-artifact checks
-- [ ] Marketplace manifest drafted/validated; action image/GIF pending
+- [x] Marketplace manifest drafted/validated; original action image in README
 - [ ] Final v1.0.0 draft → exact asset verify → publish → Marketplace PR
 Verify: check + 158 tests + package; then live capture/mode transitions.
 ## Blockers
-Capture autofocus; safe-page action image/GIF.
+Capture autofocus; final release approval gates.

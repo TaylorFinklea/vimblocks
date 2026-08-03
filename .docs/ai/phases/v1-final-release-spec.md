@@ -148,7 +148,7 @@ Sidebar must visibly show `tesela-keyboard-audit-2026-07-23`.
 Result: Taylor authorized a new isolated replacement graph. Created and
 visibly verified `vimblocks-marketplace-2026-07-31` before any test input.
 
-- [ ] **Step 4: Run focused Run 5**
+- [x] **Step 4: Run focused Run 5**
 
 - R5: one enabled Vimblocks 1.0.0 card, new icon visible, no load error.
 - R3: title Close, Cancel, and unsaved-change Confirm each return focus; a
@@ -156,7 +156,7 @@ visibly verified `vimblocks-marketplace-2026-07-31` before any test input.
 - S6: existing DB asset PDF opens inline; no new `PDF loader`,
   `UnexpectedResponseException`, or `Missing PDF` console error.
 
-- [ ] **Step 5: Pin the evidence**
+- [x] **Step 5: Pin the evidence**
 
 Append Run 5 with installed `assets/index-<hash>.js`, `diff -rq` result,
 observations, console result, and final `SMOKE: pass` or failure.
@@ -220,10 +220,15 @@ findings, console errors, restart ledger, and exactly
 - Modify: `.docs/ai/current-state.md`
 - Modify: `.docs/ai/roadmap.md`
 
-- [ ] **Step 1: Capture one original action image or GIF**
+- [x] **Step 1: Capture one original action image or GIF**
 
 Use the real DB build on the disposable graph. Show Vimblocks visibly in
 action without private content. Add it to README for Marketplace eligibility.
+
+Result: created the isolated `Vimblocks Marketplace Demo` page and captured
+the final 1.0.0 DB task overlay parsing `tom at 3 pm p1` into Todo, Urgent,
+and Scheduled properties. Added the reviewed 3604×2268 original image at
+`docs/images/vimblocks-db-task-capture.png`; no private content is visible.
 
 - [x] **Step 2: Draft the Marketplace manifest**
 
@@ -252,7 +257,7 @@ Result: pinned checkout to `11d5960a326750d5838078e36cf38b85af677262`
 and setup-node to `49933ea5288caeca8642d1e84afbd3f7d6820020`, the commits
 advertised by their respective `v4` refs on 2026-07-31.
 
-- [ ] **Step 4: Reconcile handoff state**
+- [x] **Step 4: Reconcile handoff state**
 
 Record Run 5 and soak truth. Remove the stale pending PDF/smoke blockers.
 
