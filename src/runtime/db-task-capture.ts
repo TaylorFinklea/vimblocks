@@ -29,6 +29,67 @@ export interface DbTaskCaptureSegment {
   kind: DbTaskCaptureSegmentKind;
 }
 
+interface DbTaskCaptureFocusRoot {
+  querySelector(selector: string): { focus(): void } | null;
+}
+
+interface DbTaskCaptureFocusWindow {
+  focus(): void;
+}
+
+interface DbTaskCaptureMainUiApi {
+  showMainUI(options: { autoFocus: boolean }): unknown;
+}
+
+interface DbTaskCaptureFocusedRoot extends DbTaskCaptureFocusRoot {
+  activeElement: unknown;
+  hasFocus(): boolean;
+}
+
+type DbTaskCaptureFrameScheduler = (callback: () => void) => number;
+
+export const focusDbTaskCaptureInput = (
+  root: DbTaskCaptureFocusRoot,
+  frameWindow: DbTaskCaptureFocusWindow
+): boolean => {
+  const input = root.querySelector(".db-task-capture input");
+  if (!input) return false;
+  frameWindow.focus();
+  input.focus();
+  return true;
+};
+
+export const showDbTaskCaptureMainUI = async (
+  api: DbTaskCaptureMainUiApi,
+  root: DbTaskCaptureFocusedRoot,
+  frameWindow: DbTaskCaptureFocusWindow,
+  scheduleFrame: DbTaskCaptureFrameScheduler = (callback) =>
+    requestAnimationFrame(callback)
+): Promise<boolean> => {
+  api.showMainUI({ autoFocus: true });
+  return new Promise((resolve) => {
+    let attempts = 0;
+    const focusWhenReady = () => {
+      attempts += 1;
+      const input = root.querySelector(".db-task-capture input");
+      if (root.hasFocus() && input) {
+        frameWindow.focus();
+        input.focus();
+        if (root.activeElement === input) {
+          resolve(true);
+          return;
+        }
+      }
+      if (attempts >= 12) {
+        resolve(false);
+        return;
+      }
+      scheduleFrame(focusWhenReady);
+    };
+    scheduleFrame(focusWhenReady);
+  });
+};
+
 const PRIORITY_BY_TOKEN: Record<string, DbTaskPriority> = {
   p1: "Urgent",
   p2: "High",

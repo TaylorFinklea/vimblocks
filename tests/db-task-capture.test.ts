@@ -293,3 +293,104 @@ test("prefers the Vim-owned cursor block as the capture anchor", async () => {
     "logseq-selected"
   );
 });
+
+test("focuses the capture iframe and input synchronously when it opens", async () => {
+  const capture = await loadCaptureModule();
+  assert.ok(capture, "DB task capture module should exist");
+  if (!capture) return;
+
+  assert.equal(
+    typeof capture.focusDbTaskCaptureInput,
+    "function",
+    "capture focus helper should be available"
+  );
+  if (typeof capture.focusDbTaskCaptureInput !== "function") return;
+
+  const calls: string[] = [];
+  const input = {
+    focus() {
+      calls.push("input");
+    },
+  };
+  const root = {
+    querySelector(selector: string) {
+      assert.equal(selector, ".db-task-capture input");
+      return input;
+    },
+  };
+  const frameWindow = {
+    focus() {
+      calls.push("window");
+    },
+  };
+
+  assert.equal(
+    capture.focusDbTaskCaptureInput(root, frameWindow),
+    true
+  );
+  assert.deepEqual(calls, ["window", "input"]);
+});
+
+test("waits for host iframe focus before focusing the capture input", async () => {
+  const capture = await loadCaptureModule();
+  assert.ok(capture, "DB task capture module should exist");
+  if (!capture) return;
+
+  assert.equal(
+    typeof capture.showDbTaskCaptureMainUI,
+    "function",
+    "capture presentation helper should be available"
+  );
+  if (typeof capture.showDbTaskCaptureMainUI !== "function") return;
+
+  const calls: string[] = [];
+  const api = {
+    async showMainUI(options: { autoFocus: boolean }) {
+      calls.push(`show:${options.autoFocus}`);
+    },
+  };
+  let frame = 0;
+  const input = {
+    focus() {
+      calls.push("input");
+      root.activeElement = input;
+    },
+  };
+  const root = {
+    activeElement: null as typeof input | null,
+    hasFocus() {
+      return frame >= 2;
+    },
+    querySelector() {
+      return input;
+    },
+  };
+  const frameWindow = {
+    focus() {
+      calls.push("window");
+    },
+  };
+  const scheduleFrame = (callback: () => void) => {
+    frame += 1;
+    calls.push(`frame:${frame}`);
+    callback();
+    return frame;
+  };
+
+  assert.equal(
+    await capture.showDbTaskCaptureMainUI(
+      api,
+      root,
+      frameWindow,
+      scheduleFrame
+    ),
+    true
+  );
+  assert.deepEqual(calls, [
+    "show:true",
+    "frame:1",
+    "frame:2",
+    "window",
+    "input",
+  ]);
+});

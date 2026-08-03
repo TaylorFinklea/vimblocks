@@ -91,4 +91,22 @@ pending; do not record `SOAK: pass` or publish final 1.0.0 until supplied.
 - User confirmed the conservative release-gate floor: 3 sessions, 90
   cumulative active minutes, and 6 plugin reload/restart cycles.
 
-SOAK: pass (3 sessions, 90 minutes, 6 reloads)
+RC.2 SOAK: pass (3 sessions, 90 minutes, 6 reloads)
+
+## RC.3 Restart — 2026-08-03
+
+- Taylor chose to fix Capture autofocus before Marketplace submission and
+  repeat the bounded soak rather than defer the fix to 1.0.1.
+- The autofocus fix changes `src/**`, so the successful rc.2 soak remains
+  historical evidence but cannot certify rc.3 or final 1.0.0.
+- Local rc.3 candidate: `release/vimblocks-1.0.0-rc.3.zip`; SHA-256
+  `9e6ca57c862ccd51bbeaaea17ed74c125511dd4e4f90220f784d408ff1696da3`;
+  runtime `assets/index-DvarLuei.js`.
+- Exact expanded rc.3 tree installed byte-for-byte on the primary Mac. After
+  the overlay became visible, its text field was already focused and accepted
+  exact `focus probe` without a mouse click; the capture was canceled.
+- Restarted minimum: 3 sessions across 2 calendar days, 90 cumulative active
+  minutes, 6 reload/restart cycles, and all three devices using the exact
+  published rc.3 ZIP.
+
+SOAK: pending (RC.3 candidate not published; restarted budget not begun)

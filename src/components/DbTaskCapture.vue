@@ -9,6 +9,7 @@ import {
 import { hideMainUI } from "@/common/funcs";
 import {
   createDbTaskAfterBlock,
+  focusDbTaskCaptureInput,
   segmentDbTaskCaptureInput,
 } from "@/runtime/db-task-capture";
 import { useDbTaskCaptureStore } from "@/stores/db-task-capture";
@@ -52,10 +53,7 @@ const focusInput = async () => {
   await nextTick();
   requestAnimationFrame(() => {
     if (!captureStore.visible) return;
-    window.focus();
-    document
-      .querySelector<HTMLInputElement>(".db-task-capture input")
-      ?.focus();
+    focusDbTaskCaptureInput(document, window);
   });
 };
 

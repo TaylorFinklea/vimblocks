@@ -276,7 +276,7 @@ corresponding peeled origin tag. No tag was created, removed, or pushed.
 
 ### Task 5: Create and verify the draft release
 
-**Final 1.0.0 prerequisite:** `SOAK: pass`.
+**Final 1.0.0 prerequisite:** `SOAK: pass` for the exact runtime candidate.
 
 **Local final candidate — 2026-07-31:**
 
@@ -352,6 +352,31 @@ authorize final `v1.0.0` or a Marketplace submission.
   `5176361e93e373b3927b9c92a9b0f76be48074ee5b72367b35a7891b5ecc8b79`
   matched its checksum and extracted byte-for-byte against the approved local
   `release/vimblocks/` tree.
+
+**RC.3 Capture autofocus adjustment — 2026-08-03:**
+
+- Taylor chose to fix the known mouse-click requirement before Marketplace
+  submission and restart the full bounded soak.
+- Root cause: `showMainUI({ autoFocus: true })` returns before Logseq finishes
+  focusing the plugin iframe, so the host could overwrite the component's
+  initial input focus. Capture now waits for iframe focus, then focuses and
+  verifies the capture input; the component keeps its deferred fallback.
+- Regression coverage verifies direct iframe/input focus and the host-focus
+  wait. Fresh gates: TypeScript clean, 160/160 tests, and packaging succeeds.
+- Local package: `release/vimblocks-1.0.0-rc.3.zip`; SHA-256
+  `9e6ca57c862ccd51bbeaaea17ed74c125511dd4e4f90220f784d408ff1696da3`;
+  runtime `assets/index-DvarLuei.js`.
+- The exact expanded rc.3 artifact was installed byte-for-byte. With a safe
+  destination selected, the visible Capture overlay reported its input as the
+  focused element and accepted exact `focus probe` without clicking; the
+  capture was canceled and created no task.
+- Typing synthesized before the overlay is visible can still outrun plugin UI
+  creation and lose leading characters; the verified user path begins once
+  the overlay appears.
+- This `src/**` change supersedes rc.2 soak certification. RC.3 must be
+  published and complete the full 3-device bounded soak before final 1.0.0.
+- No push, tag, prerelease publication, or final-release action was authorized
+  or performed by this local preparation.
 
 - [ ] **Step 1: Obtain Taylor's push approval**
 

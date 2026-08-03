@@ -1,6 +1,6 @@
 {
   "name": "vimblocks",
-  "version": "1.0.0",
+  "version": "1.0.0-rc.3",
   "schemaVersion": "1.0.0",
   "description": "Vim-style modal editing for Logseq DB graphs.",
   "author": "Taylor Finklea",

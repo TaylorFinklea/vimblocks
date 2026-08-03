@@ -54,6 +54,7 @@ import {
   highlightPseudoStyle,
 } from "./runtime/cursor-style";
 import { registerDbTaskCaptureCommand } from "./db-task-capture-command";
+import { showDbTaskCaptureMainUI } from "./runtime/db-task-capture";
 import { useDbTaskCaptureStore } from "./stores/db-task-capture";
 import { useModalStore } from "./stores/modal";
 
@@ -207,7 +208,7 @@ async function main() {
       openCapture: async (anchorUUID) => {
         requestHostTheme();
         captureStore.show(anchorUUID);
-        await logseq.showMainUI({ autoFocus: true });
+        await showDbTaskCaptureMainUI(logseq, document, window);
         captureStore.requestFocus();
       },
     })

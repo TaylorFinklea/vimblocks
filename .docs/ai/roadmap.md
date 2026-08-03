@@ -10,21 +10,26 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
   listing. Plan: `.docs/ai/phases/v1-final-release-spec.md`.
   Current: `v1.0.0-rc.2` is published; human capture/mode UI verification
   passed. Local final metadata and immutable workflow action pins are prepared.
-  Exact final package install/diff and focused R5/R3/S6 Run 5 passed. The soak
-  passed across 4 business days and 3 devices at the confirmed conservative
-  floor of 3 sessions, 90 active minutes, and 6 reloads.
+  Exact final package install/diff and focused R5/R3/S6 Run 5 passed. The rc.2
+  soak passed across 4 business days and 3 devices at the confirmed
+  conservative floor of 3 sessions, 90 active minutes, and 6 reloads.
   Original action image is in README; four local/origin release tags are
-  aligned. Remaining before final: Capture autofocus policy, final draft
-  release verification, and Marketplace PR.
+  aligned. Capture autofocus is fixed in a local rc.3 candidate, so the rc.2
+  soak is historical and the full bounded soak must restart on exact rc.3.
+  Remaining before final: publish/soak rc.3, final draft release verification,
+  and Marketplace PR.
   Verify: `pnpm check && pnpm test && pnpm package`, then the live smoke.
   Caveat: Marketplace approval is not ours to control — Logseq reviews
   `effect: true` plugins more strictly with no guarantee — so the GitHub
   release must stand alone.
-- [ ] Fix DB task Capture autofocus before Marketplace submission: opening
+- [x] Fix DB task Capture autofocus before Marketplace submission: opening
   Capture currently requires a mouse click in the input box before typing.
   Rebuild/reinstall the exact artifact; verify the shortcut opens with the
   input focused and accepts typing without mouse interaction, then rerun the
   affected load/focus smoke checks.
+  Result: local `1.0.0-rc.3` candidate, 160 tests, exact expanded artifact
+  install/diff clean, and no-click `focus probe` acceptance passed after the
+  overlay became visible. Runtime change resets the full bounded soak.
 - [x] Deliver daily Vim parity with counts, composable operators,
   repeat/history, insert transitions, rendered-view search, character
   navigation, `v`/`V`, and persistent Vim-first/Logseq-first profiles.
