@@ -8,8 +8,8 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
 
 - [ ] Publish Vimblocks **1.0.0** to GitHub, then submit a Logseq Marketplace
   listing. Plan: `.docs/ai/phases/v1-final-release-spec.md`.
-  Current: `v1.0.0-rc.2` is published; human capture/mode UI verification
-  passed. Local final metadata and immutable workflow action pins are prepared.
+  Current: `v1.0.0-rc.3` is published; human capture/mode UI verification
+  passed. Final metadata and immutable workflow action pins are prepared.
   Exact final package install/diff and focused R5/R3/S6 Run 5 passed. The rc.2
   soak passed across 4 business days and 3 devices at the confirmed
   conservative floor of 3 sessions, 90 active minutes, and 6 reloads.
@@ -17,9 +17,13 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
   aligned. Capture autofocus is fixed in a local rc.3 candidate, so the rc.2
   soak is historical and the full bounded soak must restart on exact rc.3.
   RC.3 is a public prerelease; its ZIP and checksum match, the extracted tree
-  matches locally, and the downloaded no-click smoke passed. Remaining before
-  final: complete the restarted rc.3 soak, final draft release verification,
-  and Marketplace PR.
+  matches locally, and the downloaded no-click smoke passed. The restarted
+  rc.3 soak passed on 3 devices at 3 sessions, 90 active minutes, 6 reloads,
+  and at least 2 calendar days. The final 1.0.0 artifact is built, installed,
+  and smoke-tested; a fresh local Marketplace contribution is validated.
+  Legacy `v0.3.0`/`v0.3.1` will be preserved but marked prerelease immediately
+  before final publication. Remaining: push/tag/verify/publish 1.0.0 and submit
+  the Marketplace PR.
   Verify: `pnpm check && pnpm test && pnpm package`, then the live smoke.
   Caveat: Marketplace approval is not ours to control — Logseq reviews
   `effect: true` plugins more strictly with no guarantee — so the GitHub

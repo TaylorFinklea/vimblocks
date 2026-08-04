@@ -278,6 +278,27 @@ corresponding peeled origin tag. No tag was created, removed, or pushed.
 
 **Final 1.0.0 prerequisite:** `SOAK: pass` for the exact runtime candidate.
 
+**Post-RC.3 final candidate — 2026-08-03:**
+
+- Manifest version advanced from `1.0.0-rc.3` to `1.0.0`; no runtime source
+  changed after the successful rc.3 soak.
+- Fresh gates: TypeScript clean, 160/160 tests, packaging succeeds.
+- Local package: `release/vimblocks-1.0.0.zip`; SHA-256
+  `a45fa75de24a887113efeaad2dedd3e12b0f3157f48c6ebdbdc90705518525bb`;
+  runtime `assets/index-DSUORCDr.js`.
+- The expanded final artifact was installed byte-for-byte. Logseq loaded
+  `1.0.0`; visible Capture focused its input and accepted exact
+  `marketplace final probe` without an input click. The capture was canceled
+  and created no task.
+- Fresh Marketplace checkout `/tmp/logseq-marketplace-vimblocks`, local branch
+  `codex/add-vimblocks`, contains validated
+  `packages/vimblocks/{manifest.json,icon.png}`. Routing is `effect: true`,
+  `supportsDB: true`, `supportsDBOnly: true`, `web: false`; icon SHA-256
+  `8239d407d01b926c3c2e7a14484d0b3f0b06e2b3db894ddf39eb597822fbe104`
+  matches this repository exactly.
+- No push, final tag, final release mutation/publication, fork creation, or
+  Marketplace PR submission is authorized or performed by this preparation.
+
 **Local final candidate — 2026-07-31:**
 
 - Manifest version advanced from `1.0.0-rc.2` to `1.0.0`.
@@ -398,6 +419,15 @@ authorize final `v1.0.0` or a Marketplace submission.
 - Final 1.0.0 and Marketplace submission remain unauthorized. The restarted
   three-device soak is now the active release blocker.
 
+**RC.3 soak result — 2026-08-03:**
+
+- Taylor confirmed successful rc.3 use against the previously stated floor:
+  3 devices, 3 sessions across at least 2 calendar days, 90 cumulative active
+  minutes, and 6 reload/restart cycles.
+- No R1-R8 or other stop-bar failure was reported.
+- `SOAK: pass`; final 1.0.0 preparation may resume. Push, tag, publication,
+  and Marketplace submission remain separate approval gates.
+
 - [x] **Step 1: Obtain Taylor's push approval**
 
 - [x] **Step 2: Push `main` and require CI green**
@@ -406,10 +436,14 @@ Result (2026-08-03): Taylor approved pushing `main` only. Commit `4eb2f87`
 was pushed; CI run `30868311362` passed Typecheck, Test, and Package. No rc.3
 tag or prerelease was created.
 
-- [ ] **Step 3: Resolve v0.3.0/v0.3.1 release-state policy**
+- [x] **Step 3: Resolve v0.3.0/v0.3.1 release-state policy**
 
 Before publishing 1.0.0, decide whether the old releases become prereleases so
 GitHub `latest` can never fall back to the pre-v1 build.
+
+Result (2026-08-03): preserve both releases and their assets, but mark
+`v0.3.0` and `v0.3.1` as prereleases immediately before publishing final
+1.0.0. No release flag was changed during preparation.
 
 - [ ] **Step 4: Obtain Taylor's tag approval**
 

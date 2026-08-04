@@ -116,4 +116,10 @@ RC.2 SOAK: pass (3 sessions, 90 minutes, 6 reloads)
 RC.3 prerelease:
 https://github.com/TaylorFinklea/vimblocks/releases/tag/v1.0.0-rc.3
 
-SOAK: pending (RC.3 published; restarted budget not yet attested)
+2026-08-03 user attestation:
+- Taylor confirmed the rc.3 soak succeeded against the previously stated
+  release floor: 3 devices, 3 sessions across at least 2 calendar days,
+  90 cumulative active minutes, and 6 reload/restart cycles.
+- No R1-R8 or other stop-bar failure was reported.
+
+SOAK: pass (RC.3; 3 devices, 3 sessions, 90 minutes, 6 reloads, >=2 days)
