@@ -102,6 +102,10 @@ RC.2 SOAK: pass (3 sessions, 90 minutes, 6 reloads)
 - Local rc.3 candidate: `release/vimblocks-1.0.0-rc.3.zip`; SHA-256
   `9e6ca57c862ccd51bbeaaea17ed74c125511dd4e4f90220f784d408ff1696da3`;
   runtime `assets/index-DvarLuei.js`.
+- Exact tag `v1.0.0-rc.3` points to `8761e65`; workflow `30868490609`
+  passed and created a draft. Downloaded ZIP SHA-256
+  `2731fd26139cd47dbf37eb6109db011b812f266aa676a64bdf221cb6f9510d35`
+  matches `SHA256SUMS.txt` and extracts byte-for-byte against the local tree.
 - Exact expanded rc.3 tree installed byte-for-byte on the primary Mac. After
   the overlay became visible, its text field was already focused and accepted
   exact `focus probe` without a mouse click; the capture was canceled.
@@ -109,4 +113,7 @@ RC.2 SOAK: pass (3 sessions, 90 minutes, 6 reloads)
   minutes, 6 reload/restart cycles, and all three devices using the exact
   published rc.3 ZIP.
 
-SOAK: pending (RC.3 candidate not published; restarted budget not begun)
+RC.3 prerelease:
+https://github.com/TaylorFinklea/vimblocks/releases/tag/v1.0.0-rc.3
+
+SOAK: pending (RC.3 published; restarted budget not yet attested)

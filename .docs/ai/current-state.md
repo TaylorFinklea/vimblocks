@@ -1,7 +1,7 @@
 # Current State
 
 ## Branch
-`main`; rc.3 candidate on origin; CI `30868311362` green; final unreleased.
+`main`; `v1.0.0-rc.3` public prerelease; exact asset verified; final unreleased.
 ## Plan
 Final plan: `phases/v1-final-release-spec.md`.
 - [x] Implementation, automated gates, remote CI, and Run 1–4 evidence
@@ -12,9 +12,9 @@ Final plan: `phases/v1-final-release-spec.md`.
 - [x] Final metadata + action pins; 158 tests/package; ZIP `fc9b1b88…77dfd`
 - [x] Final artifact installed/diff clean; exact-artifact Run 5 smoke passed
 - [x] Autofocus/no-click smoke fixed; Marketplace image/manifest ready; refs aligned
-- [x] RC.3 main pushed; CI typecheck/tests/package green
-- [ ] Approve exact rc.3 tag/publish; restart full 3-device bounded soak
+- [x] RC.3 prerelease published; downloaded no-click smoke passed
+- [ ] Complete restarted full 3-device bounded soak on exact rc.3 ZIP
 - [ ] Final v1.0.0 draft → exact asset verify → publish → Marketplace PR
 Verify: check + 160 tests + package; then live capture/mode transitions.
 ## Blockers
-RC.3 tag/publish approval; restarted soak; final release approval gates.
+Restarted rc.3 soak; final release approval gates.

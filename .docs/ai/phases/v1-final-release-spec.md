@@ -378,6 +378,26 @@ authorize final `v1.0.0` or a Marketplace submission.
 - No push, tag, prerelease publication, or final-release action was authorized
   or performed by this local preparation.
 
+**RC.3 draft verification — 2026-08-03:**
+
+- Taylor separately approved the `main` push and exact tag push. Head commit
+  `8761e65` passed CI run `30868420007`; annotated tag `v1.0.0-rc.3` points to
+  that exact commit.
+- Publish workflow `30868490609` passed and created a draft release. Downloaded
+  ZIP SHA-256
+  `2731fd26139cd47dbf37eb6109db011b812f266aa676a64bdf221cb6f9510d35`
+  matches its checksum; the extracted tree is byte-for-byte identical to the
+  approved local rc.3 tree.
+- Installed the downloaded expanded tree byte-for-byte. After reload, Logseq
+  loaded `1.0.0-rc.3`; visible Capture focused its input and accepted exact
+  `downloaded probe` without an input click. The capture was canceled and
+  created no task.
+- Taylor approved prerelease publication. RC.3 was published with
+  `isDraft=false` and `isPrerelease=true`:
+  https://github.com/TaylorFinklea/vimblocks/releases/tag/v1.0.0-rc.3
+- Final 1.0.0 and Marketplace submission remain unauthorized. The restarted
+  three-device soak is now the active release blocker.
+
 - [x] **Step 1: Obtain Taylor's push approval**
 
 - [x] **Step 2: Push `main` and require CI green**
