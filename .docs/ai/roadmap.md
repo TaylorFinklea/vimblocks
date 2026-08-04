@@ -6,7 +6,7 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
 
 ## Now
 
-- [ ] Publish Vimblocks **1.0.0** to GitHub, then submit a Logseq Marketplace
+- [x] Publish Vimblocks **1.0.0** to GitHub, then submit a Logseq Marketplace
   listing. Plan: `.docs/ai/phases/v1-final-release-spec.md`.
   Current: `v1.0.0-rc.3` is published; human capture/mode UI verification
   passed. Final metadata and immutable workflow action pins are prepared.
@@ -24,8 +24,9 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
   Legacy `v0.3.0`/`v0.3.1` will be preserved but marked prerelease immediately
   before final publication. Final tag/draft ZIP is verified byte-for-byte and
   its downloaded micro-smoke passed. Final 1.0.0 is public Latest; legacy
-  v0.3.0/v0.3.1 are preserved as prereleases. Remaining: submit and track the
-  Marketplace PR.
+  v0.3.0/v0.3.1 are preserved as prereleases. Marketplace PR
+  `logseq/marketplace#879` is open, ready, mergeable, and passed its WIP check;
+  external Logseq review remains pending.
   Verify: `pnpm check && pnpm test && pnpm package`, then the live smoke.
   Caveat: Marketplace approval is not ours to control — Logseq reviews
   `effect: true` plugins more strictly with no guarantee — so the GitHub

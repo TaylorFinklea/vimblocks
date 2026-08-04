@@ -499,15 +499,30 @@ Stable asset URLs:
 
 ### Task 6: Submit Marketplace listing and close the release
 
-- [ ] **Step 1: Submit the Marketplace PR**
+- [x] **Step 1: Submit the Marketplace PR**
 
 Include manifest, identical chosen icon, and README action image/GIF.
 
-- [ ] **Step 2: Update release handoff**
+- [x] **Step 2: Update release handoff**
 
 Record GitHub release URL, digest, Marketplace PR, and outstanding external
 review status.
 
-- [ ] **Step 3: Retire rollback worktrees/branches after publication**
+Result (2026-08-03):
+
+- Created public fork `TaylorFinklea/marketplace` and pushed local contribution
+  commit `3bdbfab` on `codex/add-vimblocks`.
+- Opened ready-for-review PR:
+  https://github.com/logseq/marketplace/pull/879
+- PR targets `logseq/marketplace:master`, is open and mergeable, and its WIP
+  check passed. Manifest/icon validation and final v1.0.0 release evidence are
+  included in the PR body.
+- External Logseq Marketplace review remains pending; approval timing is not
+  controlled by this project.
+
+- [x] **Step 3: Retire rollback worktrees/branches after publication**
 
 Only after confirming `main` contains their commits.
+
+Result: `git worktree list` shows only the primary checkout and `git branch`
+shows only `main`; no rollback worktree or branch remains to retire.
