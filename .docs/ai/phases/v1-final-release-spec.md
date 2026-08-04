@@ -378,9 +378,13 @@ authorize final `v1.0.0` or a Marketplace submission.
 - No push, tag, prerelease publication, or final-release action was authorized
   or performed by this local preparation.
 
-- [ ] **Step 1: Obtain Taylor's push approval**
+- [x] **Step 1: Obtain Taylor's push approval**
 
-- [ ] **Step 2: Push `main` and require CI green**
+- [x] **Step 2: Push `main` and require CI green**
+
+Result (2026-08-03): Taylor approved pushing `main` only. Commit `4eb2f87`
+was pushed; CI run `30868311362` passed Typecheck, Test, and Package. No rc.3
+tag or prerelease was created.
 
 - [ ] **Step 3: Resolve v0.3.0/v0.3.1 release-state policy**
 

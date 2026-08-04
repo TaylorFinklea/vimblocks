@@ -16,8 +16,9 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
   Original action image is in README; four local/origin release tags are
   aligned. Capture autofocus is fixed in a local rc.3 candidate, so the rc.2
   soak is historical and the full bounded soak must restart on exact rc.3.
-  Remaining before final: publish/soak rc.3, final draft release verification,
-  and Marketplace PR.
+  RC.3 source is on origin and CI run `30868311362` passed. Remaining before
+  final: approve/publish/soak rc.3, final draft release verification, and
+  Marketplace PR.
   Verify: `pnpm check && pnpm test && pnpm package`, then the live smoke.
   Caveat: Marketplace approval is not ours to control — Logseq reviews
   `effect: true` plugins more strictly with no guarantee — so the GitHub
