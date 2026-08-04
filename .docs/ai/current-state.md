@@ -1,7 +1,7 @@
 # Current State
 
 ## Branch
-`main`; rc.3 soak passed; final 1.0.0 candidate verified; final unreleased.
+`main`; v1.0.0 public Latest; Marketplace contribution local and unsubmitted.
 ## Plan
 Final plan: `phases/v1-final-release-spec.md`.
 - [x] Implementation, automated gates, remote CI, and Run 1–4 evidence
@@ -13,8 +13,8 @@ Final plan: `phases/v1-final-release-spec.md`.
 - [x] Autofocus/no-click smoke fixed; Marketplace image/manifest ready; refs aligned
 - [x] RC.3 prerelease published; downloaded no-click smoke passed
 - [x] Restarted rc.3 soak passed: 3 devices/3 sessions/90 min/6 reloads/2+ days
-- [x] Final 1.0.0 built/installed/smoked; Marketplace contribution prepared
-- [ ] Push final → tag/draft asset verify → publish → Marketplace PR
+- [x] Final v1 Latest; exact ZIP/micro-smoke verified; legacy releases prerelease
+- [ ] Push Marketplace branch → submit PR → track external review
 Verify: check + 160 tests + package; then live capture/mode transitions.
 ## Blockers
-Final push/tag/publish and Marketplace PR approvals.
+Marketplace branch/PR approval; external Logseq review.

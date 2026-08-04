@@ -445,26 +445,55 @@ Result (2026-08-03): preserve both releases and their assets, but mark
 `v0.3.0` and `v0.3.1` as prereleases immediately before publishing final
 1.0.0. No release flag was changed during preparation.
 
-- [ ] **Step 4: Obtain Taylor's tag approval**
+- [x] **Step 4: Obtain Taylor's tag approval**
 
-- [ ] **Step 5: Push only the exact v1 tag**
+- [x] **Step 5: Push only the exact v1 tag**
 
 ```bash
 git push origin refs/tags/v1.0.0
 ```
 
-- [ ] **Step 6: Verify the draft asset**
+- [x] **Step 6: Verify the draft asset**
 
 Download ZIP and `SHA256SUMS.txt`; verify digest; extract; compare the relative
 path set and per-file hashes against the locally approved tree. A differing
 runtime asset hash is a stop.
 
-- [ ] **Step 7: Install the downloaded asset and micro-smoke**
+- [x] **Step 7: Install the downloaded asset and micro-smoke**
 
 Verify load, Esc, one motion, one mutation plus undo, and unload/reload with a
 clean console.
 
-- [ ] **Step 8: Obtain Taylor's publish approval and publish the draft**
+Result (2026-08-03):
+
+- Final source commit `fc8165c` passed CI run `30871827278`; annotated tag
+  `v1.0.0` points to that exact commit.
+- Publish workflow `30871919999` passed and created a private, non-prerelease
+  draft. Downloaded ZIP SHA-256
+  `2ed55a58c7a2380b5b60f964cddc632b78198b39e3f556cf055943bda822577b`
+  matches `SHA256SUMS.txt`; its extracted tree is byte-for-byte identical to
+  the locally approved final tree.
+- Installed the downloaded tree byte-for-byte. Logseq loaded final `1.0.0`;
+  `0` then `l` moved the cursor, `x` changed `Composable` to `Cmposable`, and
+  `u` restored the exact original text. Capture focused without an input click
+  and accepted exact `final downloaded probe`; cancellation created no task.
+  A subsequent reload completed with no visible error notification.
+- Renderer-console inspection was unavailable in this harness; earlier exact
+  artifact runs and the successful rc.3 soak remain the console/runtime
+  evidence. No new visible load failure occurred.
+
+- [x] **Step 8: Obtain Taylor's publish approval and publish the draft**
+
+Result (2026-08-03): Taylor approved the coordinated publication. Preserved
+`v0.3.0` and `v0.3.1` but marked both prerelease, then published `v1.0.0` as
+stable Latest. Verified `isDraft=false`, `isPrerelease=false`, and
+`isLatest=true`:
+https://github.com/TaylorFinklea/vimblocks/releases/tag/v1.0.0
+
+Stable asset URLs:
+- `vimblocks-1.0.0.zip`; SHA-256
+  `2ed55a58c7a2380b5b60f964cddc632b78198b39e3f556cf055943bda822577b`
+- `SHA256SUMS.txt`
 
 ---
 

@@ -22,8 +22,10 @@ Deliver Vim-style Logseq DB editing as one reliable, easy-to-install plugin.
   and at least 2 calendar days. The final 1.0.0 artifact is built, installed,
   and smoke-tested; a fresh local Marketplace contribution is validated.
   Legacy `v0.3.0`/`v0.3.1` will be preserved but marked prerelease immediately
-  before final publication. Remaining: push/tag/verify/publish 1.0.0 and submit
-  the Marketplace PR.
+  before final publication. Final tag/draft ZIP is verified byte-for-byte and
+  its downloaded micro-smoke passed. Final 1.0.0 is public Latest; legacy
+  v0.3.0/v0.3.1 are preserved as prereleases. Remaining: submit and track the
+  Marketplace PR.
   Verify: `pnpm check && pnpm test && pnpm package`, then the live smoke.
   Caveat: Marketplace approval is not ours to control — Logseq reviews
   `effect: true` plugins more strictly with no guarantee — so the GitHub
